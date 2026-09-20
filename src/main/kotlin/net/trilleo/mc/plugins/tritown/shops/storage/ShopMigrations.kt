@@ -25,8 +25,8 @@ object ShopMigrations {
     }
 
     /**
-     * Schema 1 counted stock and limits in purchases; schema 2 counts them in
-     * items.
+     * Schema 1 counted stock, limits and sales figures in purchases; schema 2
+     * counts all three in items.
      *
      * Multiplying by the bundle keeps every shop trading exactly as it did — an
      * entry selling sixteen at a time with a stock of four still offers
@@ -41,6 +41,8 @@ object ShopMigrations {
                     limitAmount = entry.limitAmount * bundle,
                     stockMax = entry.stockMax * bundle,
                     stockRemaining = entry.stockRemaining * bundle,
+                    bought = entry.bought * bundle,
+                    sold = entry.sold * bundle,
                 )
             }
         )

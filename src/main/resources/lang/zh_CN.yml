@@ -454,7 +454,7 @@ gui:
     limit: "<gray>你还能买 <red>{amount}</red> 个 <dark_gray>（{period}）"
     sell-limit: "<gray>你还能卖 <green>{amount}</green> 个 <dark_gray>（{period}）"
     click-buy: "<yellow>左键 <gray>购买一份"
-    click-buy-max: "<yellow>Shift + 左键 <gray>买下能买的全部"
+    click-amount: "<yellow>Shift + 左键 <gray>选择数量"
     click-sell: "<yellow>右键 <gray>出售一份"
     click-sell-max: "<yellow>Shift + 右键 <gray>卖出身上全部"
     locked-permission: "<red>你无法购买此商品。"
@@ -474,6 +474,15 @@ gui:
     period-weekly: "每周"
     match-exact: "完全相同的物品"
     match-material: "同类的任意物品"
+
+  shop-amount:
+    title: "<dark_gray>买多少？"
+    bundle: "<dark_gray>每次出售 {amount} 个"
+    option: "<yellow>{amount}个 <white>{item}"
+    option-locked: "<dark_gray>{amount}个 {item}"
+    click-buy: "<yellow>单击 <gray>买下这些"
+    back: "<yellow>返回"
+    back-lore: "<gray>返回商店，不购买任何东西。"
 
   shop-confirm:
     title: "<dark_gray>确认购买"
@@ -629,6 +638,7 @@ shop:
     unavailable: "<red>商店暂时不可用。"
     locked: "<red>你无法进入这家商店。"
     bad-amount: "<red>这家商店无法交易这个数量。"
+    part-bundle: "<red>此物品每次以 <white>{amount}</white> 个为单位交易。"
     not-for-sale: "<red>这件商品不出售。"
     not-bought: "<red>这家商店不回收此物。"
     cannot-afford: "<red>你的钱不够，需要 <white>{price}</white>。"

@@ -13,8 +13,8 @@ package net.trilleo.mc.plugins.tritown.shops.storage
  *
  * 1. The first shape shops were written in. Stock and per-player limits counted
  *    purchases.
- * 2. Stock and per-player limits count items, and an entry carries a separate
- *    limit for selling.
+ * 2. Stock, per-player limits and the sales figures count items, and an entry
+ *    carries a separate limit for selling.
  */
 object ShopSchema {
 

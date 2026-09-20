@@ -182,6 +182,10 @@ A shop is created with `/tt shop create <id>`, which opens its editor. Everythin
 - **Pricing it.** An entry has a buy side and a sell side, and each may be switched on or off on its own. Either side
   can ask for money, for items, or for both at once. Money is typed in chat when you click the price; items are added
   by clicking them in your inventory, and the stack size is the quantity.
+- **Buying it.** A player left-clicks an entry to buy one purchase of it, and shift-left-clicks anything that stacks to
+  pick an amount instead — 1, 8, 16, 32 or 64, priced at the entry's own rate, so eight of something sold sixteen at a
+  time costs half. An amount they cannot take is greyed out with the reason rather than refusing after the click. Right
+  -click sells one purchase back, and shift-right-click sells everything they are carrying.
 - **Limiting it.** *Stock* is shared by everybody and refills to full on a timer. A *limit* is per player and resets
   daily, weekly, or never; buying and selling have one each, and they are counted separately. All of them are counted
   in items rather than in purchases — a limit of 64 on an entry that sells 16 at a time is four purchases — and all of

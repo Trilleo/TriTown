@@ -2566,8 +2566,13 @@ allows, which is what is both measured for room and handed over, while the first
 
 **Stock and limits are counted in items, not in purchases.** An administrator writing "64 a day" means sixty-four
 items however large the bundle is, which is the only reading that stays true when the bundle is edited afterwards. A
-trade therefore spends `bundleSize * bundles` of each, and `maxBuyable` / `maxSellable` divide what is left by
-`bundleSize` — a remainder too small for one more bundle is not offered, because half a bundle is not a purchase.
+trade therefore spends exactly what it moves. `ShopTrade` takes an item count throughout: a left-click on the shelf
+asks for `bundleSize`, and the amount menu asks for whatever the player picked.
+
+Money divides, so any amount can be priced — a bundle of sixteen at 10 puts one at 0.63, which is what keeping the
+entry's own ratio means. A price or payout made of **items** cannot be divided that finely, so an amount that is not a
+whole number of bundles has no quote at all: `quoteBuy` and `quoteSell` return `null` for it and the trade refuses with
+`shop.error.part-bundle`.
 
 An entry carries a limit per side: `buyLimit` and `sellLimit`, reached through `limitOn(side)` / `setLimitOn(side, …)`
 with a `TradeSide`. They are independent, so neither spends the other's allowance.
@@ -2611,7 +2616,8 @@ taken, and anything taken is remembered so it can be put back.**
 
 A buy, in order:
 
-1. Re-check the gate, the buying limit and the stock, restocking lazily first.
+1. Re-check everything that can refuse, through `buyRefusal` — the gate, the amount, the buying limit and the stock,
+   restocking lazily first.
 2. Quote the price, applying the best discount the player's standing in Towny earns.
 3. Check there is room for the goods.
 4. Take the item side of the price, keeping what was removed.
@@ -2680,6 +2686,7 @@ rather than in `getItems`.
 | Menu               | What it does                                                          |
 |:-------------------|:------------------------------------------------------------------------|
 | `ShopGUI`          | The player's view; buys and sells, and redraws only the entry traded   |
+| `ShopAmountGUI`    | How many to buy: 1, 8, 16, 32 or 64, priced at the entry's own rate    |
 | `ShopConfirmGUI`   | A second look above `shops.confirm-above`; re-quotes on accept         |
 | `ShopListGUI`      | Every shop, for an administrator                                       |
 | `ShopEditorGUI`    | One shop's entries; adds one from the administrator's own inventory    |
@@ -2693,8 +2700,15 @@ Every one of them is framed: the paged menus through `PagedLayout.FRAMED`, and `
 grid, through `GUIFrame` directly. The editor's actions — add, settings, figures, back — live in the navigation row via
 `navButtons`, so they do not shuffle along as entries are added.
 
-`ShopRender` holds what they all draw with — item names, price lines, requirement names — and `ShopRender.navigate`,
-which opens the next menu on the following tick.
+`ShopRender` holds what they all draw with — item names, price lines, requirement names, and how a trade is announced
+or refused — and `ShopRender.navigate`, which opens the next menu on the following tick. Every menu that can start a
+purchase goes through `ShopConfirmGUI.askIfDear`, so `shops.confirm-above` guards all of them rather than whichever one
+remembered to ask.
+
+**A menu never offers what a click would refuse.** `ShopAmountGUI` greys an amount out with the very
+`ShopTrade.buyRefusal` the purchase itself runs, so what is drawn and what happens cannot drift apart. The one thing
+that refusal leaves out is the money: a balance may be read to draw a menu, but only the withdrawal may decide a
+charge, so the menu asks `EconomyUtil.has` itself and `ShopTrade.buy` still charges atomically.
 
 **Items are never taken to add them.** Clicking a stack in the administrator's own inventory copies it and cancels the
 event; a drag reads `event.oldCursor` and cancels too. A live slot would lose the item to a crash or a mistimed close,

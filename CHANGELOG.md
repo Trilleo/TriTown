@@ -9,6 +9,10 @@
 + An entry can now limit how much each player **sells** to the shop per day, per week or ever, alongside the limit on
   how much they buy. The two are set separately in the entry editor and counted separately, so an entry can be "buy 64
   a day, sell 256 a day" without one side spending the other's allowance.
++ Shift-left-clicking anything that stacks now opens a menu to pick how many to buy: 1, 8, 16, 32 or 64. They are
+  priced at the entry's own rate, so eight of something sold sixteen at a time costs half of what the shelf quotes,
+  and an amount you cannot take is greyed out with the reason rather than refusing once you have clicked it. This
+  replaces "buy as many as you can", which gave you a number you had not chosen and no way to ask for a smaller one.
 
 ### Improvements
 
@@ -16,10 +20,10 @@
 
 + An entry's description now separates what it costs from what clicking does, with the prices, the payout and what is
   left of the stock and your limits each in a block of their own.
++ A price that asks for items is refused for part of a purchase rather than quietly rounded, and says how many the
+  entry is traded at a time.
 + A price is now red and a payout green wherever they appear, including the items either side asks for, so buying and
   selling can be told apart at a glance.
-+ A shift-click that cannot buy anything now says why. It used to claim the player could not afford the entry even
-  when it was the stock or their own limit that had run out.
 
 ### Fixes
 
@@ -30,13 +34,15 @@
   it moved one item or a hundred and twenty-eight. A limit of 64 is now sixty-four items, and stays sixty-four if you
   change the bundle afterwards. Existing shops are converted on first start, so every entry keeps trading exactly as
   it did; only the number you see in the editor changes unit.
++ A shop's sales figures count items too, so what one entry has traded can be compared with another whatever their
+  bundles are. Existing figures are converted with everything else.
 
 ### Technical Details
 
 #### Shops
 
 + An older shop file is now brought forward by `ShopMigrations` as it is read rather than being misread against the
-  current shape. Schema 2 is stock and limits in items, plus the selling limit.
+  current shape. Schema 2 is stock, limits and sales figures in items, plus the selling limit.
 
 ## Version 1.1.0
 

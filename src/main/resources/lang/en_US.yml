@@ -453,7 +453,7 @@ gui:
     limit: "<gray>You may still buy <red>{amount}</red> <dark_gray>({period})"
     sell-limit: "<gray>You may still sell <green>{amount}</green> <dark_gray>({period})"
     click-buy: "<yellow>Left-click <gray>to buy one"
-    click-buy-max: "<yellow>Shift-left-click <gray>to buy as many as you can"
+    click-amount: "<yellow>Shift-left-click <gray>to choose an amount"
     click-sell: "<yellow>Right-click <gray>to sell one"
     click-sell-max: "<yellow>Shift-right-click <gray>to sell all you carry"
     locked-permission: "<red>You cannot buy this."
@@ -473,6 +473,15 @@ gui:
     period-weekly: "per week"
     match-exact: "Exactly this item"
     match-material: "Any item of this kind"
+
+  shop-amount:
+    title: "<dark_gray>How many?"
+    bundle: "<dark_gray>Sold {amount} at a time"
+    option: "<yellow>{amount}x <white>{item}"
+    option-locked: "<dark_gray>{amount}x {item}"
+    click-buy: "<yellow>Click <gray>to buy this many"
+    back: "<yellow>Back"
+    back-lore: "<gray>Return to the shop, nothing bought."
 
   shop-confirm:
     title: "<dark_gray>Confirm purchase"
@@ -628,6 +637,7 @@ shop:
     unavailable: "<red>Shops are not available right now."
     locked: "<red>This shop is not open to you."
     bad-amount: "<red>That is not an amount this shop can trade."
+    part-bundle: "<red>This is traded <white>{amount}</white> at a time."
     not-for-sale: "<red>That is not for sale."
     not-bought: "<red>This shop does not buy that."
     cannot-afford: "<red>You cannot afford that. It costs <white>{price}</white>."

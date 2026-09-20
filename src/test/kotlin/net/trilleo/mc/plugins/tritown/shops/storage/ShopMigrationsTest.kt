@@ -24,12 +24,16 @@ class ShopMigrationsTest {
                 limitAmount = 3,
                 stockMax = 8,
                 stockRemaining = 5,
+                bought = 4L,
+                sold = 2L,
             )
         )
 
         assertEquals(48, entry.limitAmount)
         assertEquals(128, entry.stockMax)
         assertEquals(80, entry.stockRemaining)
+        assertEquals(64L, entry.bought)
+        assertEquals(32L, entry.sold)
     }
 
     @Test

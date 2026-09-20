@@ -44,6 +44,9 @@ data class ShopEntry(
     /** Whether the shop buys this back. */
     val isSellable: Boolean get() = sell != null
 
+    /** Whether an amount menu makes sense for these goods: a single item cannot be bought eight at a time. */
+    val isStackable: Boolean get() = item.maxStackSize > 1
+
     /** The per-player cap that applies to [side], or `null` when that side is uncapped. */
     fun limitOn(side: TradeSide): ShopLimit? = when (side) {
         TradeSide.BUY -> buyLimit
@@ -67,20 +70,19 @@ data class ShopEntry(
     fun displayStack(): ItemStack = item.clone().apply { amount = bundleSize.coerceAtMost(item.maxStackSize) }
 
     /**
-     * [bundles] bundles of the goods, split into stacks the game allows.
+     * [amount] of the goods, split into stacks the game allows.
      *
      * Split here rather than left as one oversized stack, so that what is
      * checked for room is exactly what is handed over.
      */
-    fun goodsStacks(bundles: Int = 1): List<ItemStack> {
-        val total = bundleSize * bundles
+    fun goodsStacks(amount: Int = bundleSize): List<ItemStack> {
         val perStack = item.maxStackSize.coerceAtLeast(1)
 
         return buildList {
-            var outstanding = total
+            var outstanding = amount
             while (outstanding > 0) {
                 val size = minOf(outstanding, perStack)
-                add(item.clone().apply { amount = size })
+                add(item.clone().apply { this.amount = size })
                 outstanding -= size
             }
         }

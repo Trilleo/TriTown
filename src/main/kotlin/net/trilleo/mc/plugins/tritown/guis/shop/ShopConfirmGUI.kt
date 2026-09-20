@@ -1,7 +1,6 @@
 package net.trilleo.mc.plugins.tritown.guis.shop
 
-import net.kyori.adventure.key.Key
-import net.kyori.adventure.sound.Sound
+import net.trilleo.mc.plugins.tritown.config.ShopSettings
 import net.trilleo.mc.plugins.tritown.enums.FillMode
 import net.trilleo.mc.plugins.tritown.registration.GUIManager
 import net.trilleo.mc.plugins.tritown.registration.PluginGUI
@@ -11,7 +10,6 @@ import net.trilleo.mc.plugins.tritown.shops.ShopManager
 import net.trilleo.mc.plugins.tritown.shops.ShopTrade
 import net.trilleo.mc.plugins.tritown.utils.LoreUtil
 import net.trilleo.mc.plugins.tritown.utils.itemStack
-import net.trilleo.mc.plugins.tritown.utils.sendPrefixed
 import net.trilleo.mc.plugins.tritown.utils.tr
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -37,26 +35,26 @@ class ShopConfirmGUI : PluginGUI(
     fillMode = FillMode.DARK,
 ) {
 
-    private data class Pending(val shopId: String, val entryId: String, val bundles: Int)
+    private data class Pending(val shopId: String, val entryId: String, val amount: Int)
 
     private val pending = ConcurrentHashMap<UUID, Pending>()
 
-    /** Asks [player] to confirm buying [bundles] of [entry]. */
-    fun open(player: Player, shop: ShopDefinition, entry: ShopEntry, bundles: Int) {
-        pending[player.uniqueId] = Pending(shop.id, entry.id, bundles)
+    /** Asks [player] to confirm buying [amount] of [entry]. */
+    fun open(player: Player, shop: ShopDefinition, entry: ShopEntry, amount: Int) {
+        pending[player.uniqueId] = Pending(shop.id, entry.id, amount)
         GUIManager.open(player, ID)
     }
 
     override fun setup(player: Player, inventory: Inventory) {
-        val (shop, entry, bundles) = resolve(player) ?: return
-        val quote = ShopTrade.quoteBuy(player, entry, bundles)
+        val (_, entry, amount) = resolve(player) ?: return
+        val quote = ShopTrade.quoteBuy(player, entry, amount)
 
         val lines = buildList {
-            add(player.tr("gui.shop-confirm.amount", "amount" to entry.bundleSize * bundles))
+            add(player.tr("gui.shop-confirm.amount", "amount" to amount))
             if (quote != null && quote.hasMoney) {
                 add(player.tr("gui.shop-confirm.price", "price" to ShopRender.money(quote.money)))
             }
-            entry.buy?.items?.forEach { add(ShopRender.itemLine(player, it, bundles, "gui.shop.buy-item")) }
+            quote?.items?.forEach { add(ShopRender.itemLine(player, it, key = "gui.shop.buy-item")) }
         }
 
         inventory.setItem(SLOT_GOODS, ShopRender.withLore(entry.displayStack(), lines))
@@ -86,23 +84,10 @@ class ShopConfirmGUI : PluginGUI(
     }
 
     private fun accept(player: Player) {
-        val (shop, entry, bundles) = resolve(player) ?: return
-        when (val result = ShopTrade.buy(player, shop, entry, bundles)) {
-            is ShopTrade.Result.Success -> {
-                player.sendPrefixed(
-                    player.tr(
-                        "shop.traded",
-                        "amount" to entry.bundleSize * result.bundles,
-                        "item" to ShopRender.itemName(entry.item),
-                        "price" to ShopRender.money(result.money),
-                    )
-                )
-                player.playSound(Sound.sound(Key.key("minecraft:entity.villager.yes"), Sound.Source.UI, 1f, 1f))
-            }
-
-            is ShopTrade.Result.Failure -> player.sendPrefixed(
-                player.tr("common.error", "message" to player.tr(result.key, *result.args.toTypedArray()))
-            )
+        val (shop, entry, amount) = resolve(player) ?: return
+        when (val result = ShopTrade.buy(player, shop, entry, amount)) {
+            is ShopTrade.Result.Success -> ShopRender.announce(player, entry, result)
+            is ShopTrade.Result.Failure -> ShopRender.refuse(player, result)
         }
 
         back(player)
@@ -122,7 +107,7 @@ class ShopConfirmGUI : PluginGUI(
         val held = pending[player.uniqueId] ?: return null
         val shop = ShopManager.get(held.shopId) ?: return null
         val entry = shop.entry(held.entryId) ?: return null
-        return Triple(shop, entry, held.bundles)
+        return Triple(shop, entry, held.amount)
     }
 
     private fun button(player: Player, material: Material, nameKey: String, loreKey: String): ItemStack =
@@ -133,6 +118,25 @@ class ShopConfirmGUI : PluginGUI(
 
     companion object {
         const val ID = "shop-confirm"
+
+        /**
+         * Asks [player] to confirm buying [amount] when the bill is over
+         * `shops.confirm-above`, and reports whether it took the purchase over.
+         *
+         * Every menu that can start a purchase goes through this, so the
+         * threshold guards all of them rather than whichever remembered to ask.
+         */
+        fun askIfDear(player: Player, shop: ShopDefinition, entry: ShopEntry, amount: Int): Boolean {
+            val threshold = if (ShopSettings.isLoaded) ShopSettings.snapshot.confirmAbove else 0.0
+            if (threshold <= 0.0) return false
+
+            val quote = ShopTrade.quoteBuy(player, entry, amount) ?: return false
+            if (quote.money <= threshold) return false
+
+            val gui = GUIManager.getGUI(ID) as? ShopConfirmGUI ?: return false
+            ShopRender.navigate { gui.open(player, shop, entry, amount) }
+            return true
+        }
 
         private const val SLOT_GOODS = 13
         private const val SLOT_ACCEPT = 11
