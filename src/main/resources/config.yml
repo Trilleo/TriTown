@@ -144,6 +144,26 @@ shops:
     is-mayor: 0.0
     is-king: 0.0
 
+# ── Player Trades ───────────────────────────────────────────────────────────
+# Trading between two players, face to face. Shift-right-click the other player
+# or run /trade <player>; they have to agree before the menu opens, and both of
+# you have to confirm before anything changes hands.
+#
+# Items leave your inventory the moment you put them up and are held by the
+# trade until it goes through, so what the other side is looking at cannot be
+# spent behind their back. Anything a trade is holding goes straight back if it
+# is called off, if either of you closes the menu, or if one of you disconnects.
+player-trades:
+  # Turn player trading off entirely. /trade then says so, and shift-right-clicking
+  # another player does nothing.
+  enabled: true
+  # How close the two of you have to be, in blocks. You also have to stay that
+  # close: walking away — or leaving the world they are in — calls the trade off
+  # and hands everything back.
+  distance: 10.0
+  # Seconds an unanswered request stands before it lapses.
+  request-expiry: 60
+
 # ── Sidebar ─────────────────────────────────────────────────────────────────
 # The scoreboard shown at the right of the screen. Each board names a condition
 # and a priority, and a player sees the highest-priority board whose condition

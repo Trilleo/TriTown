@@ -6,6 +6,7 @@ import net.trilleo.mc.plugins.tritown.config.EconomySettings
 import net.trilleo.mc.plugins.tritown.config.PluginConfig
 import net.trilleo.mc.plugins.tritown.config.ScoreboardSettings
 import net.trilleo.mc.plugins.tritown.config.ShopSettings
+import net.trilleo.mc.plugins.tritown.config.TradeSettings
 import net.trilleo.mc.plugins.tritown.data.PlayerDataManager
 import net.trilleo.mc.plugins.tritown.data.ServerDataManager
 import net.trilleo.mc.plugins.tritown.economy.*
@@ -18,6 +19,7 @@ import net.trilleo.mc.plugins.tritown.registration.*
 import net.trilleo.mc.plugins.tritown.scoreboard.ScoreboardService
 import net.trilleo.mc.plugins.tritown.shops.ShopManager
 import net.trilleo.mc.plugins.tritown.shops.storage.JsonShopStorage
+import net.trilleo.mc.plugins.tritown.trades.TradeManager
 import net.trilleo.mc.plugins.tritown.utils.EconomyUtil
 import net.trilleo.mc.plugins.tritown.utils.Lang
 import net.trilleo.mc.plugins.tritown.utils.MessageUtil
@@ -103,6 +105,8 @@ class Main : JavaPlugin() {
             ShopManager.global()
         }
 
+        TradeSettings.load(pluginConfig)
+
         ItemRegistrar.registerAll(this)
         RecipeRegistrar.registerAll(this)
 
@@ -143,6 +147,8 @@ class Main : JavaPlugin() {
         ShopSettings.load(pluginConfig)
         // shops.global-id may have moved, and the shop it now names may not exist yet.
         ShopManager.global()
+
+        TradeSettings.load(pluginConfig)
     }
 
     override fun onDisable() {
@@ -153,6 +159,11 @@ class Main : JavaPlugin() {
         // Stopped first, so the flush task cannot race the final write.
         TaskRegistrar.unregisterAll()
         RecipeRegistrar.unregisterAll()
+
+        // Before anything else is torn down, and while both players of a trade
+        // are still online: every escrowed item has to be back in an inventory
+        // the server is about to save.
+        TradeManager.shutdown()
 
         ShopManager.shutdown()
 

@@ -2,7 +2,7 @@
 
 This guide explains how to create **commands**, **listeners**, **GUIs**, **tasks**, **custom items**, **recipes**, work
 with **translations** and the **configuration** system using TriTown's registration system, and how to build on
-**Towny**, the **Vault economy**, the **admin panel** and the **sidebar**. Commands, listeners, GUIs, tasks, custom items, and recipes all
+**Towny**, the **Vault economy**, the **admin panel**, **shops**, **player trades** and the **sidebar**. Commands, listeners, GUIs, tasks, custom items, and recipes all
 follow the same pattern: extend a base class (or implement an interface), place the file in the correct package, and the
 plugin handles the rest automatically at startup. The configuration system provides typed access to `config.yml` values.
 
@@ -367,6 +367,20 @@ GUIManager.open(player, "settings")
 // From inside a click handler, so the client is not left disagreeing about what is on screen
 GUIManager.openLater(player, "settings")
 ```
+
+To redraw a menu somebody is already looking at, without opening a new one:
+
+```kotlin
+// Which of this plugin's GUIs the player has open, or null
+val open = GUIManager.openGUI(player)
+
+// Re-runs setup() on the same inventory: no flash, and the menu stays open
+if (open?.id == "settings") GUIManager.refresh(player)
+```
+
+`refresh` writes into the inventory the player is already looking at rather than opening a replacement, which is what
+lets a menu change under somebody — the other side of a trade adding an item, a figure that has moved on. It works on
+any player, not only the one whose click you are handling, so a menu two people share can keep both windows the same.
 
 ### Example
 
@@ -2748,6 +2762,110 @@ each viewer's, because one shop has one order and it cannot depend on who is loo
 
 Anything free-form — a price, a permission node, a shop's name — is asked for in chat through `ChatPrompt`, because
 a chest menu has nowhere to type and a price of 12500 is not somewhere to click.
+
+
+---
+
+## Player Trades
+
+Two players trading face to face: items and money across one table, both sides confirming before anything moves. Asked
+for by shift-right-clicking the other player or with `/trade <player>`, and always agreed to before a menu opens.
+
+The core lives under `trades/`, which is **not a scanned package** — the same reason `economy/` and `shops/` are not.
+`TradeManager` has to be alive before the registrars build the command, the menu and the listener that read it. The
+menu is `guis/trade/TradeGUI`, the command `commands/trade/TradeCommand`, the click and disconnect handling
+`listeners/trade/TradeListener`, and the watchdog `tasks/trade/TradeWatchTask`.
+
+### The model
+
+| Type            | What it is                                                                        |
+|:----------------|:------------------------------------------------------------------------------------|
+| `TradeOffer`    | One side's table: up to 16 stacks held by the trade, plus an amount of money named  |
+| `TradeParty`    | One player in a trade: their offer, their confirmation, and whether they are in chat |
+| `TradeSession`  | The trade itself: both parties, the confirmation lock, and whether it has ended     |
+| `TradeManager`  | Requests, live sessions, and the one way a trade ends                               |
+| `TradeExchange` | The swap, and the only place a trade's items or money move                          |
+
+### Items are escrowed, money is not
+
+An item leaves the player's inventory the moment they put it up and is held by the `TradeOffer` until the trade ends.
+That is what lets the other side trust what it is looking at: an offer cannot be dropped, deposited or handed to
+somebody else behind their back while it is on the table.
+
+Money is deliberately *not* held aside. A balance is read by everything from the sidebar to another plugin, and a
+figure quietly missing from all of them for the length of a trade would be a worse lie than the one escrow prevents.
+Money is named on the table and only moves when both sides confirm, which is why the confirmation re-checks the
+balance and the settlement can still refuse over it.
+
+### Escrow is handed back exactly once
+
+Everything that ends a trade without the swap happening goes through `TradeManager.cancel`, and `TradeSession.end`
+makes that idempotent — a player closing the menu at the very moment the other one disconnects would otherwise hand
+the same stacks back twice. The ways a trade ends:
+
+| What happened                     | Where it is noticed                      |
+|:----------------------------------|:-------------------------------------------|
+| Either player closed the menu     | `TradeGUI.onClose`                        |
+| Either player disconnected        | `TradeListener.onQuit`                    |
+| They walked too far apart         | `TradeWatchTask`                          |
+| A menu was replaced by another    | `TradeWatchTask`                          |
+| A chat question went unanswered   | `TradeWatchTask`                          |
+| The plugin stopped                | `TradeManager.shutdown`, from `onDisable` |
+
+**The quit path is load-bearing.** A `PlayerQuitEvent` handler still runs before the server writes the player's
+inventory to disk, so handing escrow back there is what keeps a disconnect from costing them anything. It is also why
+`cancel` takes the leaving `Player` rather than looking them up: by the time a lookup would run they may be gone.
+`TradeManager.shutdown` runs early in `onDisable`, while both players of every trade are still online.
+
+A hard crash is the one case escrow cannot survive, and nothing pretends otherwise: an item that cannot be handed back
+is logged as a warning naming the player and the number of stacks.
+
+### Confirming
+
+`TradeSession.touch` is called after **every** change to either offer. It drops both confirmations and starts a short
+lock, so a confirmation only ever describes the table as it was at the moment it was given, and a change cannot be
+beaten by a click already on its way to the server. Both sides confirming settles the trade immediately.
+
+A refused settlement does **not** end the trade. It drops both confirmations and says why, because what went wrong —
+no room, or money that is no longer there — is usually something the players can put right without starting over.
+
+### The swap
+
+`TradeExchange.execute` follows the same discipline shop trades do: everything that can refuse is asked before
+anything is handed over. Both players online, both still in range, both with room for what they are about to receive;
+then the money, which is the last step that can fail; then the items, which cannot.
+
+Money settles as a **single net payment**. If one side puts up 100 and the other 40, sixty moves once. Two payments
+could leave a player unable to make the second with money the first had already taken, and there is no state in which
+a trade should be half paid for. It is attributed with `EconomyContext.SOURCE_TRADE` and `TransactionReason.TRADE`,
+which `FlowCategory.of` maps to `PAYMENT` — a trade moves money between two players rather than creating or
+destroying any, so it is neither a faucet nor a sink.
+
+### The menu
+
+Both players look at the same trade through a window of their own, so every item is drawn for its **viewer** rather
+than for a side: the left four columns are always what you have put up and the right four always the other player's,
+whichever end of the trade you are at. Anything either of them changes calls `TradeGUI.redraw`, which refreshes both
+windows through `GUIManager.refresh` so the two can never show different tables.
+
+Every click is cancelled and then carried out by hand. The offer and the player's own inventory only add up if one
+piece of code moves both, so the client is never allowed to move anything itself.
+
+Money is put up with click steps on the gold-ingot slot, and an exact amount is asked for in chat through
+`ChatPrompt`, because a chest menu has nowhere to type. That closes the menu, which is otherwise how a trade is called
+off — `TradeParty.promptingSince` is what tells the two apart, and it is what the other side is shown in place of a
+confirmation while it is set. `TradeWatchTask` brings a player back to the menu if they back out of the question, and
+calls the trade off if they leave it hanging.
+
+### Settings
+
+| Key                            | What it does                                                   |
+|:-------------------------------|:-----------------------------------------------------------------|
+| `player-trades.enabled`        | Turns trading off entirely                                     |
+| `player-trades.distance`       | How close the two players must be, when asking and throughout  |
+| `player-trades.request-expiry` | Seconds an unanswered request stands                           |
+
+`TradeSettings` is a snapshot swapped in whole on a reload, the way `ShopSettings` is.
 
 
 ## Sidebar

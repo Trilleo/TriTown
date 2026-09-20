@@ -33,6 +33,13 @@ town or nation members a discount while you are at it. Players reach a shop by c
 [FancyNpcs](https://modrinth.com/plugin/fancynpcs) NPC, and every sale is recorded in the transaction log and totalled
 in a sales view.
 
+**Trading, player to player.** Shift-right-click another player, or run `/trade <player>`, and once they agree you
+both get the same table: sixteen stacks and any amount of money a side, yours on the left and theirs on the right.
+Items leave your inventory the moment you put them up and are held by the trade, so what the other side is looking at
+cannot be spent behind their back, and anything changing on the table clears both confirmations — nothing can be
+swapped out after somebody has agreed to it. Everything comes straight back if either of you closes the menu, walks
+away or disconnects.
+
 **An admin panel.** `/tt admin` opens a menu that reads the server back to you. The economy section shows how much
 currency exists and who holds it, what created it and what removed it — new players, shops, Towny, administrators or
 another plugin — with the net drift per day, how unevenly wealth is spread, how fast money circulates, and a chart of
@@ -92,6 +99,7 @@ Prebuilt jars are attached to every [GitHub release](https://github.com/Trilleo/
 | `/eco <action> …`        | Administer balances (OP only)         |
 | `/tt scoreboard`         | Show or hide the sidebar              |
 | `/trades`                | Open the server's global shop         |
+| `/trade <player>`        | Ask another player to trade           |
 | `/tt shop <action> …`    | Set up the server's shops (OP only)   |
 | `/tt admin [section]`    | Open the admin panel (OP only)        |
 
@@ -104,6 +112,10 @@ viewing someone else's history additionally needs `tritown.economy.admin.history
 `edit <id>` to change what it offers, `open <id> [player]` to open it for somebody, `bind <id> <npc>` and
 `unbind <npc>` to put an NPC behind the counter, and `stats <id>` for what it has traded. Each action has its own
 permission, `tritown.shop.admin.<action>`. Players have no shop command of their own — they click an NPC.
+
+`/trade` also takes `accept [player]` and `deny [player]`, which the request message offers as buttons. Both players
+have to be within `player-trades.distance` blocks of each other, and have to stay that close for as long as the menu
+is open. There is no permission node: whether players may trade at all is `player-trades.enabled`.
 
 `/tt admin` opens the panel itself, and `economy` or `shops` opens that section directly. Opening the panel needs
 `tritown.admin`; the sections need `tritown.admin.economy` and `tritown.admin.shops` on top of it.
@@ -152,6 +164,9 @@ version stays available as `/tritown:balance` and so on.
 | `shops.confirm-above`                     | `1000.0`           | Purchase total that asks for confirmation first; `0` never asks                 |
 | `shops.sell-rate`                         | `0.5`              | What the editor suggests as a payout, as a fraction of the buy price            |
 | `shops.discounts.<standing>`              | `0.0`              | Money off for `has-town`, `has-nation`, `is-mayor` or `is-king`                 |
+| `player-trades.enabled`                   | `true`             | Turn player-to-player trading off entirely                                      |
+| `player-trades.distance`                  | `10.0`             | How close two players must be to trade, and stay while the menu is open         |
+| `player-trades.request-expiry`            | `60`               | Seconds an unanswered trade request stands                                      |
 | `scoreboard.enabled`                      | `true`             | Turn the sidebar off entirely                                                   |
 | `scoreboard.refresh-interval`             | `2`                | Seconds between redraws of a sidebar nothing has changed on                     |
 | `scoreboard.default-on`                   | `true`             | Whether a player who has never used `/tt scoreboard` sees one                   |
@@ -214,6 +229,22 @@ in the transaction log and appears in `/eco history` as a shop movement naming t
 Shops live in `plugins/TriTown/shops/shops.json`, written atomically with a `.bak` copy beside it. A shop you edit is
 written straight away; stock levels and sales figures are written every `shops.save-interval` seconds, so a crash costs
 at most that long of counters and never a shop.
+
+### Player trades
+
+Shift-right-click the other player, or run `/trade <player>`. They get a request with **Accept** and **Deny** buttons,
+and nothing opens until they take it. Both of you have to be standing close by, and have to stay there.
+
+In the menu, click an item in your inventory to put it up — right-click puts up a single one — and click it again in
+the menu to take it back. The gold ingot is your money: left-click adds, right-click takes off, hold shift for ten
+times as much, and press **Q** to type an exact amount in chat. You can never put up more than you actually have.
+
+Anything either of you changes clears both confirmations and greys the button for a moment, so nothing can be swapped
+out after the other person has agreed to it. When you have both confirmed, the items change hands and any difference
+in money is paid across in one payment, recorded in the transaction log like any other.
+
+Closing the menu calls the trade off and everything goes straight back. So does walking too far apart, disconnecting,
+or the server stopping.
 
 ### The sidebar
 

@@ -4,6 +4,26 @@
 
 ### New Features
 
+#### Trading
+
++ Added player-to-player trading. Shift-right-click another player, or run `/trade <player>`, and once they accept you
+  both get the same table: up to sixteen stacks and any amount of money a side, yours on the left and theirs on the
+  right, each of you reading it in your own language.
+    + Click an item in your inventory to put it up and click it again in the menu to take it back; right-click puts up
+      a single one. The gold ingot is your money — left-click adds, right-click takes off, shift does ten times as
+      much, and **Q** types an exact amount in chat. You can never put up more than you actually have.
+    + What you put up leaves your inventory and is held by the trade, so what the other side is looking at cannot be
+      spent, dropped or deposited behind their back. It all comes straight back the moment the trade ends any way
+      other than going through.
+    + Anything either of you changes clears both confirmations and greys the buttons for a moment, so nothing can be
+      swapped out after the other person has agreed to it. When you have both confirmed the items change hands and any
+      difference in money is paid across in one payment, recorded in the transaction log and counted in the admin
+      panel like any other payment between players.
+    + Closing the menu, walking too far apart, disconnecting or the server stopping all call the trade off and hand
+      everything back. `player-trades.distance` sets how close you have to be, and `player-trades.request-expiry` how
+      long an unanswered request stands; `player-trades.enabled` turns the whole thing off.
+    + NPCs wearing a player's shape are left alone, so shift-right-clicking a shop keeper still opens its shop.
+
 #### Shops
 
 + An entry can now limit how much each player **sells** to the shop per day, per week or ever, alongside the limit on

@@ -17,6 +17,7 @@ command:
     info: "Info"
     moderation: "Moderation"
     shop: "Shops"
+    trade: "Trading"
     admin: "Admin"
 
   help:
@@ -117,6 +118,25 @@ command:
     disabled: "<red>Shops are switched off on this server."
     unavailable: "<red>The global shop is not available right now."
 
+  trade:
+    description: "Ask another player to trade"
+    players-only: "<red>Trading happens in a menu, so only players can do it."
+    disabled: "<red>Player trading is switched off on this server."
+    usage: "<red>Usage: <white>/trade <player></white>"
+    self: "<red>You cannot trade with yourself."
+    not-found: "<red><white>{name}</white> is not online."
+    busy: "<red><white>{name}</white> is already trading with somebody."
+    you-busy: "<red>You are already trading."
+    too-far: "<red>You have to be standing next to each other to trade."
+    sent: "Asked <white>{name}</white> to trade. They have <white>{seconds}s</white> to answer."
+    received: "<white>{name}</white> wants to trade with you. <click:run_command:'/trade accept {name}'><green><bold>[Accept]</bold></green></click> <click:run_command:'/trade deny {name}'><red><bold>[Deny]</bold></red></click>"
+    expired: "<gray>Your trade request to <white>{name}</white> lapsed."
+    no-requests: "<red>Nobody has asked you to trade."
+    no-request: "<red><white>{name}</white> has not asked you to trade."
+    which-request: "<red>More than one player has asked. Say which: <white>{names}</white>"
+    denied: "Turned down the trade request from <white>{name}</white>."
+    denied-by: "<white>{name}</white> turned down your trade request."
+
   shop:
     description: "Administer the server's shops"
     disabled: "<red>Shops are switched off on this server."
@@ -192,6 +212,7 @@ money:
     admin-reset: "Reset by {admin}"
     shop-buy: "Bought at {shop}"
     shop-sell: "Sold at {shop}"
+    trade: "Player trade"
 
   # Where money comes from and where it goes, as the admin panel groups it.
   flow:
@@ -635,6 +656,38 @@ gui:
     net: "<gray>Net: <white>{amount}</white>"
     reset: "<yellow>Shift-click <gray>to set every figure back to zero"
 
+
+  # The table two players trade across. The left half of the menu is always what
+  # the player looking at it has put up, the right half the other player's.
+  trade:
+    title: "<dark_gray>Trading with {name}"
+    take-back: "<yellow>Click <gray>to take this back"
+    their-item: "<gray>Put up by <white>{name}</white>"
+    partner: "<aqua><bold>{name}</bold>"
+    partner-lore: "<gray>The player you are trading with."
+    money-yours: "<gold><bold>Your money</bold>"
+    money-theirs: "<gold><bold>{name}'s money</bold>"
+    money-amount: "<gray>On the table: <gold>{amount}</gold>"
+    money-balance: "<gray>You have: <white>{amount}</white>"
+    money-add: "<yellow>Click <gray>to put up {amount} more"
+    money-remove: "<yellow>Right-click <gray>to take off {amount}"
+    money-bulk: "<yellow>Hold shift <gray>for {amount} at a time"
+    money-exact: "<yellow>Press Q <gray>to type an exact amount"
+    money-none: "<red>No economy is available"
+    confirm: "<gray><bold>Confirm</bold>"
+    confirm-lore: "<gray>Agree to the trade as it stands. Both of you have to."
+    confirmed: "<green><bold>Confirmed</bold>"
+    confirmed-lore: "<gray>Click to take your agreement back."
+    their-confirm: "<gray><bold>{name} has not confirmed</bold>"
+    their-confirmed: "<green><bold>{name} has confirmed</bold>"
+    their-away: "<yellow><bold>{name} is typing an amount</bold>"
+    status: "<yellow><bold>How this works</bold>"
+    status-add: "<gray>Click an item in your inventory to put it up. Right-click puts up one of it."
+    status-take: "<gray>Click it again here to take it back."
+    status-both: "<gray>Nothing changes hands until both of you confirm."
+    status-close: "<gray>Closing this menu calls the trade off."
+    status-locked: "<red>The trade just changed. Look it over and confirm again."
+
 # Messages a shop sends to a player, outside the menus themselves.
 shop:
   traded: "Traded <white>{amount}x</white> {item} for <gold>{price}</gold>."
@@ -662,6 +715,32 @@ shop:
     entry-added: "Added {item} to the shop. Set a price next."
     entry-removed: "Removed that entry."
     sorted: "Put all {amount} entries in order."
+
+
+# Player-to-player trading, outside the menu itself.
+trade:
+  done: "Traded with <white>{name}</white>."
+  money-prompt: "<gray>Type how much to put up. You have <white>{amount}</white>."
+  money-capped: "<gray>Put up <white>{amount}</white>, which is everything you have."
+
+  error:
+    offer-full: "<red>You cannot put up more than <white>{amount}</white> stacks at once."
+    no-room: "<red>You have no room to take that back."
+    economy-unavailable: "<red>The economy is not available, so money cannot be traded."
+    cannot-afford: "<red>You do not have that much."
+    locked: "<red>The trade just changed. Look it over and confirm again."
+    gone: "<red><white>{name}</white> is no longer here."
+    too-far: "<red>You have moved too far apart."
+    no-space: "<red><white>{name}</white> has no room for that."
+    money: "<red><white>{name}</white> cannot pay what they put up."
+
+  cancelled:
+    closed: "<gray>The trade was called off. Everything you put up is back in your inventory."
+    quit: "<gray>The other player left, so the trade was called off."
+    gone: "<gray>The other player is no longer here, so the trade was called off."
+    too-far: "<gray>You moved too far apart, so the trade was called off."
+    away: "<gray>Nobody answered the question in chat, so the trade was called off."
+    shutdown: "<gray>The server is stopping. The trade was called off and everything you put up is back."
 
 
 # The sidebar. Which lines appear, and in what order, is set per board in

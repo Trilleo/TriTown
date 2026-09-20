@@ -43,4 +43,5 @@ object EconomyContext {
     const val SOURCE_COMMAND = "command"
     const val SOURCE_TOWNY = "towny"
     const val SOURCE_SHOP = "shop"
+    const val SOURCE_TRADE = "trade"
 }

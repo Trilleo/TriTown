@@ -17,6 +17,7 @@ command:
     info: "信息"
     moderation: "管理"
     shop: "商店"
+    trade: "交易"
     admin: "管理"
 
   help:
@@ -117,6 +118,25 @@ command:
     disabled: "<red>本服务器已关闭商店功能。"
     unavailable: "<red>全局商店现在不可用。"
 
+  trade:
+    description: "向其他玩家发起交易"
+    players-only: "<red>交易在菜单中进行，只有玩家能使用。"
+    disabled: "<red>本服务器已关闭玩家交易功能。"
+    usage: "<red>用法：<white>/trade <player></white>"
+    self: "<red>你不能和自己交易。"
+    not-found: "<red><white>{name}</white> 不在线。"
+    busy: "<red><white>{name}</white> 正在和别人交易。"
+    you-busy: "<red>你已经在交易中了。"
+    too-far: "<red>你们必须站在一起才能交易。"
+    sent: "已向 <white>{name}</white> 发起交易请求，对方有 <white>{seconds}秒</white> 时间回应。"
+    received: "<white>{name}</white> 想和你交易。<click:run_command:'/trade accept {name}'><green><bold>[接受]</bold></green></click> <click:run_command:'/trade deny {name}'><red><bold>[拒绝]</bold></red></click>"
+    expired: "<gray>你向 <white>{name}</white> 发起的交易请求已过期。"
+    no-requests: "<red>没有人向你发起交易请求。"
+    no-request: "<red><white>{name}</white> 没有向你发起交易请求。"
+    which-request: "<red>有多个玩家发起了请求，请指明是谁：<white>{names}</white>"
+    denied: "已拒绝 <white>{name}</white> 的交易请求。"
+    denied-by: "<white>{name}</white> 拒绝了你的交易请求。"
+
   shop:
     description: "管理服务器商店"
     disabled: "<red>本服务器已关闭商店功能。"
@@ -191,6 +211,7 @@ money:
     admin-reset: "由 {admin} 重置"
     shop-buy: "在 {shop} 购买"
     shop-sell: "在 {shop} 出售"
+    trade: "玩家交易"
 
   # 资金的来源与去向，管理面板按此归类统计。
   flow:
@@ -636,6 +657,37 @@ gui:
     net: "<gray>净额：<white>{amount}</white>"
     reset: "<yellow>Shift + 单击 <gray>将所有数据清零"
 
+
+  # 两名玩家进行交易的界面。菜单左半边永远是查看者自己放上的东西，右半边是对方的。
+  trade:
+    title: "<dark_gray>与 {name} 交易"
+    take-back: "<yellow>单击 <gray>收回该物品"
+    their-item: "<gray>由 <white>{name}</white> 放上"
+    partner: "<aqua><bold>{name}</bold>"
+    partner-lore: "<gray>与你交易的玩家。"
+    money-yours: "<gold><bold>你出的金钱</bold>"
+    money-theirs: "<gold><bold>{name} 出的金钱</bold>"
+    money-amount: "<gray>已放上：<gold>{amount}</gold>"
+    money-balance: "<gray>你拥有：<white>{amount}</white>"
+    money-add: "<yellow>单击 <gray>增加 {amount}"
+    money-remove: "<yellow>右键 <gray>减少 {amount}"
+    money-bulk: "<yellow>按住 Shift <gray>每次 {amount}"
+    money-exact: "<yellow>按 Q <gray>输入精确金额"
+    money-none: "<red>经济系统不可用"
+    confirm: "<gray><bold>确认</bold>"
+    confirm-lore: "<gray>同意当前的交易内容，双方都要确认。"
+    confirmed: "<green><bold>已确认</bold>"
+    confirmed-lore: "<gray>单击可撤回你的确认。"
+    their-confirm: "<gray><bold>{name} 尚未确认</bold>"
+    their-confirmed: "<green><bold>{name} 已确认</bold>"
+    their-away: "<yellow><bold>{name} 正在输入金额</bold>"
+    status: "<yellow><bold>交易说明</bold>"
+    status-add: "<gray>单击你背包中的物品即可放上，右键只放上一个。"
+    status-take: "<gray>再次单击菜单中的物品即可收回。"
+    status-both: "<gray>双方都确认之前，任何东西都不会易手。"
+    status-close: "<gray>关闭此菜单将取消交易。"
+    status-locked: "<red>交易内容刚刚发生变化，请重新确认。"
+
 # 商店在菜单之外发给玩家的消息。
 shop:
   traded: "以 <gold>{price}</gold> 成交 <white>{amount}个</white> {item}。"
@@ -663,6 +715,32 @@ shop:
     entry-added: "已将 {item} 加入商店，接下来设置价格。"
     entry-removed: "已移除该商品。"
     sorted: "已将全部 {amount} 件商品重新排序。"
+
+
+# 玩家之间的交易在菜单之外发出的消息。
+trade:
+  done: "已与 <white>{name}</white> 完成交易。"
+  money-prompt: "<gray>请输入要放上的金额。你拥有 <white>{amount}</white>。"
+  money-capped: "<gray>已放上 <white>{amount}</white>，这是你的全部金钱。"
+
+  error:
+    offer-full: "<red>一次最多只能放上 <white>{amount}</white> 组物品。"
+    no-room: "<red>你的背包放不下，无法收回。"
+    economy-unavailable: "<red>经济系统不可用，无法交易金钱。"
+    cannot-afford: "<red>你没有这么多钱。"
+    locked: "<red>交易内容刚刚发生变化，请看清后再确认。"
+    gone: "<red><white>{name}</white> 已经不在这里了。"
+    too-far: "<red>你们已经离得太远了。"
+    no-space: "<red><white>{name}</white> 的背包放不下。"
+    money: "<red><white>{name}</white> 付不出他们放上的金钱。"
+
+  cancelled:
+    closed: "<gray>交易已取消，你放上的东西都已退回背包。"
+    quit: "<gray>对方已离线，交易已取消。"
+    gone: "<gray>对方已经不在这里，交易已取消。"
+    too-far: "<gray>你们离得太远，交易已取消。"
+    away: "<gray>聊天栏中的提问无人回答，交易已取消。"
+    shutdown: "<gray>服务器正在关闭，交易已取消，你放上的东西都已退回。"
 
 
 scoreboard:
