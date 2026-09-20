@@ -150,11 +150,8 @@ object ShopManager {
             return null
         }
 
-        val limit = if (entry.limitAmount > 0) {
-            ShopLimit(entry.limitAmount, enumOrDefault(entry.limitPeriod, LimitPeriod.NONE))
-        } else {
-            null
-        }
+        val buyLimit = toLimit(entry.limitAmount, entry.limitPeriod)
+        val sellLimit = toLimit(entry.sellLimitAmount, entry.sellLimitPeriod)
 
         val stock = if (entry.stockMax > 0) {
             ShopStock(
@@ -175,7 +172,8 @@ object ShopManager {
             buy = toCost(entry.buy),
             sell = toCost(entry.sell),
             gate = ShopGate(entry.permission, requirement(entry.towny), entry.hideWhenLocked),
-            limit = limit,
+            buyLimit = buyLimit,
+            sellLimit = sellLimit,
             stock = stock,
             discountable = entry.discountable,
             matchMode = enumOrDefault(entry.matchMode, MatchMode.EXACT),
@@ -200,8 +198,10 @@ object ShopManager {
                 permission = entry.gate.permission,
                 towny = entry.gate.towny.name,
                 hideWhenLocked = entry.gate.hideWhenLocked,
-                limitAmount = entry.limit?.amount ?: 0,
-                limitPeriod = (entry.limit?.period ?: LimitPeriod.NONE).name,
+                limitAmount = entry.buyLimit?.amount ?: 0,
+                limitPeriod = (entry.buyLimit?.period ?: LimitPeriod.NONE).name,
+                sellLimitAmount = entry.sellLimit?.amount ?: 0,
+                sellLimitPeriod = (entry.sellLimit?.period ?: LimitPeriod.NONE).name,
                 stockMax = entry.stock?.max ?: 0,
                 stockRestockSeconds = entry.stock?.restockSeconds ?: 0L,
                 stockRemaining = entry.stock?.remaining ?: 0,
@@ -215,6 +215,9 @@ object ShopManager {
             )
         },
     )
+
+    private fun toLimit(amount: Int, period: String): ShopLimit? =
+        if (amount > 0) ShopLimit(amount, enumOrDefault(period, LimitPeriod.NONE)) else null
 
     private fun toCost(stored: StoredCost?): ShopCost? =
         stored?.let { ShopCost(it.money, ItemCodec.decodeAll(it.items)) }

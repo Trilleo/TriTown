@@ -33,6 +33,8 @@ data class StoredEntry(
     val hideWhenLocked: Boolean = false,
     val limitAmount: Int = 0,
     val limitPeriod: String = "NONE",
+    val sellLimitAmount: Int = 0,
+    val sellLimitPeriod: String = "NONE",
     val stockMax: Int = 0,
     val stockRestockSeconds: Long = 0L,
     val stockRemaining: Int = 0,

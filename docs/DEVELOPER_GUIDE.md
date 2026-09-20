@@ -2549,10 +2549,10 @@ manager has to be alive before the registrars build the menus and commands that 
 | Type             | What it is                                                                                  |
 |:-----------------|:---------------------------------------------------------------------------------------------|
 | `ShopDefinition` | One shop: `id`, `displayName`, a `ShopGate`, its entries, and the FancyNpcs ids bound to it  |
-| `ShopEntry`      | One line of goods: the `ItemStack`, a buy `ShopCost`, a sell `ShopCost`, gate, limit, stock  |
+| `ShopEntry`      | One line of goods: the `ItemStack`, a buy `ShopCost`, a sell `ShopCost`, gate, limits, stock |
 | `ShopCost`       | A price or a payout: an amount of money, a list of `ItemStack`s, or both                     |
 | `ShopGate`       | A permission node and a `TownyRequirement`, plus whether a locked entry hides                |
-| `ShopLimit`      | How many items one player may buy per `LimitPeriod` window                                   |
+| `ShopLimit`      | How many items one player may trade per `LimitPeriod` window                                 |
 | `ShopStock`      | A shared supply of items that refills to full on a timer                                     |
 | `ShopStats`      | Bundles traded and currency moved, per entry                                                 |
 
@@ -2566,8 +2566,11 @@ allows, which is what is both measured for room and handed over, while the first
 
 **Stock and limits are counted in items, not in purchases.** An administrator writing "64 a day" means sixty-four
 items however large the bundle is, which is the only reading that stays true when the bundle is edited afterwards. A
-trade therefore spends `bundleSize * bundles` of each, and `maxBuyable` divides what is left by `bundleSize` — a
-remainder too small for one more bundle is not offered, because half a bundle is not a purchase.
+trade therefore spends `bundleSize * bundles` of each, and `maxBuyable` / `maxSellable` divide what is left by
+`bundleSize` — a remainder too small for one more bundle is not offered, because half a bundle is not a purchase.
+
+An entry carries a limit per side: `buyLimit` and `sellLimit`, reached through `limitOn(side)` / `setLimitOn(side, …)`
+with a `TradeSide`. They are independent, so neither spends the other's allowance.
 
 ### Preserving an item
 
@@ -2608,16 +2611,17 @@ taken, and anything taken is remembered so it can be put back.**
 
 A buy, in order:
 
-1. Re-check the gate, the per-player limit and the stock, restocking lazily first.
+1. Re-check the gate, the buying limit and the stock, restocking lazily first.
 2. Quote the price, applying the best discount the player's standing in Towny earns.
 3. Check there is room for the goods.
 4. Take the item side of the price, keeping what was removed.
 5. Take the stock.
 6. `EconomyUtil.withdraw(player, money, EconomyContext.SOURCE_SHOP, reason)` — on refusal, put the stock and the items
    back and stop.
-7. Hand over the goods, record the purchase against the player's limit, and update the statistics.
+7. Hand over the goods, record the items against the player's buying limit, and update the statistics.
 
-A sell is the mirror image. Never check `has` and withdraw separately — `EconomyUtil.withdraw` does both in one step.
+A sell is the mirror image, and checks and records the selling limit in the same places. Never check `has` and withdraw
+separately — `EconomyUtil.withdraw` does both in one step.
 
 The pricing, limit and stock arithmetic is deliberately free of Bukkit (`ShopPricing`, `ShopLimit`, `ShopStock`) so it
 can be unit-tested, in the same way `EconomyLedger` is.
@@ -2646,9 +2650,11 @@ nodes are. They are checked as they stand and defined in the server's permission
 
 ### Per-player limits
 
-Counters live in the buyer's own `PlayerData` under `shop-limits`, keyed `"<shopId>/<entryId>"`, each holding a count
-of **items** and the window it belongs to. A count from a window that has turned over is ignored rather than cleared, so nothing has
-to sweep counters at midnight. `PlayerDataManager` only serves online players, which is the only case a purchase needs.
+Counters live in the trader's own `PlayerData` under `shop-limits`, keyed `"<shopId>/<entryId>"` for buying and
+`"<shopId>/<entryId>/sell"` for selling, each holding a count of **items** and the window it belongs to. Buying keeps
+the key it has always had, so counters written before the selling limit existed still count against the day they were
+written. A count from a window that has turned over is ignored rather than cleared, so nothing has to sweep counters at
+midnight. `PlayerDataManager` only serves online players, which is the only case a trade needs.
 
 ### FancyNpcs
 
@@ -2677,7 +2683,7 @@ rather than in `getItems`.
 | `ShopConfirmGUI`   | A second look above `shops.confirm-above`; re-quotes on accept         |
 | `ShopListGUI`      | Every shop, for an administrator                                       |
 | `ShopEditorGUI`    | One shop's entries; adds one from the administrator's own inventory    |
-| `ShopEntryGUI`     | One entry's prices, limit, stock and gate                              |
+| `ShopEntryGUI`     | One entry's prices, limits, stock and gate                             |
 | `ShopCostGUI`      | The item side of a price or a payout                                   |
 | `ShopSortGUI`      | Puts a whole shop in one order, on an administrator's say-so           |
 | `ShopSettingsGUI`  | A shop's name, gate and bound NPCs                                     |

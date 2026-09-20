@@ -1,6 +1,7 @@
 package net.trilleo.mc.plugins.tritown.shops
 
 import net.trilleo.mc.plugins.tritown.enums.MatchMode
+import net.trilleo.mc.plugins.tritown.enums.TradeSide
 import org.bukkit.inventory.ItemStack
 import java.util.*
 
@@ -14,8 +15,10 @@ import java.util.*
  * selling are independent, so an entry can do either, both, or — with both left
  * null — act as a display piece.
  *
- * @param id     stable across reordering and renaming, because purchase counters are keyed by it
- * @param bundle how many items one purchase moves; at least 1, with no upper bound
+ * @param id        stable across reordering and renaming, because trade counters are keyed by it
+ * @param bundle    how many items one purchase moves; at least 1, with no upper bound
+ * @param buyLimit  how many items one player may buy per window, counted in items rather than purchases
+ * @param sellLimit the same cap on the other side, kept apart so neither spends the other's allowance
  */
 data class ShopEntry(
     val id: String = UUID.randomUUID().toString(),
@@ -24,7 +27,8 @@ data class ShopEntry(
     var buy: ShopCost? = null,
     var sell: ShopCost? = null,
     var gate: ShopGate = ShopGate.OPEN,
-    var limit: ShopLimit? = null,
+    var buyLimit: ShopLimit? = null,
+    var sellLimit: ShopLimit? = null,
     var stock: ShopStock? = null,
     var discountable: Boolean = true,
     var matchMode: MatchMode = MatchMode.EXACT,
@@ -39,6 +43,20 @@ data class ShopEntry(
 
     /** Whether the shop buys this back. */
     val isSellable: Boolean get() = sell != null
+
+    /** The per-player cap that applies to [side], or `null` when that side is uncapped. */
+    fun limitOn(side: TradeSide): ShopLimit? = when (side) {
+        TradeSide.BUY -> buyLimit
+        TradeSide.SELL -> sellLimit
+    }
+
+    /** Sets the per-player cap that applies to [side]. */
+    fun setLimitOn(side: TradeSide, limit: ShopLimit?) {
+        when (side) {
+            TradeSide.BUY -> buyLimit = limit
+            TradeSide.SELL -> sellLimit = limit
+        }
+    }
 
     /**
      * One bundle as a single stack, for a menu slot rather than for handing over.

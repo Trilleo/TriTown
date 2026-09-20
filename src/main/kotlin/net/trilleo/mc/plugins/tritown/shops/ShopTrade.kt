@@ -6,6 +6,7 @@ import net.trilleo.mc.plugins.tritown.economy.EconomyContext
 import net.trilleo.mc.plugins.tritown.economy.TransactionReason
 import net.trilleo.mc.plugins.tritown.enums.MatchMode
 import net.trilleo.mc.plugins.tritown.enums.TownyRequirement
+import net.trilleo.mc.plugins.tritown.enums.TradeSide
 import net.trilleo.mc.plugins.tritown.utils.EconomyUtil
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -90,7 +91,7 @@ object ShopTrade {
         var max = MAX_BUNDLES
 
         entry.stock?.let { max = minOf(max, it.available(System.currentTimeMillis()) / bundle) }
-        ShopLimits.remaining(player, shop, entry)?.let { max = minOf(max, it / bundle) }
+        ShopLimits.remaining(player, shop, entry, TradeSide.BUY)?.let { max = minOf(max, it / bundle) }
 
         for (item in cost.items) {
             val held = ShopInventory.count(player, item, entry.matchMode)
@@ -110,11 +111,21 @@ object ShopTrade {
         return max.coerceAtLeast(0)
     }
 
-    /** How many bundles of [entry] [player] is holding, for a shift-click that sells the lot. */
-    fun maxSellable(player: Player, entry: ShopEntry): Int {
+    /**
+     * How many bundles of [entry] [player] could sell right now.
+     *
+     * Bounded by what they are carrying, their own selling limit and
+     * [MAX_BUNDLES], for a shift-click that sells the lot.
+     */
+    fun maxSellable(player: Player, shop: ShopDefinition, entry: ShopEntry): Int {
         if (!entry.isSellable) return 0
+        val bundle = entry.bundleSize
         val held = ShopInventory.count(player, entry.item, entry.matchMode)
-        return minOf(MAX_BUNDLES, held / entry.bundleSize)
+        var max = minOf(MAX_BUNDLES, held / bundle)
+
+        ShopLimits.remaining(player, shop, entry, TradeSide.SELL)?.let { max = minOf(max, it / bundle) }
+
+        return max.coerceAtLeast(0)
     }
 
     // ── Buying ──────────────────────────────────────────────────────────
@@ -132,7 +143,7 @@ object ShopTrade {
 
         val items = entry.bundleSize * bundles
 
-        ShopLimits.remaining(player, shop, entry)?.let { left ->
+        ShopLimits.remaining(player, shop, entry, TradeSide.BUY)?.let { left ->
             if (left < items) return Result.Failure("shop.error.limit-reached", listOf("amount" to left))
         }
 
@@ -167,7 +178,7 @@ object ShopTrade {
         }
 
         ShopInventory.give(player, goods)
-        ShopLimits.record(player, shop, entry, items, now)
+        ShopLimits.record(player, shop, entry, TradeSide.BUY, items, now)
         entry.stats.recordBuy(bundles, quote.money)
         ShopManager.markDirty()
 
@@ -186,11 +197,18 @@ object ShopTrade {
         ShopAccess.refusalKey(player, shop.gate, standing)?.let { return Result.Failure(it) }
         ShopAccess.refusalKey(player, entry.gate, standing)?.let { return Result.Failure(it) }
 
+        val items = entry.bundleSize * bundles
+        val now = System.currentTimeMillis()
+
+        ShopLimits.remaining(player, shop, entry, TradeSide.SELL, now)?.let { left ->
+            if (left < items) return Result.Failure("shop.error.sell-limit-reached", listOf("amount" to left))
+        }
+
         val quote = quoteSell(entry, bundles) ?: return Result.Failure("shop.error.not-bought")
         if (!ShopInventory.hasSpaceFor(player, quote.items)) return Result.Failure("shop.error.no-space")
         if (quote.hasMoney && !EconomyUtil.isAvailable) return Result.Failure("shop.error.economy-unavailable")
 
-        val handedOver = ShopInventory.remove(player, entry.item, entry.matchMode, entry.bundleSize * bundles)
+        val handedOver = ShopInventory.remove(player, entry.item, entry.matchMode, items)
             ?: return Result.Failure("shop.error.missing-goods")
 
         if (quote.hasMoney) {
@@ -202,6 +220,7 @@ object ShopTrade {
         }
 
         ShopInventory.give(player, quote.items)
+        ShopLimits.record(player, shop, entry, TradeSide.SELL, items, now)
         entry.stats.recordSell(bundles, quote.money)
         ShopManager.markDirty()
 

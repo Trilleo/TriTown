@@ -55,4 +55,12 @@ class ShopMigrationsTest {
 
         assertEquals(entry, upgraded(entry, from = ShopSchema.CURRENT))
     }
+
+    @Test
+    fun `the selling limit is left to its default on an upgraded file`() {
+        val entry = upgraded(StoredEntry(id = "bread", bundle = 16, limitAmount = 3))
+
+        assertEquals(0, entry.sellLimitAmount)
+        assertEquals("NONE", entry.sellLimitPeriod)
+    }
 }

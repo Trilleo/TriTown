@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### New Features
+
+#### Shops
+
++ An entry can now limit how much each player **sells** to the shop per day, per week or ever, alongside the limit on
+  how much they buy. The two are set separately in the entry editor and counted separately, so an entry can be "buy 64
+  a day, sell 256 a day" without one side spending the other's allowance.
+
 ### Fixes
 
 #### Shops
@@ -17,7 +25,7 @@
 #### Shops
 
 + An older shop file is now brought forward by `ShopMigrations` as it is read rather than being misread against the
-  current shape. Schema 2 is stock and limits in items.
+  current shape. Schema 2 is stock and limits in items, plus the selling limit.
 
 ## Version 1.1.0
 

@@ -28,7 +28,7 @@ and off with `/tt scoreboard`, and it takes turns with Towny's own plot HUD rath
 **Shops the server runs.** Admin shops, set up entirely in game: click an item in your own inventory to put it on the
 shelf and it is sold exactly as you made it, custom name, enchantments and all. An entry can be sold, bought back, or
 both, and priced in currency, items, or a mix of the two. Give it a stock that refills on a timer, a limit on how much
-each player may buy per day or per week, a permission node, or a requirement to be in a town or a nation — and give
+each player may buy or sell per day or per week, a permission node, or a requirement to be in a town or a nation — and give
 town or nation members a discount while you are at it. Players reach a shop by clicking a
 [FancyNpcs](https://modrinth.com/plugin/fancynpcs) NPC, and every sale is recorded in the transaction log and totalled
 in a sales view.
@@ -183,9 +183,9 @@ A shop is created with `/tt shop create <id>`, which opens its editor. Everythin
   can ask for money, for items, or for both at once. Money is typed in chat when you click the price; items are added
   by clicking them in your inventory, and the stack size is the quantity.
 - **Limiting it.** *Stock* is shared by everybody and refills to full on a timer. A *limit* is per player and resets
-  daily, weekly, or never. Both are counted in items rather than in purchases — a limit of 64 on an entry that sells
-  16 at a time is four purchases — and both are optional. An entry with neither is unlimited, which is what an admin
-  shop usually wants.
+  daily, weekly, or never; buying and selling have one each, and they are counted separately. All of them are counted
+  in items rather than in purchases — a limit of 64 on an entry that sells 16 at a time is four purchases — and all of
+  them are optional. An entry with none is unlimited, which is what an admin shop usually wants.
 - **Locking it.** A shop, and each entry inside it, can require a permission node or a standing in Towny — being in a
   town, being without one, being in a nation, being a mayor or being a king. A locked entry shows the reason by
   default, or can be hidden entirely.

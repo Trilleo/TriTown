@@ -7,6 +7,7 @@ import net.trilleo.mc.plugins.tritown.config.ShopSettings
 import net.trilleo.mc.plugins.tritown.enums.FillMode
 import net.trilleo.mc.plugins.tritown.enums.PagedLayout
 import net.trilleo.mc.plugins.tritown.enums.TownyRequirement
+import net.trilleo.mc.plugins.tritown.enums.TradeSide
 import net.trilleo.mc.plugins.tritown.registration.GUIManager
 import net.trilleo.mc.plugins.tritown.registration.PagedPluginGUI
 import net.trilleo.mc.plugins.tritown.shops.*
@@ -126,9 +127,15 @@ class ShopGUI : PagedPluginGUI(
     }
 
     private fun sellMax(player: Player, shop: ShopDefinition, entry: ShopEntry): ShopTrade.Result {
-        val bundles = ShopTrade.maxSellable(player, entry)
-        if (bundles <= 0) return ShopTrade.Result.Failure("shop.error.missing-goods")
-        return ShopTrade.sell(player, shop, entry, bundles)
+        val bundles = ShopTrade.maxSellable(player, shop, entry)
+        if (bundles > 0) return ShopTrade.sell(player, shop, entry, bundles)
+
+        ShopLimits.remaining(player, shop, entry, TradeSide.SELL)?.let { left ->
+            if (left < entry.bundleSize) {
+                return ShopTrade.Result.Failure("shop.error.sell-limit-reached", listOf("amount" to left))
+            }
+        }
+        return ShopTrade.Result.Failure("shop.error.missing-goods")
     }
 
     private fun announce(player: Player, entry: ShopEntry, result: ShopTrade.Result.Success) {
@@ -221,10 +228,18 @@ class ShopGUI : PagedPluginGUI(
             )
         }
 
-        entry.limit?.let { limit ->
+        entry.buyLimit?.let { limit ->
             lines += viewer.tr(
                 "gui.shop.limit",
-                "amount" to (ShopLimits.remaining(viewer, shop, entry) ?: limit.amount),
+                "amount" to (ShopLimits.remaining(viewer, shop, entry, TradeSide.BUY) ?: limit.amount),
+                "period" to ShopRender.periodName(viewer, limit.period),
+            )
+        }
+
+        entry.sellLimit?.let { limit ->
+            lines += viewer.tr(
+                "gui.shop.sell-limit",
+                "amount" to (ShopLimits.remaining(viewer, shop, entry, TradeSide.SELL) ?: limit.amount),
                 "period" to ShopRender.periodName(viewer, limit.period),
             )
         }
