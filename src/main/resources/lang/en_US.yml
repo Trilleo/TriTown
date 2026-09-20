@@ -539,6 +539,7 @@ gui:
   shop-entry:
     title: "<dark_gray>Entry"
     bundle: "<gray>One purchase gives <white>{amount}</white>"
+    count-lore: "<dark_gray>Counted in items, not in purchases."
     bundle-size: "<gold>Amount per purchase"
     bundle-lore: "<dark_gray>May be more than one stack; it is handed over as several."
     state: "<gray>Now: <white>{state}</white>"
@@ -570,8 +571,8 @@ gui:
     prompt-price: "<gray>Type the new price in chat."
     prompt-permission: "<gray>Type the permission node in chat."
     prompt-bundle: "<gray>Type how many items one purchase should give."
-    prompt-limit: "<gray>Type how many one player may buy. <white>0</white> removes the limit."
-    prompt-stock: "<gray>Type the stock and the refill time in seconds, like <white>64 3600</white>. <white>0</white> removes the stock."
+    prompt-limit: "<gray>Type how many items one player may buy per window. <white>0</white> removes the limit."
+    prompt-stock: "<gray>Type the stock in items and the refill time in seconds, like <white>64 3600</white>. <white>0</white> removes the stock."
     back: "<yellow>Back"
     back-lore: "<gray>Return to the shop editor."
 

@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### Fixes
+
+#### Shops
+
++ A stock and a per-player limit are now counted in items rather than in purchases, so they mean what they say. An
+  entry selling 16 at a time with a limit of 10 used to hand over 160 items, and a click spent one of the ten whether
+  it moved one item or a hundred and twenty-eight. A limit of 64 is now sixty-four items, and stays sixty-four if you
+  change the bundle afterwards. Existing shops are converted on first start, so every entry keeps trading exactly as
+  it did; only the number you see in the editor changes unit.
+
+### Technical Details
+
+#### Shops
+
++ An older shop file is now brought forward by `ShopMigrations` as it is read rather than being misread against the
+  current shape. Schema 2 is stock and limits in items.
+
 ## Version 1.1.0
 
 ### New Features

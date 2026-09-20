@@ -540,6 +540,7 @@ gui:
   shop-entry:
     title: "<dark_gray>商品设置"
     bundle: "<gray>每次购买获得 <white>{amount}</white>"
+    count-lore: "<dark_gray>按物品数计算，而非按购买次数。"
     bundle-size: "<gold>每次购买数量"
     bundle-lore: "<dark_gray>可以超过一组，将分成多组交付。"
     state: "<gray>当前：<white>{state}</white>"
@@ -571,8 +572,8 @@ gui:
     prompt-price: "<gray>请在聊天栏输入新的价格。"
     prompt-permission: "<gray>请在聊天栏输入权限节点。"
     prompt-bundle: "<gray>请输入每次购买应获得的数量。"
-    prompt-limit: "<gray>请输入每个玩家最多能买多少。<white>0</white> 表示不限。"
-    prompt-stock: "<gray>请输入库存和补货秒数，例如 <white>64 3600</white>。<white>0</white> 表示不限库存。"
+    prompt-limit: "<gray>请输入每个玩家每个周期最多能买多少个物品。<white>0</white> 表示不限。"
+    prompt-stock: "<gray>请输入库存物品数和补货秒数，例如 <white>64 3600</white>。<white>0</white> 表示不限库存。"
     back: "<yellow>返回"
     back-lore: "<gray>回到商店编辑器。"
 
@@ -629,8 +630,8 @@ shop:
     missing-items: "<red>你缺少所需的物品。"
     missing-goods: "<red>你身上的数量不够。"
     no-space: "<red>你的背包放不下。"
-    out-of-stock: "<red>库存只剩 <white>{amount}</white> 份。"
-    limit-reached: "<red>你最多还能买 <white>{amount}</white> 份。"
+    out-of-stock: "<red>库存只剩 <white>{amount}</white> 个。"
+    limit-reached: "<red>你最多还能买 <white>{amount}</white> 个。"
     economy-unavailable: "<red>经济系统不可用，无法付款。"
     payout-refused: "<red>付款失败，交易未完成。"
 

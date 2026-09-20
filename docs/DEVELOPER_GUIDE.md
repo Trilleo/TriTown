@@ -2552,8 +2552,8 @@ manager has to be alive before the registrars build the menus and commands that 
 | `ShopEntry`      | One line of goods: the `ItemStack`, a buy `ShopCost`, a sell `ShopCost`, gate, limit, stock  |
 | `ShopCost`       | A price or a payout: an amount of money, a list of `ItemStack`s, or both                     |
 | `ShopGate`       | A permission node and a `TownyRequirement`, plus whether a locked entry hides                |
-| `ShopLimit`      | How much one player may buy per `LimitPeriod` window                                         |
-| `ShopStock`      | A shared supply that refills to full on a timer                                              |
+| `ShopLimit`      | How many items one player may buy per `LimitPeriod` window                                   |
+| `ShopStock`      | A shared supply of items that refills to full on a timer                                     |
 | `ShopStats`      | Bundles traded and currency moved, per entry                                                 |
 
 `id` is stable and is what NPC bindings and purchase counters are keyed by; `displayName` is administrator-written
@@ -2563,6 +2563,11 @@ MiniMessage and can be changed freely. Entry ids are UUIDs, so reordering or ren
 exceed what a stack holds, and an `ItemStack` is not a safe place to keep a count of 128. `bundleSize`,
 `displayStack()` and `goodsStacks(bundles)` are the three ways to ask about it — the last splits into stacks the game
 allows, which is what is both measured for room and handed over, while the first two are for drawing.
+
+**Stock and limits are counted in items, not in purchases.** An administrator writing "64 a day" means sixty-four
+items however large the bundle is, which is the only reading that stays true when the bundle is edited afterwards. A
+trade therefore spends `bundleSize * bundles` of each, and `maxBuyable` divides what is left by `bundleSize` — a
+remainder too small for one more bundle is not offered, because half a bundle is not a purchase.
 
 ### Preserving an item
 
@@ -2581,6 +2586,12 @@ starting empty, because an empty start would be written back over the real data 
 The storage layer works on `StoredShop` / `StoredEntry` / `StoredCost`, which hold Base64 strings rather than
 `ItemStack`s. That keeps it free of Bukkit and therefore testable without a server; `ShopManager` converts between
 the stored and live shapes.
+
+The file records the `ShopSchema` version it was written with. A newer file is refused outright; an older one is
+brought forward by `ShopMigrations.upgrade` **as it is read**, so a build that loads the shops and then fails to enable
+leaves the original untouched and the upgraded shape only reaches disk at the first ordinary save. Each step takes the
+shape one version forward, so a file several versions old walks through them in turn. Adding a step means bumping
+`ShopSchema.CURRENT`, adding a line to its history and a branch to `upgrade`.
 
 Saving has two speeds, and the difference matters:
 
@@ -2636,7 +2647,7 @@ nodes are. They are checked as they stand and defined in the server's permission
 ### Per-player limits
 
 Counters live in the buyer's own `PlayerData` under `shop-limits`, keyed `"<shopId>/<entryId>"`, each holding a count
-and the window it belongs to. A count from a window that has turned over is ignored rather than cleared, so nothing has
+of **items** and the window it belongs to. A count from a window that has turned over is ignored rather than cleared, so nothing has
 to sweep counters at midnight. `PlayerDataManager` only serves online players, which is the only case a purchase needs.
 
 ### FancyNpcs

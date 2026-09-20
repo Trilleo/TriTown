@@ -5,7 +5,7 @@ import net.trilleo.mc.plugins.tritown.data.PlayerDataManager
 import org.bukkit.entity.Player
 
 /**
- * How much of a limited entry each player has already bought.
+ * How many items of a limited entry each player has already bought.
  *
  * Counters live in the buyer's own player data rather than with the shop: they
  * are read and written only while that player is online, and keeping them there
@@ -20,7 +20,7 @@ object ShopLimits {
     private const val COUNT = "n"
     private const val WINDOW = "w"
 
-    /** How many more bundles of [entry] in [shop] the player may buy, or `null` when it is unlimited. */
+    /** How many more items of [entry] in [shop] the player may buy, or `null` when it is unlimited. */
     fun remaining(
         player: Player,
         shop: ShopDefinition,
@@ -32,18 +32,18 @@ object ShopLimits {
         return limit.remaining(record.first, record.second, now)
     }
 
-    /** Records [bundles] bought, resetting the count first when the window has turned over. */
+    /** Records [items] bought, resetting the count first when the window has turned over. */
     fun record(
         player: Player,
         shop: ShopDefinition,
         entry: ShopEntry,
-        bundles: Int,
+        items: Int,
         now: Long = System.currentTimeMillis(),
     ) {
         val limit = entry.limit ?: return
         val window = limit.windowAt(now)
         val previous = record(player, shop, entry)
-        val count = if (previous != null && previous.second == window) previous.first + bundles else bundles
+        val count = if (previous != null && previous.second == window) previous.first + items else items
 
         val root = root(player)
         root.add(key(shop, entry), JsonObject().apply {

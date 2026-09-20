@@ -75,6 +75,9 @@ object ShopTrade {
      * the supply left, their own limit and [MAX_BUNDLES] — whichever runs out
      * first. Used by a shift-click, which buys as many as it can rather than
      * refusing outright.
+     *
+     * Stock and limits are counted in items, so a bundle that does not fit
+     * whole into what is left is not offered: half a bundle is not a purchase.
      */
     fun maxBuyable(
         player: Player,
@@ -83,10 +86,11 @@ object ShopTrade {
         standing: Set<TownyRequirement> = ShopAccess.standing(player),
     ): Int {
         val cost = entry.buy ?: return 0
+        val bundle = entry.bundleSize
         var max = MAX_BUNDLES
 
-        entry.stock?.let { max = minOf(max, it.available(System.currentTimeMillis())) }
-        ShopLimits.remaining(player, shop, entry)?.let { max = minOf(max, it) }
+        entry.stock?.let { max = minOf(max, it.available(System.currentTimeMillis()) / bundle) }
+        ShopLimits.remaining(player, shop, entry)?.let { max = minOf(max, it / bundle) }
 
         for (item in cost.items) {
             val held = ShopInventory.count(player, item, entry.matchMode)
@@ -126,13 +130,15 @@ object ShopTrade {
         ShopAccess.refusalKey(player, shop.gate, standing)?.let { return Result.Failure(it) }
         ShopAccess.refusalKey(player, entry.gate, standing)?.let { return Result.Failure(it) }
 
+        val items = entry.bundleSize * bundles
+
         ShopLimits.remaining(player, shop, entry)?.let { left ->
-            if (left < bundles) return Result.Failure("shop.error.limit-reached", listOf("amount" to left))
+            if (left < items) return Result.Failure("shop.error.limit-reached", listOf("amount" to left))
         }
 
         val stock = entry.stock
         val now = System.currentTimeMillis()
-        if (stock != null && stock.available(now) < bundles) {
+        if (stock != null && stock.available(now) < items) {
             return Result.Failure("shop.error.out-of-stock", listOf("amount" to stock.remaining))
         }
 
@@ -146,7 +152,7 @@ object ShopTrade {
         val taken = takeItems(player, quote.items, entry.matchMode)
             ?: return Result.Failure("shop.error.missing-items")
 
-        if (stock != null && !stock.take(bundles, now)) {
+        if (stock != null && !stock.take(items, now)) {
             ShopInventory.give(player, taken)
             return Result.Failure("shop.error.out-of-stock", listOf("amount" to stock.remaining))
         }
@@ -154,14 +160,14 @@ object ShopTrade {
         if (quote.hasMoney) {
             val reason = TransactionReason.of(TransactionReason.SHOP_BUY, "shop" to shop.displayName)
             if (!EconomyUtil.withdraw(player, quote.money, EconomyContext.SOURCE_SHOP, reason)) {
-                stock?.restore(bundles)
+                stock?.restore(items)
                 ShopInventory.give(player, taken)
                 return Result.Failure("shop.error.cannot-afford", listOf("price" to format(quote.money)))
             }
         }
 
         ShopInventory.give(player, goods)
-        ShopLimits.record(player, shop, entry, bundles, now)
+        ShopLimits.record(player, shop, entry, items, now)
         entry.stats.recordBuy(bundles, quote.money)
         ShopManager.markDirty()
 

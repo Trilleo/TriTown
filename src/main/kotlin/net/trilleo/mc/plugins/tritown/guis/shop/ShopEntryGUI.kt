@@ -327,6 +327,7 @@ class ShopEntryGUI : PluginGUI(
             lore(
                 LoreUtil.wrapLore(
                     player.tr("gui.shop-entry.amount", "amount" to value) +
+                            "<newline>" + player.tr("gui.shop-entry.count-lore") +
                             "<newline>" + player.tr("gui.shop-entry.click-set") +
                             "<newline>" + player.tr("gui.shop-entry.middle-click-period") +
                             "<newline>" + player.tr("gui.shop-entry.right-click-clear")
@@ -353,6 +354,7 @@ class ShopEntryGUI : PluginGUI(
             lore(
                 LoreUtil.wrapLore(
                     player.tr("gui.shop-entry.amount", "amount" to value) +
+                            "<newline>" + player.tr("gui.shop-entry.count-lore") +
                             "<newline>" + player.tr("gui.shop-entry.click-set") +
                             "<newline>" + player.tr("gui.shop-entry.right-click-clear")
                 )
