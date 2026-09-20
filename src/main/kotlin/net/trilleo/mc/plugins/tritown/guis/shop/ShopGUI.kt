@@ -211,35 +211,63 @@ class ShopGUI : PagedPluginGUI(
         return View(shop.id, entryIds, items)
     }
 
+    /**
+     * One entry as it sits on the shelf.
+     *
+     * The lore is built in blocks — what it costs, what it pays, how much of it
+     * is left, and what a click does — which [ShopRender.sections] spaces apart.
+     * Reading a price should not mean picking it out of a list of instructions.
+     */
     private fun draw(
         viewer: Player,
         shop: ShopDefinition,
         entry: ShopEntry,
         standing: Set<TownyRequirement>,
     ): ItemStack {
-        val lines = mutableListOf<String>()
         val refusal = ShopAccess.refusalKey(viewer, entry.gate, standing)
 
-        if (entry.isBuyable) {
-            val quote = ShopTrade.quoteBuy(viewer, entry, 1, standing)
-            if (quote != null && quote.isDiscounted) {
-                lines += viewer.tr(
-                    "gui.shop.buy-discounted",
-                    "price" to ShopRender.money(quote.money),
-                    "full" to ShopRender.money(quote.fullMoney),
-                )
-            } else if (entry.buy?.hasMoney == true) {
-                lines += viewer.tr("gui.shop.buy", "price" to ShopRender.money(quote?.money ?: 0.0))
-            }
-            entry.buy?.items?.forEach { lines += ShopRender.itemLine(viewer, it) }
+        val lore = ShopRender.sections(
+            listOf(
+                buyLines(viewer, entry, standing),
+                sellLines(viewer, entry),
+                availabilityLines(viewer, shop, entry),
+                if (refusal != null) listOf(viewer.tr(refusal)) else clickLines(viewer, entry),
+            )
+        )
+
+        return ShopRender.withLore(entry.displayStack(), lore)
+    }
+
+    private fun buyLines(viewer: Player, entry: ShopEntry, standing: Set<TownyRequirement>): List<String> {
+        val cost = entry.buy ?: return emptyList()
+        val quote = ShopTrade.quoteBuy(viewer, entry, 1, standing)
+        val lines = mutableListOf<String>()
+
+        if (quote != null && quote.isDiscounted) {
+            lines += viewer.tr(
+                "gui.shop.buy-discounted",
+                "price" to ShopRender.money(quote.money),
+                "full" to ShopRender.money(quote.fullMoney),
+            )
+        } else if (cost.hasMoney) {
+            lines += viewer.tr("gui.shop.buy", "price" to ShopRender.money(quote?.money ?: 0.0))
         }
 
-        if (entry.isSellable) {
-            entry.sell?.let { payout ->
-                if (payout.hasMoney) lines += viewer.tr("gui.shop.sell", "price" to ShopRender.money(payout.money))
-                payout.items.forEach { lines += ShopRender.itemLine(viewer, it) }
-            }
-        }
+        cost.items.forEach { lines += ShopRender.itemLine(viewer, it, key = "gui.shop.buy-item") }
+        return lines
+    }
+
+    private fun sellLines(viewer: Player, entry: ShopEntry): List<String> {
+        val payout = entry.sell ?: return emptyList()
+        val lines = mutableListOf<String>()
+
+        if (payout.hasMoney) lines += viewer.tr("gui.shop.sell", "price" to ShopRender.money(payout.money))
+        payout.items.forEach { lines += ShopRender.itemLine(viewer, it, key = "gui.shop.sell-item") }
+        return lines
+    }
+
+    private fun availabilityLines(viewer: Player, shop: ShopDefinition, entry: ShopEntry): List<String> {
+        val lines = mutableListOf<String>()
 
         entry.stock?.let { stock ->
             lines += viewer.tr(
@@ -265,20 +293,22 @@ class ShopGUI : PagedPluginGUI(
             )
         }
 
-        if (refusal != null) {
-            lines += viewer.tr(refusal)
-        } else {
-            if (entry.isBuyable) {
-                lines += viewer.tr("gui.shop.click-buy")
-                lines += viewer.tr("gui.shop.click-buy-max")
-            }
-            if (entry.isSellable) {
-                lines += viewer.tr("gui.shop.click-sell")
-                lines += viewer.tr("gui.shop.click-sell-max")
-            }
+        return lines
+    }
+
+    private fun clickLines(viewer: Player, entry: ShopEntry): List<String> {
+        val lines = mutableListOf<String>()
+
+        if (entry.isBuyable) {
+            lines += viewer.tr("gui.shop.click-buy")
+            lines += viewer.tr("gui.shop.click-buy-max")
+        }
+        if (entry.isSellable) {
+            lines += viewer.tr("gui.shop.click-sell")
+            lines += viewer.tr("gui.shop.click-sell-max")
         }
 
-        return ShopRender.withLore(entry.displayStack(), lines)
+        return lines
     }
 
     private fun shopOf(player: Player): ShopDefinition? = views[player.uniqueId]?.let { ShopManager.get(it.shopId) }

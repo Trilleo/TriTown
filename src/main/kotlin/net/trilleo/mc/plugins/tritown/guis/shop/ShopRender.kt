@@ -51,12 +51,23 @@ object ShopRender {
         return custom?.let { ComponentUtil.escape(plain.serialize(it)) } ?: "<lang:${item.translationKey()}>"
     }
 
-    /** `3× Diamond`, for one line of a price or payout. */
-    fun itemLine(player: Player, item: ItemStack, multiplier: Int = 1): String = player.tr(
-        "gui.shop.cost-item",
-        "amount" to item.amount * multiplier,
-        "item" to itemName(item),
-    )
+    /**
+     * `3x Diamond`, for one line of a price or payout.
+     *
+     * [key] chooses the wording, so the same line can be coloured as something
+     * the player hands over or as something they are given.
+     */
+    fun itemLine(player: Player, item: ItemStack, multiplier: Int = 1, key: String = "gui.shop.cost-item"): String =
+        player.tr(key, "amount" to item.amount * multiplier, "item" to itemName(item))
+
+    /**
+     * [blocks] run together into one lore, a blank line between each pair.
+     *
+     * Empty blocks are dropped rather than spaced, so an entry that is only for
+     * sale does not carry a gap where its payout would have been.
+     */
+    fun sections(blocks: List<List<String>>): List<String> =
+        blocks.filter { it.isNotEmpty() }.reduceOrNull { left, right -> left + "" + right } ?: emptyList()
 
     /** Every line a [cost] needs, money first, or an empty list when it asks for nothing. */
     fun costLines(player: Player, cost: ShopCost?, multiplier: Int = 1): List<String> {

@@ -56,7 +56,7 @@ class ShopConfirmGUI : PluginGUI(
             if (quote != null && quote.hasMoney) {
                 add(player.tr("gui.shop-confirm.price", "price" to ShopRender.money(quote.money)))
             }
-            entry.buy?.items?.forEach { add(ShopRender.itemLine(player, it, bundles)) }
+            entry.buy?.items?.forEach { add(ShopRender.itemLine(player, it, bundles, "gui.shop.buy-item")) }
         }
 
         inventory.setItem(SLOT_GOODS, ShopRender.withLore(entry.displayStack(), lines))

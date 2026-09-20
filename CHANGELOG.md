@@ -14,6 +14,10 @@
 
 #### Shops
 
++ An entry's description now separates what it costs from what clicking does, with the prices, the payout and what is
+  left of the stock and your limits each in a block of their own.
++ A price is now red and a payout green wherever they appear, including the items either side asks for, so buying and
+  selling can be told apart at a glance.
 + A shift-click that cannot buy anything now says why. It used to claim the player could not afford the entry even
   when it was the stock or their own limit that had run out.
 
