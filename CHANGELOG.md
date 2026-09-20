@@ -10,6 +10,13 @@
   how much they buy. The two are set separately in the entry editor and counted separately, so an entry can be "buy 64
   a day, sell 256 a day" without one side spending the other's allowance.
 
+### Improvements
+
+#### Shops
+
++ A shift-click that cannot buy anything now says why. It used to claim the player could not afford the entry even
+  when it was the stock or their own limit that had run out.
+
 ### Fixes
 
 #### Shops

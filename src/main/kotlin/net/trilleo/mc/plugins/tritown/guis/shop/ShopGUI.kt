@@ -110,9 +110,7 @@ class ShopGUI : PagedPluginGUI(
      * confirmation menu takes over and this reports nothing.
      */
     private fun tradeBuy(player: Player, shop: ShopDefinition, entry: ShopEntry, bundles: Int): ShopTrade.Result? {
-        if (bundles <= 0) {
-            return ShopTrade.Result.Failure("shop.error.cannot-afford", listOf("price" to unitPrice(player, entry)))
-        }
+        if (bundles <= 0) return nothingToBuy(player, shop, entry)
 
         val threshold = if (ShopSettings.isLoaded) ShopSettings.snapshot.confirmAbove else 0.0
         val quote = ShopTrade.quoteBuy(player, entry, bundles)
@@ -136,6 +134,29 @@ class ShopGUI : PagedPluginGUI(
             }
         }
         return ShopTrade.Result.Failure("shop.error.missing-goods")
+    }
+
+    /**
+     * Why a shift-click could not buy anything at all.
+     *
+     * A limit and a stock are counted in items, so either can leave a remainder
+     * too small for one more bundle while still reading as more than nothing —
+     * telling that player they cannot afford it would simply be untrue.
+     */
+    private fun nothingToBuy(player: Player, shop: ShopDefinition, entry: ShopEntry): ShopTrade.Result.Failure {
+        ShopLimits.remaining(player, shop, entry, TradeSide.BUY)?.let { left ->
+            if (left < entry.bundleSize) {
+                return ShopTrade.Result.Failure("shop.error.limit-reached", listOf("amount" to left))
+            }
+        }
+
+        entry.stock?.let { stock ->
+            if (stock.available(System.currentTimeMillis()) < entry.bundleSize) {
+                return ShopTrade.Result.Failure("shop.error.out-of-stock", listOf("amount" to stock.remaining))
+            }
+        }
+
+        return ShopTrade.Result.Failure("shop.error.cannot-afford", listOf("price" to unitPrice(player, entry)))
     }
 
     private fun announce(player: Player, entry: ShopEntry, result: ShopTrade.Result.Success) {
