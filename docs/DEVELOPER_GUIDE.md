@@ -2585,6 +2585,24 @@ exactly as it went in, and Paper upgrades the embedded game version when Minecra
 
 `ItemCodec.decode` returns `null` rather than throwing. One unreadable entry must not take a whole shop with it.
 
+### The global shop
+
+Every shop stands behind an NPC somebody has to walk to, which is the point of a shop — except one. `ShopManager.global()`
+returns the shop named by `shops.global-id` (default `trades`), **creating it empty when it is not there**, and
+`/trades` opens it from anywhere. It is an ordinary `ShopDefinition` otherwise: listed, edited, gated, sorted and
+bound to NPCs like the rest, which is why nothing in the editor needed a special case for it.
+
+Two things follow from its being created rather than configured:
+
+- **It cannot be deleted while it is named.** `ShopManager.delete` refuses it and `ShopCommand` says why. Deleting it
+  would only lose its entries and then bring the shop back empty at the next start, so emptying it in the editor is
+  the honest way to do that.
+- **`global()` runs at enable and again on reload**, so it is in the editor's list before anybody asks for it, and a
+  changed `shops.global-id` takes effect without a restart.
+
+`TradesCommand` declares no permission, the way `ScoreboardCommand` does — the shop's own `ShopGate` is what decides
+who may see and buy what inside it.
+
 ### Storage
 
 `plugins/TriTown/shops/shops.json`, written by `JsonShopStorage` through a temporary file with the previous copy kept

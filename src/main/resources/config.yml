@@ -129,6 +129,11 @@ shops:
   # price, when sell-back is switched on for it. Only a starting point — the
   # price can be changed to anything afterwards.
   sell-rate: 0.5
+  # The shop /trades opens. It is created empty if it does not exist, is edited
+  # like any other shop, and cannot be deleted while it is named here. Point
+  # this at a different id to make that shop the one players reach from
+  # anywhere. Lowercase letters, digits, dashes and underscores only.
+  global-id: trades
 
   # Money taken off a purchase for players who have earned it, as a fraction:
   # 0.1 is ten percent off. Discounts do not stack, so a player who matches more

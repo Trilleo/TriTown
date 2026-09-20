@@ -111,6 +111,12 @@ command:
     unpinned: "侧边栏已恢复为根据所在位置自动切换。"
     unknown-board: "<red>不存在名为 <white>{board}</white> 的板面。"
 
+  trades:
+    description: "打开服务器的全局商店"
+    players-only: "<red>商店是菜单，只有玩家能打开。"
+    disabled: "<red>本服务器已关闭商店功能。"
+    unavailable: "<red>全局商店现在不可用。"
+
   shop:
     description: "管理服务器商店"
     disabled: "<red>本服务器已关闭商店功能。"
@@ -121,6 +127,7 @@ command:
     created: "已创建商店 <white>{id}</white>。"
     create-failed: "<red><white>{id}</white> 已被占用或不是有效的 id。请使用小写字母、数字、短横线和下划线。"
     delete-confirm: "<red>删除商店无法撤销。请执行 <white>/tritown shop delete {id} confirm</white> 继续。"
+    delete-global: "<red><white>{id}</white> 是 <white>/trades</white> 打开的商店，无法删除。请在编辑器中清空它，或将 <white>shops.global-id</white> 指向其他商店。"
     deleted: "已删除商店 <white>{id}</white>。"
     opened: "已为 <white>{player}</white> 打开商店 <white>{id}</white>。"
     bound: "<white>{npc}</white> 现在会打开商店 <white>{id}</white>。"
@@ -500,6 +507,7 @@ gui:
     id: "<gray>Id：<white>{id}</white>"
     entries: "<gray>商品数：<white>{amount}</white>"
     npcs: "<gray>NPC 数：<white>{amount}</white>"
+    global: "<green>使用 <white>/trades</white> 打开"
     click-edit: "<yellow>单击 <gray>编辑"
     click-preview: "<yellow>Shift + 单击 <gray>以玩家视角查看"
 

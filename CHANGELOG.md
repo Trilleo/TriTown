@@ -9,6 +9,11 @@
 + An entry can now limit how much each player **sells** to the shop per day, per week or ever, alongside the limit on
   how much they buy. The two are set separately in the entry editor and counted separately, so an entry can be "buy 64
   a day, sell 256 a day" without one side spending the other's allowance.
++ Added a global shop, opened from anywhere with `/trades` and needing no NPC — for the goods the server always
+  trades. It is created empty on first start, appears in `/tritown shop list` and the editor like any other shop, and
+  is set up the same way; `shops.global-id` chooses which shop it is. It cannot be deleted while it is the one
+  `/trades` opens, and anyone may run the command, so what each player sees inside it is still the shop's own
+  permission and Towny requirements.
 + Shift-left-clicking anything that stacks now opens a menu to pick how many to buy: 1, 8, 16, 32 or 64. They are
   priced at the entry's own rate, so eight of something sold sixteen at a time costs half of what the shelf quotes,
   and an amount you cannot take is greyed out with the reason rather than refusing once you have clicked it. This

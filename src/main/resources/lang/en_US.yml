@@ -111,6 +111,12 @@ command:
     unpinned: "Sidebar back to matching where you stand."
     unknown-board: "<red>No board named <white>{board}</white>."
 
+  trades:
+    description: "Open the server's global shop"
+    players-only: "<red>A shop is a menu, so only players can open it."
+    disabled: "<red>Shops are switched off on this server."
+    unavailable: "<red>The global shop is not available right now."
+
   shop:
     description: "Administer the server's shops"
     disabled: "<red>Shops are switched off on this server."
@@ -121,6 +127,7 @@ command:
     created: "Created the shop <white>{id}</white>."
     create-failed: "<red><white>{id}</white> is taken or is not a usable id. Use lowercase letters, digits, dashes and underscores."
     delete-confirm: "<red>Deleting a shop cannot be undone. Run <white>/tritown shop delete {id} confirm</white> to go ahead."
+    delete-global: "<red><white>{id}</white> is the shop <white>/trades</white> opens and cannot be deleted. Empty it in the editor instead, or point <white>shops.global-id</white> elsewhere."
     deleted: "Deleted the shop <white>{id}</white>."
     opened: "Opened <white>{id}</white> for <white>{player}</white>."
     bound: "<white>{npc}</white> now opens the shop <white>{id}</white>."
@@ -499,6 +506,7 @@ gui:
     id: "<gray>Id: <white>{id}</white>"
     entries: "<gray>Entries: <white>{amount}</white>"
     npcs: "<gray>NPCs: <white>{amount}</white>"
+    global: "<green>Opened with <white>/trades</white>"
     click-edit: "<yellow>Click <gray>to edit"
     click-preview: "<yellow>Shift-click <gray>to see it as a player does"
 

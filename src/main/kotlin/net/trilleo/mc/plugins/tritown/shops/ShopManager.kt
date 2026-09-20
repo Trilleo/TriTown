@@ -1,5 +1,6 @@
 package net.trilleo.mc.plugins.tritown.shops
 
+import net.trilleo.mc.plugins.tritown.config.ShopSettings
 import net.trilleo.mc.plugins.tritown.enums.LimitPeriod
 import net.trilleo.mc.plugins.tritown.enums.MatchMode
 import net.trilleo.mc.plugins.tritown.enums.TownyRequirement
@@ -76,6 +77,26 @@ object ShopManager {
     /** The shop with [id], or `null` when there is none. */
     fun get(id: String): ShopDefinition? = shops[id.lowercase()]
 
+    /**
+     * The shop `/trades` opens, creating it empty when it is not there.
+     *
+     * Created rather than reported missing, so a fresh server has somewhere to
+     * put its first entry and `/trades` never answers with an apology. It is an
+     * ordinary shop in every other way: it is listed, edited, gated and sorted
+     * like the rest, and an owner who wants a different one only has to point
+     * `shops.global-id` somewhere else.
+     */
+    fun global(): ShopDefinition? {
+        if (!isReady || !ShopSettings.isLoaded) return null
+
+        val id = ShopSettings.snapshot.globalId
+        return get(id) ?: create(id, id)
+    }
+
+    /** Whether [id] is the shop `/trades` opens, which is the one shop that may not be deleted. */
+    fun isGlobal(id: String): Boolean =
+        ShopSettings.isLoaded && id.equals(ShopSettings.snapshot.globalId, ignoreCase = true)
+
     /** Every shop, ordered by id so a listing does not shuffle between restarts. */
     fun all(): List<ShopDefinition> = shops.values.sortedBy { it.id }
 
@@ -102,8 +123,17 @@ object ShopManager {
         return shop
     }
 
-    /** Removes the shop with [id]. Returns `false` when there was none. */
+    /**
+     * Removes the shop with [id]. Returns `false` when there was none.
+     *
+     * The global shop is not one of them: it would be recreated empty on the
+     * next start anyway, so deleting it only ever means losing its entries
+     * without losing the shop. Emptying it in the editor is the honest way to
+     * do that.
+     */
     fun delete(id: String): Boolean {
+        if (isGlobal(id)) return false
+
         val removed = shops.remove(id.lowercase()) != null
         if (removed) save()
         return removed

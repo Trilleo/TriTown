@@ -99,6 +99,8 @@ class Main : JavaPlugin() {
         ShopSettings.load(pluginConfig)
         if (ShopSettings.snapshot.enabled) {
             ShopManager.start(JsonShopStorage(dataFolder, logger), logger)
+            // Made now rather than on the first /trades, so it is in the editor's list from the start.
+            ShopManager.global()
         }
 
         ItemRegistrar.registerAll(this)
@@ -139,6 +141,8 @@ class Main : JavaPlugin() {
         // Only the settings: re-reading the shop file would throw away an edit
         // that has not been flushed, and nothing in that file comes from config.yml.
         ShopSettings.load(pluginConfig)
+        // shops.global-id may have moved, and the shop it now names may not exist yet.
+        ShopManager.global()
     }
 
     override fun onDisable() {

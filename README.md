@@ -91,6 +91,7 @@ Prebuilt jars are attached to every [GitHub release](https://github.com/Trilleo/
 | `/baltop [page]`         | List the richest accounts             |
 | `/eco <action> …`        | Administer balances (OP only)         |
 | `/tt scoreboard`         | Show or hide the sidebar              |
+| `/trades`                | Open the server's global shop         |
 | `/tt shop <action> …`    | Set up the server's shops (OP only)   |
 | `/tt admin [section]`    | Open the admin panel (OP only)        |
 
@@ -147,6 +148,7 @@ version stays available as `/tritown:balance` and so on.
 | `economy.stats.retention-days`            | `30`               | How far back those figures reach; `0` keeps them forever                        |
 | `shops.enabled`                           | `true`             | Turn shops off entirely                                                         |
 | `shops.save-interval`                     | `60`               | Seconds between writing stock and sales figures; edits are saved immediately    |
+| `shops.global-id`                         | `trades`           | The shop `/trades` opens; created empty if missing, and not deletable           |
 | `shops.confirm-above`                     | `1000.0`           | Purchase total that asks for confirmation first; `0` never asks                 |
 | `shops.sell-rate`                         | `0.5`              | What the editor suggests as a payout, as a fraction of the buy price            |
 | `shops.discounts.<standing>`              | `0.0`              | Money off for `has-town`, `has-nation`, `is-mayor` or `is-king`                 |
@@ -182,6 +184,9 @@ A shop is created with `/tt shop create <id>`, which opens its editor. Everythin
 - **Pricing it.** An entry has a buy side and a sell side, and each may be switched on or off on its own. Either side
   can ask for money, for items, or for both at once. Money is typed in chat when you click the price; items are added
   by clicking them in your inventory, and the stack size is the quantity.
+- **Reaching it.** A shop normally stands behind an NPC. One does not: the shop named by `shops.global-id`
+  (`trades` by default) opens from anywhere with `/trades`, for the goods the server always trades. It is created
+  empty on first start, is edited like any other shop, and cannot be deleted while it is the one `/trades` opens.
 - **Buying it.** A player left-clicks an entry to buy one purchase of it, and shift-left-clicks anything that stacks to
   pick an amount instead — 1, 8, 16, 32 or 64, priced at the entry's own rate, so eight of something sold sixteen at a
   time costs half. An amount they cannot take is greyed out with the reason rather than refusing after the click. Right
