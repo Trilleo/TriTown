@@ -8,6 +8,7 @@ import net.trilleo.mc.plugins.tritown.enums.MatchMode
 import net.trilleo.mc.plugins.tritown.enums.TownyRequirement
 import net.trilleo.mc.plugins.tritown.enums.TradeSide
 import net.trilleo.mc.plugins.tritown.utils.EconomyUtil
+import net.trilleo.mc.plugins.tritown.utils.InventoryUtil
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 
@@ -138,7 +139,7 @@ object ShopTrade {
         }
 
         val quote = quoteBuy(player, entry, amount, standing) ?: return Result.Failure("shop.error.not-for-sale")
-        if (!ShopInventory.hasSpaceFor(player, entry.goodsStacks(amount))) {
+        if (!InventoryUtil.hasSpaceFor(player, entry.goodsStacks(amount))) {
             return Result.Failure("shop.error.no-space")
         }
         if (quote.hasMoney && !EconomyUtil.isAvailable) return Result.Failure("shop.error.economy-unavailable")
@@ -167,7 +168,7 @@ object ShopTrade {
             ?: return Result.Failure("shop.error.missing-items")
 
         if (stock != null && !stock.take(amount, now)) {
-            ShopInventory.give(player, taken)
+            InventoryUtil.give(player, taken)
             return Result.Failure("shop.error.out-of-stock", listOf("amount" to stock.remaining))
         }
 
@@ -175,12 +176,12 @@ object ShopTrade {
             val reason = TransactionReason.of(TransactionReason.SHOP_BUY, "shop" to shop.displayName)
             if (!EconomyUtil.withdraw(player, quote.money, EconomyContext.SOURCE_SHOP, reason)) {
                 stock?.restore(amount)
-                ShopInventory.give(player, taken)
+                InventoryUtil.give(player, taken)
                 return Result.Failure("shop.error.cannot-afford", listOf("price" to format(quote.money)))
             }
         }
 
-        ShopInventory.give(player, goods)
+        InventoryUtil.give(player, goods)
         ShopLimits.record(player, shop, entry, TradeSide.BUY, amount, now)
         entry.stats.recordBuy(amount, quote.money)
         ShopManager.markDirty()
@@ -212,7 +213,7 @@ object ShopTrade {
         }
 
         val quote = quoteSell(entry, amount) ?: return Result.Failure("shop.error.not-bought")
-        if (!ShopInventory.hasSpaceFor(player, quote.items)) return Result.Failure("shop.error.no-space")
+        if (!InventoryUtil.hasSpaceFor(player, quote.items)) return Result.Failure("shop.error.no-space")
         if (quote.hasMoney && !EconomyUtil.isAvailable) return Result.Failure("shop.error.economy-unavailable")
 
         val handedOver = ShopInventory.remove(player, entry.item, entry.matchMode, amount)
@@ -221,12 +222,12 @@ object ShopTrade {
         if (quote.hasMoney) {
             val reason = TransactionReason.of(TransactionReason.SHOP_SELL, "shop" to shop.displayName)
             if (!EconomyUtil.deposit(player, quote.money, EconomyContext.SOURCE_SHOP, reason)) {
-                ShopInventory.give(player, handedOver)
+                InventoryUtil.give(player, handedOver)
                 return Result.Failure("shop.error.payout-refused")
             }
         }
 
-        ShopInventory.give(player, quote.items)
+        InventoryUtil.give(player, quote.items)
         ShopLimits.record(player, shop, entry, TradeSide.SELL, amount, now)
         entry.stats.recordSell(amount, quote.money)
         ShopManager.markDirty()
@@ -259,7 +260,7 @@ object ShopTrade {
         for (item in required) {
             val removed = ShopInventory.remove(player, item, mode, item.amount)
             if (removed == null) {
-                ShopInventory.give(player, taken)
+                InventoryUtil.give(player, taken)
                 return null
             }
             taken += removed

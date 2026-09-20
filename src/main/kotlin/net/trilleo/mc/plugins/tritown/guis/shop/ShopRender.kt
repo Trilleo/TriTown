@@ -204,29 +204,10 @@ object ShopRender {
      * italics and reads as a rename rather than a label.
      */
     fun named(item: ItemStack, name: String, lines: List<String>): ItemStack {
-        val copy = withLore(item, lines)
+        val copy = LoreUtil.withLore(item, lines)
         val meta = copy.itemMeta ?: return copy
 
         meta.displayName(ComponentUtil.parse("<reset><i:false>$name"))
-        copy.itemMeta = meta
-        return copy
-    }
-
-    /**
-     * A copy of [item] with [lines] added under whatever lore it already has.
-     *
-     * The goods keep their own description, because an item that says what it
-     * does should still say it on the shelf.
-     */
-    fun withLore(item: ItemStack, lines: List<String>): ItemStack {
-        if (lines.isEmpty()) return item.clone()
-
-        val copy = item.clone()
-        val meta = copy.itemMeta ?: return copy
-        val existing = meta.lore().orEmpty()
-        val added = LoreUtil.wrapLore(lines.joinToString("<newline>"))
-
-        meta.lore(if (existing.isEmpty()) added else existing + Component.empty() + added)
         copy.itemMeta = meta
         return copy
     }

@@ -139,7 +139,7 @@ class ShopAmountGUI : PluginGUI(
         val perPurchase =
             if (bundle > 1) listOf(player.tr("gui.shop-amount.bundle", "amount" to bundle)) else emptyList()
 
-        return ShopRender.withLore(
+        return LoreUtil.withLore(
             entry.displayStack(),
             ShopRender.sections(listOf(ShopRender.buyLines(player, entry, bundle, standing), perPurchase)),
         )

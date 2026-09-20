@@ -49,6 +49,12 @@
 + An older shop file is now brought forward by `ShopMigrations` as it is read rather than being misread against the
   current shape. Schema 2 is stock, limits and sales figures in items, plus the selling limit.
 
+#### Misc
+
++ Handing a player items, asking whether they would fit, and adding lines to an item's lore are now shared utilities
+  — `InventoryUtil` and `LoreUtil.withLore` — rather than living inside the shop package, so anything else that moves
+  items or draws a menu decides both the same way shops do.
+
 ## Version 1.1.0
 
 ### New Features

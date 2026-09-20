@@ -57,7 +57,7 @@ class ShopConfirmGUI : PluginGUI(
             quote?.items?.forEach { add(ShopRender.itemLine(player, it, key = "gui.shop.buy-item")) }
         }
 
-        inventory.setItem(SLOT_GOODS, ShopRender.withLore(entry.displayStack(), lines))
+        inventory.setItem(SLOT_GOODS, LoreUtil.withLore(entry.displayStack(), lines))
         inventory.setItem(
             SLOT_ACCEPT,
             button(player, Material.LIME_CONCRETE, "gui.shop-confirm.accept", "gui.shop-confirm.accept-lore"),

@@ -5,6 +5,7 @@ import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.minimessage.MiniMessage
+import org.bukkit.inventory.ItemStack
 
 /**
  * Utility for wrapping MiniMessage-formatted text into multiple lore-ready
@@ -77,6 +78,29 @@ object LoreUtil {
         }
 
         return result
+    }
+
+    /**
+     * A copy of [item] with [lines] wrapped and added under whatever lore it
+     * already has.
+     *
+     * The item keeps its own description, because something that says what it
+     * does should still say it wherever a menu shows it.
+     *
+     * @param item  the item to copy; it is never modified
+     * @param lines MiniMessage lines to add, each wrapped like [wrapLore] does
+     */
+    fun withLore(item: ItemStack, lines: List<String>): ItemStack {
+        if (lines.isEmpty()) return item.clone()
+
+        val copy = item.clone()
+        val meta = copy.itemMeta ?: return copy
+        val existing = meta.lore().orEmpty()
+        val added = wrapLore(lines.joinToString("<newline>"))
+
+        meta.lore(if (existing.isEmpty()) added else existing + Component.empty() + added)
+        copy.itemMeta = meta
+        return copy
     }
 
     /**

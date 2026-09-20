@@ -271,7 +271,7 @@ class ShopEntryGUI : PluginGUI(
 
     // ── Drawing ─────────────────────────────────────────────────────────
 
-    private fun goods(player: Player, entry: ShopEntry): ItemStack = ShopRender.withLore(
+    private fun goods(player: Player, entry: ShopEntry): ItemStack = LoreUtil.withLore(
         entry.displayStack(),
         listOf(player.tr("gui.shop-entry.bundle", "amount" to entry.bundleSize)),
     )

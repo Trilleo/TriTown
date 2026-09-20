@@ -16,6 +16,7 @@ reduce boilerplate and provide commonly needed functionality out of the box.
 | `PDCUtil`       | Persistent data container helpers for Entity, Chunk, and ItemStack     |
 | `GameRuleUtil`  | Convenient get, set, and toggle helpers for Minecraft game rules       |
 | `LoreUtil`      | Word-aware text wrapping for item lore with style carry-over           |
+| `InventoryUtil` | Gives items to a player, and asks first whether they would fit        |
 | `TownyUtil`     | Reads and formats Towny data: names, balances, upkeep, the new day     |
 | `ComponentUtil` | Parses a MiniMessage string into a Component, and escapes input        |
 
@@ -844,12 +845,34 @@ val item = itemStack(Material.DIAMOND_SWORD) {
 }
 ```
 
+### Adding Lore to an Existing Item
+
+`withLore` returns a **copy** of an item with the given lines wrapped and appended under whatever lore it already
+carries, separated by a blank line. The original item is never modified, so an item held in a definition can be drawn
+in a menu without the menu's labels leaking back into it.
+
+```kotlin
+import net.trilleo.mc.plugins.tritown.utils.LoreUtil
+
+val icon = LoreUtil.withLore(
+    entry.displayStack(),
+    listOf(player.tr("gui.shop.buy", "price" to price), player.tr("gui.shop.click-buy")),
+)
+```
+
 ### Parameters
 
 | Parameter  | Type     | Default | Description                         |
 |:-----------|:---------|:--------|:------------------------------------|
 | `text`     | `String` | —       | MiniMessage-formatted input string  |
 | `maxWidth` | `Int`    | `40`    | Maximum visible characters per line |
+
+### Methods
+
+| Method                   | Return            | Description                                                          |
+|:-------------------------|:------------------|:---------------------------------------------------------------------|
+| `wrapLore(text, width)`  | `List<Component>` | Wraps one MiniMessage string into lore-ready lines                   |
+| `withLore(item, lines)`  | `ItemStack`       | A copy of the item with the wrapped lines added under its own lore   |
 
 ### Behavior Details
 
@@ -862,6 +885,45 @@ val item = itemStack(Material.DIAMOND_SWORD) {
 - **Empty input**: Returns an empty list.
 
 ---
+
+## InventoryUtil
+
+`InventoryUtil` puts stacks into a player's own inventory and answers, first, whether they would fit. Anything that
+hands a player items — a shop purchase, a trade, a reward — goes through it so that "will this fit?" is decided the
+same way everywhere, by the code that will do the real insertion.
+
+Every method runs on the server thread, because an inventory may not be touched from anywhere else. Only the 36
+storage slots are considered; armour and the off-hand are never written to.
+
+### Usage
+
+```kotlin
+import net.trilleo.mc.plugins.tritown.utils.InventoryUtil
+
+if (!InventoryUtil.hasSpaceFor(player, goods)) {
+    player.sendPrefixed(player.tr("common.error", "message" to player.tr("shop.error.no-space")))
+    return
+}
+
+InventoryUtil.give(player, goods)
+```
+
+### Methods
+
+| Method                     | Return            | Description                                                                   |
+|:---------------------------|:------------------|:-------------------------------------------------------------------------------|
+| `hasSpaceFor(player, items)` | `Boolean`       | Whether every stack would fit, tested against a copy of the player's storage  |
+| `give(player, items)`      | `Unit`            | Adds the stacks, dropping at the player's feet whatever will not fit          |
+| `split(items)`             | `List<ItemStack>` | Breaks oversized stacks down into ones the game allows                        |
+
+### Behavior Details
+
+- **Space is tested, not counted**: `hasSpaceFor` copies the player's storage into a scratch inventory and tries the
+  real insertion, so partial stacks, per-item stack limits and items that do not stack are all accounted for.
+- **Oversized stacks**: a quantity larger than one stack holds is accepted in memory but cannot be stored, so both
+  `hasSpaceFor` and `give` run their input through `split` first.
+- **Nothing is ever lost**: `give` drops what will not fit rather than discarding it. Check `hasSpaceFor` beforehand
+  and a drop only happens when something else filled the inventory in between.
 
 ---
 

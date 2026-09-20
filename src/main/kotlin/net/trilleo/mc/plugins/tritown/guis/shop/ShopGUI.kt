@@ -195,7 +195,7 @@ class ShopGUI : PagedPluginGUI(
             )
         )
 
-        return ShopRender.withLore(entry.displayStack(), lore)
+        return LoreUtil.withLore(entry.displayStack(), lore)
     }
 
     private fun availabilityLines(viewer: Player, shop: ShopDefinition, entry: ShopEntry): List<String> {
