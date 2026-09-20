@@ -5,7 +5,10 @@ import net.trilleo.mc.plugins.tritown.enums.TownyRequirement
 import net.trilleo.mc.plugins.tritown.registration.GUIManager
 import net.trilleo.mc.plugins.tritown.registration.PluginGUI
 import net.trilleo.mc.plugins.tritown.shops.*
-import net.trilleo.mc.plugins.tritown.utils.*
+import net.trilleo.mc.plugins.tritown.utils.EconomyUtil
+import net.trilleo.mc.plugins.tritown.utils.LoreUtil
+import net.trilleo.mc.plugins.tritown.utils.itemStack
+import net.trilleo.mc.plugins.tritown.utils.tr
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent

@@ -4,15 +4,11 @@ import net.kyori.adventure.key.Key
 import net.kyori.adventure.sound.Sound
 import net.trilleo.mc.plugins.tritown.economy.CurrencyRegistry
 import net.trilleo.mc.plugins.tritown.economy.Money
+import net.trilleo.mc.plugins.tritown.guis.trade.TradeRender.STEP
 import net.trilleo.mc.plugins.tritown.trades.TradeManager
 import net.trilleo.mc.plugins.tritown.trades.TradeParty
 import net.trilleo.mc.plugins.tritown.trades.TradeSession
-import net.trilleo.mc.plugins.tritown.utils.ComponentUtil
-import net.trilleo.mc.plugins.tritown.utils.EconomyUtil
-import net.trilleo.mc.plugins.tritown.utils.LoreUtil
-import net.trilleo.mc.plugins.tritown.utils.itemStack
-import net.trilleo.mc.plugins.tritown.utils.sendPrefixed
-import net.trilleo.mc.plugins.tritown.utils.tr
+import net.trilleo.mc.plugins.tritown.utils.*
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack

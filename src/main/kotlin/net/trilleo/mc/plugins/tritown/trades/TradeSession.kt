@@ -2,7 +2,7 @@ package net.trilleo.mc.plugins.tritown.trades
 
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
-import java.util.UUID
+import java.util.*
 
 /** One player's side of a live trade: what they have put up, and whether they have agreed to it. */
 class TradeParty(val uuid: UUID, val name: String) {

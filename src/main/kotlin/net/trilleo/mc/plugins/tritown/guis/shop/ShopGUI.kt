@@ -8,7 +8,10 @@ import net.trilleo.mc.plugins.tritown.enums.TradeSide
 import net.trilleo.mc.plugins.tritown.registration.GUIManager
 import net.trilleo.mc.plugins.tritown.registration.PagedPluginGUI
 import net.trilleo.mc.plugins.tritown.shops.*
-import net.trilleo.mc.plugins.tritown.utils.*
+import net.trilleo.mc.plugins.tritown.utils.ComponentUtil
+import net.trilleo.mc.plugins.tritown.utils.LoreUtil
+import net.trilleo.mc.plugins.tritown.utils.itemStack
+import net.trilleo.mc.plugins.tritown.utils.tr
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType

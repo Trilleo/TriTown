@@ -2,11 +2,7 @@ package net.trilleo.mc.plugins.tritown
 
 import com.palmergames.bukkit.towny.TownyEconomyHandler
 import net.milkbowl.vault.economy.Economy
-import net.trilleo.mc.plugins.tritown.config.EconomySettings
-import net.trilleo.mc.plugins.tritown.config.PluginConfig
-import net.trilleo.mc.plugins.tritown.config.ScoreboardSettings
-import net.trilleo.mc.plugins.tritown.config.ShopSettings
-import net.trilleo.mc.plugins.tritown.config.TradeSettings
+import net.trilleo.mc.plugins.tritown.config.*
 import net.trilleo.mc.plugins.tritown.data.PlayerDataManager
 import net.trilleo.mc.plugins.tritown.data.ServerDataManager
 import net.trilleo.mc.plugins.tritown.economy.*

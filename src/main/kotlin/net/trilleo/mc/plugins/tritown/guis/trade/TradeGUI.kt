@@ -6,17 +6,8 @@ import net.trilleo.mc.plugins.tritown.enums.FillMode
 import net.trilleo.mc.plugins.tritown.registration.GUIFrame
 import net.trilleo.mc.plugins.tritown.registration.GUIManager
 import net.trilleo.mc.plugins.tritown.registration.PluginGUI
-import net.trilleo.mc.plugins.tritown.trades.TradeExchange
-import net.trilleo.mc.plugins.tritown.trades.TradeManager
-import net.trilleo.mc.plugins.tritown.trades.TradeOffer
-import net.trilleo.mc.plugins.tritown.trades.TradeParty
-import net.trilleo.mc.plugins.tritown.trades.TradeSession
-import net.trilleo.mc.plugins.tritown.utils.ChatPrompt
-import net.trilleo.mc.plugins.tritown.utils.ComponentUtil
-import net.trilleo.mc.plugins.tritown.utils.InventoryUtil
-import net.trilleo.mc.plugins.tritown.utils.LoreUtil
-import net.trilleo.mc.plugins.tritown.utils.sendPrefixed
-import net.trilleo.mc.plugins.tritown.utils.tr
+import net.trilleo.mc.plugins.tritown.trades.*
+import net.trilleo.mc.plugins.tritown.utils.*
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryClickEvent
@@ -206,7 +197,8 @@ class TradeGUI : PluginGUI(
         you.endPrompt()
 
         val typed = input.toDoubleOrNull()
-        val wanted = typed?.takeIf { it.isFinite() && it >= 0.0 }?.let { runCatching { TradeRender.of(it) }.getOrNull() }
+        val wanted =
+            typed?.takeIf { it.isFinite() && it >= 0.0 }?.let { runCatching { TradeRender.of(it) }.getOrNull() }
 
         if (wanted == null) {
             player.sendPrefixed(player.tr("common.invalid-amount"))

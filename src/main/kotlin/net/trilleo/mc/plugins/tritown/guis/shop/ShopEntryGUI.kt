@@ -205,7 +205,10 @@ class ShopEntryGUI : PluginGUI(
                         val current = entry.limitOn(side)
                         entry.setLimitOn(
                             side,
-                            if (amount == 0) null else (current ?: ShopLimit(amount, LimitPeriod.DAILY)).copy(amount = amount),
+                            if (amount == 0) null else (current ?: ShopLimit(
+                                amount,
+                                LimitPeriod.DAILY
+                            )).copy(amount = amount),
                         )
                         ShopManager.save()
                     }

@@ -44,7 +44,12 @@ class TradeListener : Listener {
 
         val player = event.player
         TradeManager.refusal(player, target)?.let { key ->
-            player.sendPrefixed(player.tr("common.error", "message" to player.tr(key, "name" to TradeManager.name(target))))
+            player.sendPrefixed(
+                player.tr(
+                    "common.error",
+                    "message" to player.tr(key, "name" to TradeManager.name(target))
+                )
+            )
             return
         }
 
