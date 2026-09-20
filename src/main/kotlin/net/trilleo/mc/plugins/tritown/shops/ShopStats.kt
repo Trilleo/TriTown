@@ -3,9 +3,9 @@ package net.trilleo.mc.plugins.tritown.shops
 /**
  * What one entry has traded since the counters were last reset.
  *
- * Counts bundles rather than items, matching what a player clicks, and keeps
- * the two currency directions apart so an owner can see at a glance whether a
- * shop is draining the economy or feeding it.
+ * Counts items, the same unit as a stock and a per-player limit, and keeps the
+ * two currency directions apart so an owner can see at a glance whether a shop
+ * is draining the economy or feeding it.
  */
 data class ShopStats(
     var bought: Long = 0L,
@@ -14,15 +14,15 @@ data class ShopStats(
     var moneyOut: Double = 0.0,
 ) {
 
-    /** Records a player buying [bundles] for [money]. */
-    fun recordBuy(bundles: Int, money: Double) {
-        bought += bundles
+    /** Records a player buying [items] for [money]. */
+    fun recordBuy(items: Int, money: Double) {
+        bought += items
         moneyIn += money
     }
 
-    /** Records a player selling [bundles] for [money]. */
-    fun recordSell(bundles: Int, money: Double) {
-        sold += bundles
+    /** Records a player selling [items] for [money]. */
+    fun recordSell(items: Int, money: Double) {
+        sold += items
         moneyOut += money
     }
 

@@ -2,7 +2,7 @@
 
 This guide explains how to create **commands**, **listeners**, **GUIs**, **tasks**, **custom items**, **recipes**, work
 with **translations** and the **configuration** system using TriTown's registration system, and how to build on
-**Towny**, the **Vault economy**, the **admin panel** and the **sidebar**. Commands, listeners, GUIs, tasks, custom items, and recipes all
+**Towny**, the **Vault economy**, the **admin panel**, **shops**, **player trades** and the **sidebar**. Commands, listeners, GUIs, tasks, custom items, and recipes all
 follow the same pattern: extend a base class (or implement an interface), place the file in the correct package, and the
 plugin handles the rest automatically at startup. The configuration system provides typed access to `config.yml` values.
 
@@ -367,6 +367,20 @@ GUIManager.open(player, "settings")
 // From inside a click handler, so the client is not left disagreeing about what is on screen
 GUIManager.openLater(player, "settings")
 ```
+
+To redraw a menu somebody is already looking at, without opening a new one:
+
+```kotlin
+// Which of this plugin's GUIs the player has open, or null
+val open = GUIManager.openGUI(player)
+
+// Re-runs setup() on the same inventory: no flash, and the menu stays open
+if (open?.id == "settings") GUIManager.refresh(player)
+```
+
+`refresh` writes into the inventory the player is already looking at rather than opening a replacement, which is what
+lets a menu change under somebody — the other side of a trade adding an item, a figure that has moved on. It works on
+any player, not only the one whose click you are handling, so a menu two people share can keep both windows the same.
 
 ### Example
 
@@ -2549,11 +2563,11 @@ manager has to be alive before the registrars build the menus and commands that 
 | Type             | What it is                                                                                  |
 |:-----------------|:---------------------------------------------------------------------------------------------|
 | `ShopDefinition` | One shop: `id`, `displayName`, a `ShopGate`, its entries, and the FancyNpcs ids bound to it  |
-| `ShopEntry`      | One line of goods: the `ItemStack`, a buy `ShopCost`, a sell `ShopCost`, gate, limit, stock  |
+| `ShopEntry`      | One line of goods: the `ItemStack`, a buy `ShopCost`, a sell `ShopCost`, gate, limits, stock |
 | `ShopCost`       | A price or a payout: an amount of money, a list of `ItemStack`s, or both                     |
 | `ShopGate`       | A permission node and a `TownyRequirement`, plus whether a locked entry hides                |
-| `ShopLimit`      | How much one player may buy per `LimitPeriod` window                                         |
-| `ShopStock`      | A shared supply that refills to full on a timer                                              |
+| `ShopLimit`      | How many items one player may trade per `LimitPeriod` window                                 |
+| `ShopStock`      | A shared supply of items that refills to full on a timer                                     |
 | `ShopStats`      | Bundles traded and currency moved, per entry                                                 |
 
 `id` is stable and is what NPC bindings and purchase counters are keyed by; `displayName` is administrator-written
@@ -2564,6 +2578,19 @@ exceed what a stack holds, and an `ItemStack` is not a safe place to keep a coun
 `displayStack()` and `goodsStacks(bundles)` are the three ways to ask about it — the last splits into stacks the game
 allows, which is what is both measured for room and handed over, while the first two are for drawing.
 
+**Stock and limits are counted in items, not in purchases.** An administrator writing "64 a day" means sixty-four
+items however large the bundle is, which is the only reading that stays true when the bundle is edited afterwards. A
+trade therefore spends exactly what it moves. `ShopTrade` takes an item count throughout: a left-click on the shelf
+asks for `bundleSize`, and the amount menu asks for whatever the player picked.
+
+Money divides, so any amount can be priced — a bundle of sixteen at 10 puts one at 0.63, which is what keeping the
+entry's own ratio means. A price or payout made of **items** cannot be divided that finely, so an amount that is not a
+whole number of bundles has no quote at all: `quoteBuy` and `quoteSell` return `null` for it and the trade refuses with
+`shop.error.part-bundle`.
+
+An entry carries a limit per side: `buyLimit` and `sellLimit`, reached through `limitOn(side)` / `setLimitOn(side, …)`
+with a `TradeSide`. They are independent, so neither spends the other's allowance.
+
 ### Preserving an item
 
 `ItemCodec` wraps Paper's `ItemStack.serializeAsBytes()` / `deserializeBytes()` and Base64s the result. That is the only
@@ -2571,6 +2598,24 @@ round-trip that keeps every data component, so a renamed, enchanted, custom-mode
 exactly as it went in, and Paper upgrades the embedded game version when Minecraft moves on.
 
 `ItemCodec.decode` returns `null` rather than throwing. One unreadable entry must not take a whole shop with it.
+
+### The global shop
+
+Every shop stands behind an NPC somebody has to walk to, which is the point of a shop — except one. `ShopManager.global()`
+returns the shop named by `shops.global-id` (default `trades`), **creating it empty when it is not there**, and
+`/trades` opens it from anywhere. It is an ordinary `ShopDefinition` otherwise: listed, edited, gated, sorted and
+bound to NPCs like the rest, which is why nothing in the editor needed a special case for it.
+
+Two things follow from its being created rather than configured:
+
+- **It cannot be deleted while it is named.** `ShopManager.delete` refuses it and `ShopCommand` says why. Deleting it
+  would only lose its entries and then bring the shop back empty at the next start, so emptying it in the editor is
+  the honest way to do that.
+- **`global()` runs at enable and again on reload**, so it is in the editor's list before anybody asks for it, and a
+  changed `shops.global-id` takes effect without a restart.
+
+`TradesCommand` declares no permission, the way `ScoreboardCommand` does — the shop's own `ShopGate` is what decides
+who may see and buy what inside it.
 
 ### Storage
 
@@ -2581,6 +2626,12 @@ starting empty, because an empty start would be written back over the real data 
 The storage layer works on `StoredShop` / `StoredEntry` / `StoredCost`, which hold Base64 strings rather than
 `ItemStack`s. That keeps it free of Bukkit and therefore testable without a server; `ShopManager` converts between
 the stored and live shapes.
+
+The file records the `ShopSchema` version it was written with. A newer file is refused outright; an older one is
+brought forward by `ShopMigrations.upgrade` **as it is read**, so a build that loads the shops and then fails to enable
+leaves the original untouched and the upgraded shape only reaches disk at the first ordinary save. Each step takes the
+shape one version forward, so a file several versions old walks through them in turn. Adding a step means bumping
+`ShopSchema.CURRENT`, adding a line to its history and a branch to `upgrade`.
 
 Saving has two speeds, and the difference matters:
 
@@ -2597,16 +2648,18 @@ taken, and anything taken is remembered so it can be put back.**
 
 A buy, in order:
 
-1. Re-check the gate, the per-player limit and the stock, restocking lazily first.
+1. Re-check everything that can refuse, through `buyRefusal` — the gate, the amount, the buying limit and the stock,
+   restocking lazily first.
 2. Quote the price, applying the best discount the player's standing in Towny earns.
 3. Check there is room for the goods.
 4. Take the item side of the price, keeping what was removed.
 5. Take the stock.
 6. `EconomyUtil.withdraw(player, money, EconomyContext.SOURCE_SHOP, reason)` — on refusal, put the stock and the items
    back and stop.
-7. Hand over the goods, record the purchase against the player's limit, and update the statistics.
+7. Hand over the goods, record the items against the player's buying limit, and update the statistics.
 
-A sell is the mirror image. Never check `has` and withdraw separately — `EconomyUtil.withdraw` does both in one step.
+A sell is the mirror image, and checks and records the selling limit in the same places. Never check `has` and withdraw
+separately — `EconomyUtil.withdraw` does both in one step.
 
 The pricing, limit and stock arithmetic is deliberately free of Bukkit (`ShopPricing`, `ShopLimit`, `ShopStock`) so it
 can be unit-tested, in the same way `EconomyLedger` is.
@@ -2635,9 +2688,11 @@ nodes are. They are checked as they stand and defined in the server's permission
 
 ### Per-player limits
 
-Counters live in the buyer's own `PlayerData` under `shop-limits`, keyed `"<shopId>/<entryId>"`, each holding a count
-and the window it belongs to. A count from a window that has turned over is ignored rather than cleared, so nothing has
-to sweep counters at midnight. `PlayerDataManager` only serves online players, which is the only case a purchase needs.
+Counters live in the trader's own `PlayerData` under `shop-limits`, keyed `"<shopId>/<entryId>"` for buying and
+`"<shopId>/<entryId>/sell"` for selling, each holding a count of **items** and the window it belongs to. Buying keeps
+the key it has always had, so counters written before the selling limit existed still count against the day they were
+written. A count from a window that has turned over is ignored rather than cleared, so nothing has to sweep counters at
+midnight. `PlayerDataManager` only serves online players, which is the only case a trade needs.
 
 ### FancyNpcs
 
@@ -2663,10 +2718,11 @@ rather than in `getItems`.
 | Menu               | What it does                                                          |
 |:-------------------|:------------------------------------------------------------------------|
 | `ShopGUI`          | The player's view; buys and sells, and redraws only the entry traded   |
+| `ShopAmountGUI`    | How many to buy: 1, 8, 16, 32 or 64, priced at the entry's own rate    |
 | `ShopConfirmGUI`   | A second look above `shops.confirm-above`; re-quotes on accept         |
 | `ShopListGUI`      | Every shop, for an administrator                                       |
 | `ShopEditorGUI`    | One shop's entries; adds one from the administrator's own inventory    |
-| `ShopEntryGUI`     | One entry's prices, limit, stock and gate                              |
+| `ShopEntryGUI`     | One entry's prices, limits, stock and gate                             |
 | `ShopCostGUI`      | The item side of a price or a payout                                   |
 | `ShopSortGUI`      | Puts a whole shop in one order, on an administrator's say-so           |
 | `ShopSettingsGUI`  | A shop's name, gate and bound NPCs                                     |
@@ -2676,8 +2732,15 @@ Every one of them is framed: the paged menus through `PagedLayout.FRAMED`, and `
 grid, through `GUIFrame` directly. The editor's actions — add, settings, figures, back — live in the navigation row via
 `navButtons`, so they do not shuffle along as entries are added.
 
-`ShopRender` holds what they all draw with — item names, price lines, requirement names — and `ShopRender.navigate`,
-which opens the next menu on the following tick.
+`ShopRender` holds what they all draw with — item names, price lines, requirement names, and how a trade is announced
+or refused — and `ShopRender.navigate`, which opens the next menu on the following tick. Every menu that can start a
+purchase goes through `ShopConfirmGUI.askIfDear`, so `shops.confirm-above` guards all of them rather than whichever one
+remembered to ask.
+
+**A menu never offers what a click would refuse.** `ShopAmountGUI` greys an amount out with the very
+`ShopTrade.buyRefusal` the purchase itself runs, so what is drawn and what happens cannot drift apart. The one thing
+that refusal leaves out is the money: a balance may be read to draw a menu, but only the withdrawal may decide a
+charge, so the menu asks `EconomyUtil.has` itself and `ShopTrade.buy` still charges atomically.
 
 **Items are never taken to add them.** Clicking a stack in the administrator's own inventory copies it and cancels the
 event; a drag reads `event.oldCursor` and cancels too. A live slot would lose the item to a crash or a mistimed close,
@@ -2699,6 +2762,110 @@ each viewer's, because one shop has one order and it cannot depend on who is loo
 
 Anything free-form — a price, a permission node, a shop's name — is asked for in chat through `ChatPrompt`, because
 a chest menu has nowhere to type and a price of 12500 is not somewhere to click.
+
+
+---
+
+## Player Trades
+
+Two players trading face to face: items and money across one table, both sides confirming before anything moves. Asked
+for by shift-right-clicking the other player or with `/trade <player>`, and always agreed to before a menu opens.
+
+The core lives under `trades/`, which is **not a scanned package** — the same reason `economy/` and `shops/` are not.
+`TradeManager` has to be alive before the registrars build the command, the menu and the listener that read it. The
+menu is `guis/trade/TradeGUI`, the command `commands/trade/TradeCommand`, the click and disconnect handling
+`listeners/trade/TradeListener`, and the watchdog `tasks/trade/TradeWatchTask`.
+
+### The model
+
+| Type            | What it is                                                                        |
+|:----------------|:------------------------------------------------------------------------------------|
+| `TradeOffer`    | One side's table: up to 16 stacks held by the trade, plus an amount of money named  |
+| `TradeParty`    | One player in a trade: their offer, their confirmation, and whether they are in chat |
+| `TradeSession`  | The trade itself: both parties, the confirmation lock, and whether it has ended     |
+| `TradeManager`  | Requests, live sessions, and the one way a trade ends                               |
+| `TradeExchange` | The swap, and the only place a trade's items or money move                          |
+
+### Items are escrowed, money is not
+
+An item leaves the player's inventory the moment they put it up and is held by the `TradeOffer` until the trade ends.
+That is what lets the other side trust what it is looking at: an offer cannot be dropped, deposited or handed to
+somebody else behind their back while it is on the table.
+
+Money is deliberately *not* held aside. A balance is read by everything from the sidebar to another plugin, and a
+figure quietly missing from all of them for the length of a trade would be a worse lie than the one escrow prevents.
+Money is named on the table and only moves when both sides confirm, which is why the confirmation re-checks the
+balance and the settlement can still refuse over it.
+
+### Escrow is handed back exactly once
+
+Everything that ends a trade without the swap happening goes through `TradeManager.cancel`, and `TradeSession.end`
+makes that idempotent — a player closing the menu at the very moment the other one disconnects would otherwise hand
+the same stacks back twice. The ways a trade ends:
+
+| What happened                     | Where it is noticed                      |
+|:----------------------------------|:-------------------------------------------|
+| Either player closed the menu     | `TradeGUI.onClose`                        |
+| Either player disconnected        | `TradeListener.onQuit`                    |
+| They walked too far apart         | `TradeWatchTask`                          |
+| A menu was replaced by another    | `TradeWatchTask`                          |
+| A chat question went unanswered   | `TradeWatchTask`                          |
+| The plugin stopped                | `TradeManager.shutdown`, from `onDisable` |
+
+**The quit path is load-bearing.** A `PlayerQuitEvent` handler still runs before the server writes the player's
+inventory to disk, so handing escrow back there is what keeps a disconnect from costing them anything. It is also why
+`cancel` takes the leaving `Player` rather than looking them up: by the time a lookup would run they may be gone.
+`TradeManager.shutdown` runs early in `onDisable`, while both players of every trade are still online.
+
+A hard crash is the one case escrow cannot survive, and nothing pretends otherwise: an item that cannot be handed back
+is logged as a warning naming the player and the number of stacks.
+
+### Confirming
+
+`TradeSession.touch` is called after **every** change to either offer. It drops both confirmations and starts a short
+lock, so a confirmation only ever describes the table as it was at the moment it was given, and a change cannot be
+beaten by a click already on its way to the server. Both sides confirming settles the trade immediately.
+
+A refused settlement does **not** end the trade. It drops both confirmations and says why, because what went wrong —
+no room, or money that is no longer there — is usually something the players can put right without starting over.
+
+### The swap
+
+`TradeExchange.execute` follows the same discipline shop trades do: everything that can refuse is asked before
+anything is handed over. Both players online, both still in range, both with room for what they are about to receive;
+then the money, which is the last step that can fail; then the items, which cannot.
+
+Money settles as a **single net payment**. If one side puts up 100 and the other 40, sixty moves once. Two payments
+could leave a player unable to make the second with money the first had already taken, and there is no state in which
+a trade should be half paid for. It is attributed with `EconomyContext.SOURCE_TRADE` and `TransactionReason.TRADE`,
+which `FlowCategory.of` maps to `PAYMENT` — a trade moves money between two players rather than creating or
+destroying any, so it is neither a faucet nor a sink.
+
+### The menu
+
+Both players look at the same trade through a window of their own, so every item is drawn for its **viewer** rather
+than for a side: the left four columns are always what you have put up and the right four always the other player's,
+whichever end of the trade you are at. Anything either of them changes calls `TradeGUI.redraw`, which refreshes both
+windows through `GUIManager.refresh` so the two can never show different tables.
+
+Every click is cancelled and then carried out by hand. The offer and the player's own inventory only add up if one
+piece of code moves both, so the client is never allowed to move anything itself.
+
+Money is put up with click steps on the gold-ingot slot, and an exact amount is asked for in chat through
+`ChatPrompt`, because a chest menu has nowhere to type. That closes the menu, which is otherwise how a trade is called
+off — `TradeParty.promptingSince` is what tells the two apart, and it is what the other side is shown in place of a
+confirmation while it is set. `TradeWatchTask` brings a player back to the menu if they back out of the question, and
+calls the trade off if they leave it hanging.
+
+### Settings
+
+| Key                            | What it does                                                   |
+|:-------------------------------|:-----------------------------------------------------------------|
+| `player-trades.enabled`        | Turns trading off entirely                                     |
+| `player-trades.distance`       | How close the two players must be, when asking and throughout  |
+| `player-trades.request-expiry` | Seconds an unanswered request stands                           |
+
+`TradeSettings` is a snapshot swapped in whole on a reload, the way `ShopSettings` is.
 
 
 ## Sidebar

@@ -97,7 +97,7 @@ class ShopStatsGUI : PagedPluginGUI(
             player.tr("gui.shop-stats.money-out", "amount" to ShopRender.money(entry.stats.moneyOut)),
         )
 
-        return ShopRender.withLore(entry.displayStack(), lore)
+        return LoreUtil.withLore(entry.displayStack(), lore)
     }
 
     private fun shopOf(player: Player): ShopDefinition? = viewing[player.uniqueId]?.let(ShopManager::get)

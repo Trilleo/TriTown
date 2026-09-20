@@ -100,6 +100,29 @@ object GUIManager : Listener {
     fun getGUI(id: String): PluginGUI? = guis[id]
 
     /**
+     * The GUI [player] currently has open, or `null` when they have none of
+     * this plugin's menus open.
+     */
+    fun openGUI(player: Player): PluginGUI? = openGUIs[player]?.first
+
+    /**
+     * Redraws the GUI [player] already has open.
+     *
+     * The same inventory is written into rather than a new one being opened, so
+     * the screen does not flash and a menu that changes while it is being
+     * looked at — a trade the other player just added to — updates in place.
+     *
+     * @return `false` when the player has no plugin GUI open
+     */
+    fun refresh(player: Player): Boolean {
+        val (gui, inventory) = openGUIs[player] ?: return false
+        fillInventory(gui, inventory)
+        gui.setup(player, inventory)
+        player.updateInventory()
+        return true
+    }
+
+    /**
      * Returns an unmodifiable view of all registered GUI ids.
      */
     fun getRegisteredIds(): Set<String> = guis.keys.toSet()

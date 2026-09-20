@@ -11,6 +11,7 @@ import net.trilleo.mc.plugins.tritown.registration.PagedPluginGUI
 import net.trilleo.mc.plugins.tritown.shops.ShopDefinition
 import net.trilleo.mc.plugins.tritown.shops.ShopManager
 import net.trilleo.mc.plugins.tritown.utils.ComponentUtil
+import net.trilleo.mc.plugins.tritown.utils.LoreUtil
 import net.trilleo.mc.plugins.tritown.utils.tr
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -141,7 +142,7 @@ class AdminShopsGUI : PagedPluginGUI(
             meta.lore(null)
         }
 
-        return ShopRender.withLore(icon, lines)
+        return LoreUtil.withLore(icon, lines)
     }
 
     companion object {

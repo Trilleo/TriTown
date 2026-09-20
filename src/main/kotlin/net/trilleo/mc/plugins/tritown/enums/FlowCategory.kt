@@ -28,7 +28,7 @@ enum class FlowCategory {
     /** An administrator giving, taking, setting or resetting a balance. */
     ADMIN,
 
-    /** A payment from one account to another. */
+    /** A payment from one account to another, whether sent with `/pay` or settled by a trade. */
     PAYMENT,
 
     /** Another plugin, through Vault, with nothing to identify it further. */
@@ -67,7 +67,7 @@ enum class FlowCategory {
                 key == TransactionReason.SHOP_BUY || key == TransactionReason.SHOP_SELL -> SHOP
                 key == TransactionReason.TOWNY || key == TransactionReason.TOWN_DELETED -> TOWNY
                 key == TransactionReason.ADMIN_SET || key == TransactionReason.ADMIN_RESET -> ADMIN
-                key == TransactionReason.PAYMENT -> PAYMENT
+                key == TransactionReason.PAYMENT || key == TransactionReason.TRADE -> PAYMENT
                 source == EconomyContext.SOURCE_SHOP -> SHOP
                 source == EconomyContext.SOURCE_TOWNY -> TOWNY
                 key == TransactionReason.EXTERNAL -> EXTERNAL

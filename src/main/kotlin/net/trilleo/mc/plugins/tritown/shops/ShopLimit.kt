@@ -3,13 +3,17 @@ package net.trilleo.mc.plugins.tritown.shops
 import net.trilleo.mc.plugins.tritown.enums.LimitPeriod
 
 /**
- * A cap on how much of one entry a single player may buy.
+ * A cap on how many items of one entry a single player may trade.
+ *
+ * Counted in items rather than in purchases, so an entry that hands over a
+ * bundle of sixteen spends sixteen of the allowance per click: an administrator
+ * who writes "64 a day" means sixty-four items however the bundle is sized.
  *
  * Windows are counted from the epoch rather than from each player's first
  * purchase, so everyone's daily limit rolls over at the same moment and a
  * player cannot stagger their buying to get more than the cap allows.
  *
- * @param amount how many bundles a player may buy per window
+ * @param amount how many items a player may trade per window
  * @param period how often the window starts over
  */
 data class ShopLimit(val amount: Int, val period: LimitPeriod) {
@@ -22,7 +26,7 @@ data class ShopLimit(val amount: Int, val period: LimitPeriod) {
     }
 
     /**
-     * How many bundles are still available to a player who has bought [used] of
+     * How many items are still available to a player who has traded [used] of
      * them in window [usedWindow].
      *
      * A count from an earlier window is spent, so it is ignored rather than

@@ -17,6 +17,7 @@ command:
     info: "信息"
     moderation: "管理"
     shop: "商店"
+    trade: "交易"
     admin: "管理"
 
   help:
@@ -111,6 +112,31 @@ command:
     unpinned: "侧边栏已恢复为根据所在位置自动切换。"
     unknown-board: "<red>不存在名为 <white>{board}</white> 的板面。"
 
+  trades:
+    description: "打开服务器的全局商店"
+    players-only: "<red>商店是菜单，只有玩家能打开。"
+    disabled: "<red>本服务器已关闭商店功能。"
+    unavailable: "<red>全局商店现在不可用。"
+
+  trade:
+    description: "向其他玩家发起交易"
+    players-only: "<red>交易在菜单中进行，只有玩家能使用。"
+    disabled: "<red>本服务器已关闭玩家交易功能。"
+    usage: "<red>用法：<white>/trade <player></white>"
+    self: "<red>你不能和自己交易。"
+    not-found: "<red><white>{name}</white> 不在线。"
+    busy: "<red><white>{name}</white> 正在和别人交易。"
+    you-busy: "<red>你已经在交易中了。"
+    too-far: "<red>你们必须站在一起才能交易。"
+    sent: "已向 <white>{name}</white> 发起交易请求，对方有 <white>{seconds}秒</white> 时间回应。"
+    received: "<white>{name}</white> 想和你交易。<click:run_command:'/trade accept {name}'><green><bold>[接受]</bold></green></click> <click:run_command:'/trade deny {name}'><red><bold>[拒绝]</bold></red></click>"
+    expired: "<gray>你向 <white>{name}</white> 发起的交易请求已过期。"
+    no-requests: "<red>没有人向你发起交易请求。"
+    no-request: "<red><white>{name}</white> 没有向你发起交易请求。"
+    which-request: "<red>有多个玩家发起了请求，请指明是谁：<white>{names}</white>"
+    denied: "已拒绝 <white>{name}</white> 的交易请求。"
+    denied-by: "<white>{name}</white> 拒绝了你的交易请求。"
+
   shop:
     description: "管理服务器商店"
     disabled: "<red>本服务器已关闭商店功能。"
@@ -121,6 +147,7 @@ command:
     created: "已创建商店 <white>{id}</white>。"
     create-failed: "<red><white>{id}</white> 已被占用或不是有效的 id。请使用小写字母、数字、短横线和下划线。"
     delete-confirm: "<red>删除商店无法撤销。请执行 <white>/tritown shop delete {id} confirm</white> 继续。"
+    delete-global: "<red><white>{id}</white> 是 <white>/trades</white> 打开的商店，无法删除。请在编辑器中清空它，或将 <white>shops.global-id</white> 指向其他商店。"
     deleted: "已删除商店 <white>{id}</white>。"
     opened: "已为 <white>{player}</white> 打开商店 <white>{id}</white>。"
     bound: "<white>{npc}</white> 现在会打开商店 <white>{id}</white>。"
@@ -184,6 +211,7 @@ money:
     admin-reset: "由 {admin} 重置"
     shop-buy: "在 {shop} 购买"
     shop-sell: "在 {shop} 出售"
+    trade: "玩家交易"
 
   # 资金的来源与去向，管理面板按此归类统计。
   flow:
@@ -444,14 +472,17 @@ gui:
     unknown: "<dark_gray>商店"
     empty: "<red>暂无商品"
     empty-lore: "<gray>这家商店还没有任何商品。"
-    buy: "<gray>购买：<gold>{price}</gold>"
-    buy-discounted: "<gray>购买：<gold>{price}</gold> <dark_gray><st>{full}</st>"
+    buy: "<gray>购买：<red>{price}</red>"
+    buy-discounted: "<gray>购买：<red>{price}</red> <dark_gray><st>{full}</st>"
     sell: "<gray>出售：<green>{price}</green>"
     cost-item: "<gray>- <white>{amount}个</white> {item}"
+    buy-item: "<gray>- <red>{amount}个</red> {item}"
+    sell-item: "<gray>- <green>{amount}个</green> {item}"
     stock: "<gray>库存：<white>{amount}</white><dark_gray>/{max}"
-    limit: "<gray>你还能买：<white>{amount}</white> <dark_gray>（{period}）"
+    limit: "<gray>你还能买 <red>{amount}</red> 个 <dark_gray>（{period}）"
+    sell-limit: "<gray>你还能卖 <green>{amount}</green> 个 <dark_gray>（{period}）"
     click-buy: "<yellow>左键 <gray>购买一份"
-    click-buy-max: "<yellow>Shift + 左键 <gray>买下能买的全部"
+    click-amount: "<yellow>Shift + 左键 <gray>选择数量"
     click-sell: "<yellow>右键 <gray>出售一份"
     click-sell-max: "<yellow>Shift + 右键 <gray>卖出身上全部"
     locked-permission: "<red>你无法购买此商品。"
@@ -472,6 +503,15 @@ gui:
     match-exact: "完全相同的物品"
     match-material: "同类的任意物品"
 
+  shop-amount:
+    title: "<dark_gray>买多少？"
+    bundle: "<dark_gray>每次出售 {amount} 个"
+    option: "<yellow>{amount}个 <white>{item}"
+    option-locked: "<dark_gray>{amount}个 {item}"
+    click-buy: "<yellow>单击 <gray>买下这些"
+    back: "<yellow>返回"
+    back-lore: "<gray>返回商店，不购买任何东西。"
+
   shop-confirm:
     title: "<dark_gray>确认购买"
     amount: "<gray>你将获得 <white>{amount}</white>"
@@ -488,6 +528,7 @@ gui:
     id: "<gray>Id：<white>{id}</white>"
     entries: "<gray>商品数：<white>{amount}</white>"
     npcs: "<gray>NPC 数：<white>{amount}</white>"
+    global: "<green>使用 <white>/trades</white> 打开"
     click-edit: "<yellow>单击 <gray>编辑"
     click-preview: "<yellow>Shift + 单击 <gray>以玩家视角查看"
 
@@ -540,6 +581,7 @@ gui:
   shop-entry:
     title: "<dark_gray>商品设置"
     bundle: "<gray>每次购买获得 <white>{amount}</white>"
+    count-lore: "<dark_gray>按物品数计算，而非按购买次数。"
     bundle-size: "<gold>每次购买数量"
     bundle-lore: "<dark_gray>可以超过一组，将分成多组交付。"
     state: "<gray>当前：<white>{state}</white>"
@@ -552,6 +594,7 @@ gui:
     sell-items: "<gold>回收价（物品）"
     item-count: "<gray>物品种类：<white>{amount}</white>"
     limit: "<gold>每人限购"
+    sell-limit: "<gold>每人限售"
     limit-value: "{amount}（{period}）"
     stock: "<gold>库存"
     stock-unlimited: "无限"
@@ -571,8 +614,9 @@ gui:
     prompt-price: "<gray>请在聊天栏输入新的价格。"
     prompt-permission: "<gray>请在聊天栏输入权限节点。"
     prompt-bundle: "<gray>请输入每次购买应获得的数量。"
-    prompt-limit: "<gray>请输入每个玩家最多能买多少。<white>0</white> 表示不限。"
-    prompt-stock: "<gray>请输入库存和补货秒数，例如 <white>64 3600</white>。<white>0</white> 表示不限库存。"
+    prompt-limit: "<gray>请输入每个玩家每个周期最多能买多少个物品。<white>0</white> 表示不限。"
+    prompt-sell-limit: "<gray>请输入每个玩家每个周期最多能卖多少个物品。<white>0</white> 表示不限。"
+    prompt-stock: "<gray>请输入库存物品数和补货秒数，例如 <white>64 3600</white>。<white>0</white> 表示不限库存。"
     back: "<yellow>返回"
     back-lore: "<gray>回到商店编辑器。"
 
@@ -613,6 +657,37 @@ gui:
     net: "<gray>净额：<white>{amount}</white>"
     reset: "<yellow>Shift + 单击 <gray>将所有数据清零"
 
+
+  # 两名玩家进行交易的界面。菜单左半边永远是查看者自己放上的东西，右半边是对方的。
+  trade:
+    title: "<dark_gray>与 {name} 交易"
+    take-back: "<yellow>单击 <gray>收回该物品"
+    their-item: "<gray>由 <white>{name}</white> 放上"
+    partner: "<aqua><bold>{name}</bold>"
+    partner-lore: "<gray>与你交易的玩家。"
+    money-yours: "<gold><bold>你出的金钱</bold>"
+    money-theirs: "<gold><bold>{name} 出的金钱</bold>"
+    money-amount: "<gray>已放上：<gold>{amount}</gold>"
+    money-balance: "<gray>你拥有：<white>{amount}</white>"
+    money-add: "<yellow>单击 <gray>增加 {amount}"
+    money-remove: "<yellow>右键 <gray>减少 {amount}"
+    money-bulk: "<yellow>按住 Shift <gray>每次 {amount}"
+    money-exact: "<yellow>按 Q <gray>输入精确金额"
+    money-none: "<red>经济系统不可用"
+    confirm: "<gray><bold>确认</bold>"
+    confirm-lore: "<gray>同意当前的交易内容，双方都要确认。"
+    confirmed: "<green><bold>已确认</bold>"
+    confirmed-lore: "<gray>单击可撤回你的确认。"
+    their-confirm: "<gray><bold>{name} 尚未确认</bold>"
+    their-confirmed: "<green><bold>{name} 已确认</bold>"
+    their-away: "<yellow><bold>{name} 正在输入金额</bold>"
+    status: "<yellow><bold>交易说明</bold>"
+    status-add: "<gray>单击你背包中的物品即可放上，右键只放上一个。"
+    status-take: "<gray>再次单击菜单中的物品即可收回。"
+    status-both: "<gray>双方都确认之前，任何东西都不会易手。"
+    status-close: "<gray>关闭此菜单将取消交易。"
+    status-locked: "<red>交易内容刚刚发生变化，请重新确认。"
+
 # 商店在菜单之外发给玩家的消息。
 shop:
   traded: "以 <gold>{price}</gold> 成交 <white>{amount}个</white> {item}。"
@@ -623,14 +698,16 @@ shop:
     unavailable: "<red>商店暂时不可用。"
     locked: "<red>你无法进入这家商店。"
     bad-amount: "<red>这家商店无法交易这个数量。"
+    part-bundle: "<red>此物品每次以 <white>{amount}</white> 个为单位交易。"
     not-for-sale: "<red>这件商品不出售。"
     not-bought: "<red>这家商店不回收此物。"
     cannot-afford: "<red>你的钱不够，需要 <white>{price}</white>。"
     missing-items: "<red>你缺少所需的物品。"
     missing-goods: "<red>你身上的数量不够。"
     no-space: "<red>你的背包放不下。"
-    out-of-stock: "<red>库存只剩 <white>{amount}</white> 份。"
-    limit-reached: "<red>你最多还能买 <white>{amount}</white> 份。"
+    out-of-stock: "<red>库存只剩 <white>{amount}</white> 个。"
+    limit-reached: "<red>你最多还能买 <white>{amount}</white> 个。"
+    sell-limit-reached: "<red>你最多还能卖 <white>{amount}</white> 个。"
     economy-unavailable: "<red>经济系统不可用，无法付款。"
     payout-refused: "<red>付款失败，交易未完成。"
 
@@ -638,6 +715,32 @@ shop:
     entry-added: "已将 {item} 加入商店，接下来设置价格。"
     entry-removed: "已移除该商品。"
     sorted: "已将全部 {amount} 件商品重新排序。"
+
+
+# 玩家之间的交易在菜单之外发出的消息。
+trade:
+  done: "已与 <white>{name}</white> 完成交易。"
+  money-prompt: "<gray>请输入要放上的金额。你拥有 <white>{amount}</white>。"
+  money-capped: "<gray>已放上 <white>{amount}</white>，这是你的全部金钱。"
+
+  error:
+    offer-full: "<red>一次最多只能放上 <white>{amount}</white> 组物品。"
+    no-room: "<red>你的背包放不下，无法收回。"
+    economy-unavailable: "<red>经济系统不可用，无法交易金钱。"
+    cannot-afford: "<red>你没有这么多钱。"
+    locked: "<red>交易内容刚刚发生变化，请看清后再确认。"
+    gone: "<red><white>{name}</white> 已经不在这里了。"
+    too-far: "<red>你们已经离得太远了。"
+    no-space: "<red><white>{name}</white> 的背包放不下。"
+    money: "<red><white>{name}</white> 付不出他们放上的金钱。"
+
+  cancelled:
+    closed: "<gray>交易已取消，你放上的东西都已退回背包。"
+    quit: "<gray>对方已离线，交易已取消。"
+    gone: "<gray>对方已经不在这里，交易已取消。"
+    too-far: "<gray>你们离得太远，交易已取消。"
+    away: "<gray>聊天栏中的提问无人回答，交易已取消。"
+    shutdown: "<gray>服务器正在关闭，交易已取消，你放上的东西都已退回。"
 
 
 scoreboard:

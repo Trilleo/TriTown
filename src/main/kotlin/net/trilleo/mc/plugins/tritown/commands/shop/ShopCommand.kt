@@ -126,6 +126,11 @@ class ShopCommand : PluginCommand(
             return
         }
 
+        if (ShopManager.isGlobal(shop.id)) {
+            sender.sendPrefixed(sender.tr("command.shop.delete-global", "id" to shop.id))
+            return
+        }
+
         Bukkit.getOnlinePlayers().forEach { ShopLimits.forget(it, shop) }
         ShopManager.delete(shop.id)
         sender.sendPrefixed(sender.tr("command.shop.deleted", "id" to shop.id))

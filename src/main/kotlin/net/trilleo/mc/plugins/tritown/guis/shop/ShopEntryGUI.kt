@@ -4,6 +4,7 @@ import net.trilleo.mc.plugins.tritown.config.ShopSettings
 import net.trilleo.mc.plugins.tritown.enums.FillMode
 import net.trilleo.mc.plugins.tritown.enums.LimitPeriod
 import net.trilleo.mc.plugins.tritown.enums.MatchMode
+import net.trilleo.mc.plugins.tritown.enums.TradeSide
 import net.trilleo.mc.plugins.tritown.registration.GUIManager
 import net.trilleo.mc.plugins.tritown.registration.PluginGUI
 import net.trilleo.mc.plugins.tritown.shops.*
@@ -58,7 +59,8 @@ class ShopEntryGUI : PluginGUI(
         inventory.setItem(SLOT_SELL_MONEY, money(player, entry.sell, "gui.shop-entry.sell-price"))
         inventory.setItem(SLOT_SELL_ITEMS, items(player, entry.sell, "gui.shop-entry.sell-items"))
 
-        inventory.setItem(SLOT_LIMIT, limit(player, entry))
+        inventory.setItem(SLOT_BUY_LIMIT, limit(player, entry, TradeSide.BUY))
+        inventory.setItem(SLOT_SELL_LIMIT, limit(player, entry, TradeSide.SELL))
         inventory.setItem(SLOT_STOCK, stock(player, entry))
         inventory.setItem(SLOT_PERMISSION, permission(player, entry))
         inventory.setItem(SLOT_TOWNY, towny(player, entry))
@@ -84,7 +86,8 @@ class ShopEntryGUI : PluginGUI(
             SLOT_BUY_ITEMS -> return ShopRender.navigate { ShopCostGUI.show(player, shop, entry, buying = true) }
             SLOT_SELL_ITEMS -> return ShopRender.navigate { ShopCostGUI.show(player, shop, entry, buying = false) }
             SLOT_BUNDLE -> return editBundle(player, shop, entry)
-            SLOT_LIMIT -> return editLimit(player, shop, entry, event.click)
+            SLOT_BUY_LIMIT -> return editLimit(player, shop, entry, TradeSide.BUY, event.click)
+            SLOT_SELL_LIMIT -> return editLimit(player, shop, entry, TradeSide.SELL, event.click)
             SLOT_STOCK -> return editStock(player, shop, entry, clear)
             SLOT_PERMISSION -> return askPermission(player, shop, entry, clear)
             SLOT_TOWNY -> entry.gate = entry.gate.copy(towny = cycle(entry.gate.towny, event.click))
@@ -168,30 +171,47 @@ class ShopEntryGUI : PluginGUI(
     }
 
     /** Left sets the amount, right clears the limit, and a middle click steps the window. */
-    private fun editLimit(player: Player, shop: ShopDefinition, entry: ShopEntry, click: ClickType) {
+    private fun editLimit(
+        player: Player,
+        shop: ShopDefinition,
+        entry: ShopEntry,
+        side: TradeSide,
+        click: ClickType,
+    ) {
         when (click) {
             ClickType.RIGHT, ClickType.SHIFT_RIGHT -> {
-                entry.limit = null
+                entry.setLimitOn(side, null)
                 ShopManager.save()
                 ShopRender.navigate { show(player, shop, entry) }
             }
 
             ClickType.MIDDLE -> {
-                val current = entry.limit ?: ShopLimit(1, LimitPeriod.NONE)
-                entry.limit = current.copy(period = cycle(current.period, ClickType.LEFT))
+                val current = entry.limitOn(side) ?: ShopLimit(1, LimitPeriod.NONE)
+                entry.setLimitOn(side, current.copy(period = cycle(current.period, ClickType.LEFT)))
                 ShopManager.save()
                 ShopRender.navigate { show(player, shop, entry) }
             }
 
-            else -> prompt(player, shop, entry, player.tr("gui.shop-entry.prompt-limit")) { input ->
-                val amount = input.toIntOrNull()
-                if (amount == null || amount < 0) {
-                    player.sendPrefixed(player.tr("common.error", "message" to player.tr("common.invalid-amount")))
-                } else {
-                    entry.limit = if (amount == 0) null else {
-                        (entry.limit ?: ShopLimit(amount, LimitPeriod.DAILY)).copy(amount = amount)
+            else -> {
+                val question = player.tr(
+                    if (side == TradeSide.BUY) "gui.shop-entry.prompt-limit" else "gui.shop-entry.prompt-sell-limit"
+                )
+
+                prompt(player, shop, entry, question) { input ->
+                    val amount = input.toIntOrNull()
+                    if (amount == null || amount < 0) {
+                        player.sendPrefixed(player.tr("common.error", "message" to player.tr("common.invalid-amount")))
+                    } else {
+                        val current = entry.limitOn(side)
+                        entry.setLimitOn(
+                            side,
+                            if (amount == 0) null else (current ?: ShopLimit(
+                                amount,
+                                LimitPeriod.DAILY
+                            )).copy(amount = amount),
+                        )
+                        ShopManager.save()
                     }
-                    ShopManager.save()
                 }
             }
         }
@@ -254,7 +274,7 @@ class ShopEntryGUI : PluginGUI(
 
     // ── Drawing ─────────────────────────────────────────────────────────
 
-    private fun goods(player: Player, entry: ShopEntry): ItemStack = ShopRender.withLore(
+    private fun goods(player: Player, entry: ShopEntry): ItemStack = LoreUtil.withLore(
         entry.displayStack(),
         listOf(player.tr("gui.shop-entry.bundle", "amount" to entry.bundleSize)),
     )
@@ -310,10 +330,10 @@ class ShopEntryGUI : PluginGUI(
         }
     }
 
-    private fun limit(player: Player, entry: ShopEntry): ItemStack = itemStack(Material.CLOCK) {
-        name(player.tr("gui.shop-entry.limit"))
+    private fun limit(player: Player, entry: ShopEntry, side: TradeSide): ItemStack = itemStack(Material.CLOCK) {
+        name(player.tr(if (side == TradeSide.BUY) "gui.shop-entry.limit" else "gui.shop-entry.sell-limit"))
         meta {
-            val current = entry.limit
+            val current = entry.limitOn(side)
             val value = if (current == null) {
                 player.tr("common.none")
             } else {
@@ -327,6 +347,7 @@ class ShopEntryGUI : PluginGUI(
             lore(
                 LoreUtil.wrapLore(
                     player.tr("gui.shop-entry.amount", "amount" to value) +
+                            "<newline>" + player.tr("gui.shop-entry.count-lore") +
                             "<newline>" + player.tr("gui.shop-entry.click-set") +
                             "<newline>" + player.tr("gui.shop-entry.middle-click-period") +
                             "<newline>" + player.tr("gui.shop-entry.right-click-clear")
@@ -353,6 +374,7 @@ class ShopEntryGUI : PluginGUI(
             lore(
                 LoreUtil.wrapLore(
                     player.tr("gui.shop-entry.amount", "amount" to value) +
+                            "<newline>" + player.tr("gui.shop-entry.count-lore") +
                             "<newline>" + player.tr("gui.shop-entry.click-set") +
                             "<newline>" + player.tr("gui.shop-entry.right-click-clear")
                 )
@@ -430,9 +452,10 @@ class ShopEntryGUI : PluginGUI(
         private const val SLOT_SELL_TOGGLE = 23
         private const val SLOT_SELL_MONEY = 24
         private const val SLOT_SELL_ITEMS = 25
-        private const val SLOT_LIMIT = 29
-        private const val SLOT_STOCK = 31
-        private const val SLOT_PERMISSION = 33
+        private const val SLOT_BUY_LIMIT = 28
+        private const val SLOT_SELL_LIMIT = 30
+        private const val SLOT_STOCK = 32
+        private const val SLOT_PERMISSION = 34
         private const val SLOT_TOWNY = 38
         private const val SLOT_HIDDEN = 40
         private const val SLOT_DISCOUNT = 42

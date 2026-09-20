@@ -82,8 +82,9 @@ src/main/kotlin/net/trilleo/mc/plugins/tritown/
 ├── registration/            # Auto-registration engine (do not modify lightly)
 ├── shops/                   # Admin shops: model, trading, storage, FancyNpcs bridge (not scanned)
 ├── tasks/                   # Scheduled tasks (auto-registered, extend PluginTask)
-└── utils/                   # Lang, EconomyUtil, itemStack DSL, MessageUtil, LoreUtil, ChatPrompt, CountdownUtil,
-                             # TeamUtil, TagUtil, PDCUtil, GameRuleUtil
+├── trades/                  # Player trades: sessions, escrow, the swap (not scanned)
+└── utils/                   # Lang, EconomyUtil, InventoryUtil, itemStack DSL, MessageUtil, LoreUtil,
+                             # ChatPrompt, CountdownUtil, TeamUtil, TagUtil, PDCUtil, GameRuleUtil
 src/main/resources/
 ├── config.yml  plugin.yml
 └── lang/                    # en_US.yml, zh_CN.yml — every player-facing string
@@ -93,8 +94,8 @@ src/main/resources/
 
 The plugin uses `PackageScanner` to discover components at startup — you **never** edit `plugin.yml` or wire things
 manually. Just extend the right base class and place the file in the correct package. Packages outside the table below
-are never scanned, which is why the economy core lives in `economy/` and the shop core in `shops/`: both have to be
-alive before the registrars build the commands and menus that read them.
+are never scanned, which is why the economy core lives in `economy/`, the shop core in `shops/` and the trade core
+in `trades/`: each has to be alive before the registrars build the commands and menus that read it.
 
 | Component   | Base Class                     | Package                 |
 |:------------|:-------------------------------|:------------------------|
@@ -246,6 +247,25 @@ The panel in `guis/admin` is where an owner reads the server; `/tritown admin` o
 - **Shop and entry names are administrator-written MiniMessage stored in the shop file**, not translation keys. Escape
   anything player-written before embedding it; a shop's own name is deliberately not escaped, because an administrator
   wrote it.
+
+## Working with Player Trades
+
+**A trade holds items that belong to a player.** See [Player Trades](docs/DEVELOPER_GUIDE.md#player-trades).
+
+- **Items are escrowed, money is not.** An item leaves the player's inventory the moment it is put up, so the other
+  side can trust what it sees. A balance is read by everything else on the server, so money is only named on the table
+  and moves at settlement — which is why confirming re-checks it and the swap can still refuse over it.
+- **Escrow goes back exactly once.** `TradeManager.cancel` is the only way a trade ends without the swap, and
+  `TradeSession.end` makes it idempotent. A new way for a trade to end is a new caller of `cancel`, never a new place
+  that drains an offer.
+- **Hand items back inside `PlayerQuitEvent`.** It still runs before the server writes the player's inventory, which
+  is the whole reason a disconnect costs them nothing. Pass the leaving `Player` in rather than looking it up.
+- **Every change to an offer goes through `TradeSession.touch`**, which drops both confirmations and starts the lock.
+  A confirmation must only ever describe the table as it was at the moment it was given.
+- **The swap lives in `TradeExchange` and nowhere else** — everything that can refuse is asked before anything is
+  handed over, and money settles as a single net payment so a trade can never be half paid for.
+- **Both windows are drawn for their viewer**, never for a side, and anything that changes the table calls
+  `TradeGUI.redraw` so the two can never disagree.
 
 ## Versioning & Releases
 

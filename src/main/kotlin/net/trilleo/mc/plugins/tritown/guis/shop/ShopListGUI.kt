@@ -56,15 +56,19 @@ class ShopListGUI : PagedPluginGUI(
     }
 
     private fun icon(player: Player, shop: ShopDefinition): ItemStack {
+        val isGlobal = ShopManager.isGlobal(shop.id)
+
         val lore = buildList {
             add(player.tr("gui.shop-list.id", "id" to shop.id))
             add(player.tr("gui.shop-list.entries", "amount" to shop.entries.size))
             add(player.tr("gui.shop-list.npcs", "amount" to shop.npcIds.size))
+            if (isGlobal) add(player.tr("gui.shop-list.global"))
             add(player.tr("gui.shop-list.click-edit"))
             add(player.tr("gui.shop-list.click-preview"))
         }
 
-        return itemStack(Material.CHEST) {
+        // The one shop players reach without walking to it, so it is worth telling apart at a glance.
+        return itemStack(if (isGlobal) Material.ENDER_CHEST else Material.CHEST) {
             name(shop.displayName)
             meta { lore(LoreUtil.wrapLore(lore.joinToString("<newline>"))) }
         }

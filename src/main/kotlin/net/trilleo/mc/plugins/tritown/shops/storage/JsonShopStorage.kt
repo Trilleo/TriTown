@@ -48,7 +48,7 @@ class JsonShopStorage(directory: File, private val logger: Logger) : ShopStorage
         ShopSchema.checkReadable(version, shopsFile.name)
 
         val array = document.getAsJsonArray(KEY_SHOPS) ?: return emptyList()
-        array.mapNotNull { element ->
+        val shops = array.mapNotNull { element ->
             runCatching { gson.fromJson(element, StoredShop::class.java) }
                 .getOrNull()
                 ?.takeIf { it.id.isNotBlank() }
@@ -57,6 +57,11 @@ class JsonShopStorage(directory: File, private val logger: Logger) : ShopStorage
                     null
                 }
         }
+
+        if (version < ShopSchema.CURRENT) {
+            logger.info("Upgrading ${shopsFile.name} from schema $version to ${ShopSchema.CURRENT}")
+        }
+        ShopMigrations.upgrade(shops, version)
     }
 
     override fun saveAll(shops: List<StoredShop>) = synchronized(ioLock) {

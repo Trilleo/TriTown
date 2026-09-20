@@ -1,16 +1,17 @@
 package net.trilleo.mc.plugins.tritown.guis.shop
 
-import net.kyori.adventure.key.Key
-import net.kyori.adventure.sound.Sound
 import net.kyori.adventure.text.Component
-import net.trilleo.mc.plugins.tritown.config.ShopSettings
 import net.trilleo.mc.plugins.tritown.enums.FillMode
 import net.trilleo.mc.plugins.tritown.enums.PagedLayout
 import net.trilleo.mc.plugins.tritown.enums.TownyRequirement
+import net.trilleo.mc.plugins.tritown.enums.TradeSide
 import net.trilleo.mc.plugins.tritown.registration.GUIManager
 import net.trilleo.mc.plugins.tritown.registration.PagedPluginGUI
 import net.trilleo.mc.plugins.tritown.shops.*
-import net.trilleo.mc.plugins.tritown.utils.*
+import net.trilleo.mc.plugins.tritown.utils.ComponentUtil
+import net.trilleo.mc.plugins.tritown.utils.LoreUtil
+import net.trilleo.mc.plugins.tritown.utils.itemStack
+import net.trilleo.mc.plugins.tritown.utils.tr
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
@@ -76,24 +77,20 @@ class ShopGUI : PagedPluginGUI(
         val entry = view.entryIds.getOrNull(index)?.let(shop::entry) ?: return
 
         val result = when (event.click) {
-            ClickType.LEFT -> tradeBuy(player, shop, entry, 1)
-            ClickType.SHIFT_LEFT -> tradeBuy(player, shop, entry, ShopTrade.maxBuyable(player, shop, entry))
-            ClickType.RIGHT -> ShopTrade.sell(player, shop, entry, 1)
+            ClickType.LEFT -> tradeBuy(player, shop, entry, entry.bundleSize)
+            ClickType.SHIFT_LEFT -> chooseAmount(player, shop, entry)
+            ClickType.RIGHT -> ShopTrade.sell(player, shop, entry, entry.bundleSize)
             ClickType.SHIFT_RIGHT -> sellMax(player, shop, entry)
             else -> return
         } ?: return
 
         when (result) {
             is ShopTrade.Result.Success -> {
-                announce(player, entry, result)
+                ShopRender.announce(player, entry, result)
                 redraw(event, view, index, player, shop, entry)
             }
 
-            is ShopTrade.Result.Failure -> {
-                val reason = player.tr(result.key, *result.args.toTypedArray())
-                player.sendPrefixed(player.tr("common.error", "message" to reason))
-                player.playSound(Sound.sound(Key.key("minecraft:entity.villager.no"), Sound.Source.UI, 1f, 1f))
-            }
+            is ShopTrade.Result.Failure -> ShopRender.refuse(player, result)
         }
     }
 
@@ -108,40 +105,34 @@ class ShopGUI : PagedPluginGUI(
      * Buys, unless the bill is large enough to be worth a second look — then the
      * confirmation menu takes over and this reports nothing.
      */
-    private fun tradeBuy(player: Player, shop: ShopDefinition, entry: ShopEntry, bundles: Int): ShopTrade.Result? {
-        if (bundles <= 0) {
-            return ShopTrade.Result.Failure("shop.error.cannot-afford", listOf("price" to unitPrice(player, entry)))
-        }
+    private fun tradeBuy(player: Player, shop: ShopDefinition, entry: ShopEntry, amount: Int): ShopTrade.Result? {
+        if (ShopConfirmGUI.askIfDear(player, shop, entry, amount)) return null
+        return ShopTrade.buy(player, shop, entry, amount)
+    }
 
-        val threshold = if (ShopSettings.isLoaded) ShopSettings.snapshot.confirmAbove else 0.0
-        val quote = ShopTrade.quoteBuy(player, entry, bundles)
-        val confirm = confirmGUI()
-
-        if (threshold > 0.0 && confirm != null && quote != null && quote.money > threshold) {
-            ShopRender.navigate { confirm.open(player, shop, entry, bundles) }
-            return null
-        }
-
-        return ShopTrade.buy(player, shop, entry, bundles)
+    /**
+     * Opens the amount menu, and reports nothing because the trade happens
+     * there.
+     *
+     * Only offered for goods that stack: an amount menu for a single item is
+     * five ways of saying one.
+     */
+    private fun chooseAmount(player: Player, shop: ShopDefinition, entry: ShopEntry): ShopTrade.Result? {
+        if (!entry.isBuyable || !entry.isStackable) return null
+        ShopRender.navigate { ShopAmountGUI.show(player, shop, entry) }
+        return null
     }
 
     private fun sellMax(player: Player, shop: ShopDefinition, entry: ShopEntry): ShopTrade.Result {
-        val bundles = ShopTrade.maxSellable(player, entry)
-        if (bundles <= 0) return ShopTrade.Result.Failure("shop.error.missing-goods")
-        return ShopTrade.sell(player, shop, entry, bundles)
-    }
+        val amount = ShopTrade.maxSellable(player, shop, entry)
+        if (amount > 0) return ShopTrade.sell(player, shop, entry, amount)
 
-    private fun announce(player: Player, entry: ShopEntry, result: ShopTrade.Result.Success) {
-        val key = if (result.money > 0.0 || entry.buy?.hasMoney == true) "shop.traded" else "shop.traded-items"
-        player.sendPrefixed(
-            player.tr(
-                key,
-                "amount" to entry.bundleSize * result.bundles,
-                "item" to ShopRender.itemName(entry.item),
-                "price" to ShopRender.money(result.money),
-            )
-        )
-        player.playSound(Sound.sound(Key.key("minecraft:entity.villager.yes"), Sound.Source.UI, 1f, 1f))
+        ShopLimits.remaining(player, shop, entry, TradeSide.SELL)?.let { left ->
+            if (left < entry.bundleSize) {
+                return ShopTrade.Result.Failure("shop.error.sell-limit-reached", listOf("amount" to left))
+            }
+        }
+        return ShopTrade.Result.Failure("shop.error.missing-goods")
     }
 
     private fun redraw(
@@ -183,35 +174,35 @@ class ShopGUI : PagedPluginGUI(
         return View(shop.id, entryIds, items)
     }
 
+    /**
+     * One entry as it sits on the shelf.
+     *
+     * The lore is built in blocks — what it costs, what it pays, how much of it
+     * is left, and what a click does — which [ShopRender.sections] spaces apart.
+     * Reading a price should not mean picking it out of a list of instructions.
+     */
     private fun draw(
         viewer: Player,
         shop: ShopDefinition,
         entry: ShopEntry,
         standing: Set<TownyRequirement>,
     ): ItemStack {
-        val lines = mutableListOf<String>()
         val refusal = ShopAccess.refusalKey(viewer, entry.gate, standing)
 
-        if (entry.isBuyable) {
-            val quote = ShopTrade.quoteBuy(viewer, entry, 1, standing)
-            if (quote != null && quote.isDiscounted) {
-                lines += viewer.tr(
-                    "gui.shop.buy-discounted",
-                    "price" to ShopRender.money(quote.money),
-                    "full" to ShopRender.money(quote.fullMoney),
-                )
-            } else if (entry.buy?.hasMoney == true) {
-                lines += viewer.tr("gui.shop.buy", "price" to ShopRender.money(quote?.money ?: 0.0))
-            }
-            entry.buy?.items?.forEach { lines += ShopRender.itemLine(viewer, it) }
-        }
+        val lore = ShopRender.sections(
+            listOf(
+                ShopRender.buyLines(viewer, entry, entry.bundleSize, standing),
+                ShopRender.sellLines(viewer, entry, entry.bundleSize),
+                availabilityLines(viewer, shop, entry),
+                if (refusal != null) listOf(viewer.tr(refusal)) else clickLines(viewer, entry),
+            )
+        )
 
-        if (entry.isSellable) {
-            entry.sell?.let { payout ->
-                if (payout.hasMoney) lines += viewer.tr("gui.shop.sell", "price" to ShopRender.money(payout.money))
-                payout.items.forEach { lines += ShopRender.itemLine(viewer, it) }
-            }
-        }
+        return LoreUtil.withLore(entry.displayStack(), lore)
+    }
+
+    private fun availabilityLines(viewer: Player, shop: ShopDefinition, entry: ShopEntry): List<String> {
+        val lines = mutableListOf<String>()
 
         entry.stock?.let { stock ->
             lines += viewer.tr(
@@ -221,36 +212,41 @@ class ShopGUI : PagedPluginGUI(
             )
         }
 
-        entry.limit?.let { limit ->
+        entry.buyLimit?.let { limit ->
             lines += viewer.tr(
                 "gui.shop.limit",
-                "amount" to (ShopLimits.remaining(viewer, shop, entry) ?: limit.amount),
+                "amount" to (ShopLimits.remaining(viewer, shop, entry, TradeSide.BUY) ?: limit.amount),
                 "period" to ShopRender.periodName(viewer, limit.period),
             )
         }
 
-        if (refusal != null) {
-            lines += viewer.tr(refusal)
-        } else {
-            if (entry.isBuyable) {
-                lines += viewer.tr("gui.shop.click-buy")
-                lines += viewer.tr("gui.shop.click-buy-max")
-            }
-            if (entry.isSellable) {
-                lines += viewer.tr("gui.shop.click-sell")
-                lines += viewer.tr("gui.shop.click-sell-max")
-            }
+        entry.sellLimit?.let { limit ->
+            lines += viewer.tr(
+                "gui.shop.sell-limit",
+                "amount" to (ShopLimits.remaining(viewer, shop, entry, TradeSide.SELL) ?: limit.amount),
+                "period" to ShopRender.periodName(viewer, limit.period),
+            )
         }
 
-        return ShopRender.withLore(entry.displayStack(), lines)
+        return lines
+    }
+
+    private fun clickLines(viewer: Player, entry: ShopEntry): List<String> {
+        val lines = mutableListOf<String>()
+
+        if (entry.isBuyable) {
+            lines += viewer.tr("gui.shop.click-buy")
+            if (entry.isStackable) lines += viewer.tr("gui.shop.click-amount")
+        }
+        if (entry.isSellable) {
+            lines += viewer.tr("gui.shop.click-sell")
+            lines += viewer.tr("gui.shop.click-sell-max")
+        }
+
+        return lines
     }
 
     private fun shopOf(player: Player): ShopDefinition? = views[player.uniqueId]?.let { ShopManager.get(it.shopId) }
-
-    private fun unitPrice(player: Player, entry: ShopEntry): String =
-        ShopRender.money(ShopTrade.quoteBuy(player, entry, 1)?.money ?: 0.0)
-
-    private fun confirmGUI(): ShopConfirmGUI? = GUIManager.getGUI(ShopConfirmGUI.ID) as? ShopConfirmGUI
 
     companion object {
         const val ID = "shop"

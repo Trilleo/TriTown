@@ -3,6 +3,9 @@ package net.trilleo.mc.plugins.tritown.shops
 /**
  * A finite supply of one entry, shared by everybody, that refills on a timer.
  *
+ * Counted in items rather than in purchases, the same way a per-player limit is,
+ * so a stock of 64 is sixty-four items however large a bundle one purchase is.
+ *
  * Restocking is lazy: nothing counts down in the background, and the supply is
  * brought up to date the moment somebody looks at it. A shop nobody visits for
  * a week therefore costs nothing and is still correct when they do.
@@ -10,7 +13,7 @@ package net.trilleo.mc.plugins.tritown.shops
  * A restock fills back to [max] rather than adding one unit per period, so a
  * long absence cannot bank an unbounded supply.
  *
- * @param max            the supply a restock fills back to
+ * @param max            how many items a restock fills back to
  * @param restockSeconds how long a restock takes; 0 never restocks, making the supply one-off
  */
 data class ShopStock(
@@ -20,7 +23,7 @@ data class ShopStock(
     var lastRestock: Long = 0L,
 ) {
 
-    /** How many bundles can be bought right now, restocking first if one is due. */
+    /** How many items can be bought right now, restocking first if one is due. */
     fun available(now: Long): Int {
         restock(now)
         return remaining
@@ -43,14 +46,14 @@ data class ShopStock(
         lastRestock += elapsed / period * period
     }
 
-    /** Takes [count] bundles, or returns `false` and takes nothing when the supply is short. */
+    /** Takes [count] items, or returns `false` and takes nothing when the supply is short. */
     fun take(count: Int, now: Long): Boolean {
         if (count <= 0 || available(now) < count) return false
         remaining -= count
         return true
     }
 
-    /** Puts [count] bundles back, for a purchase that was rolled back or an item sold to the shop. */
+    /** Puts [count] items back, for a purchase that was rolled back. */
     fun restore(count: Int) {
         remaining = (remaining + count).coerceAtMost(max)
     }

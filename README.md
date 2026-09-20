@@ -28,10 +28,17 @@ and off with `/tt scoreboard`, and it takes turns with Towny's own plot HUD rath
 **Shops the server runs.** Admin shops, set up entirely in game: click an item in your own inventory to put it on the
 shelf and it is sold exactly as you made it, custom name, enchantments and all. An entry can be sold, bought back, or
 both, and priced in currency, items, or a mix of the two. Give it a stock that refills on a timer, a limit on how much
-each player may buy per day or per week, a permission node, or a requirement to be in a town or a nation — and give
+each player may buy or sell per day or per week, a permission node, or a requirement to be in a town or a nation — and give
 town or nation members a discount while you are at it. Players reach a shop by clicking a
 [FancyNpcs](https://modrinth.com/plugin/fancynpcs) NPC, and every sale is recorded in the transaction log and totalled
 in a sales view.
+
+**Trading, player to player.** Shift-right-click another player, or run `/trade <player>`, and once they agree you
+both get the same table: sixteen stacks and any amount of money a side, yours on the left and theirs on the right.
+Items leave your inventory the moment you put them up and are held by the trade, so what the other side is looking at
+cannot be spent behind their back, and anything changing on the table clears both confirmations — nothing can be
+swapped out after somebody has agreed to it. Everything comes straight back if either of you closes the menu, walks
+away or disconnects.
 
 **An admin panel.** `/tt admin` opens a menu that reads the server back to you. The economy section shows how much
 currency exists and who holds it, what created it and what removed it — new players, shops, Towny, administrators or
@@ -91,6 +98,8 @@ Prebuilt jars are attached to every [GitHub release](https://github.com/Trilleo/
 | `/baltop [page]`         | List the richest accounts             |
 | `/eco <action> …`        | Administer balances (OP only)         |
 | `/tt scoreboard`         | Show or hide the sidebar              |
+| `/trades`                | Open the server's global shop         |
+| `/trade <player>`        | Ask another player to trade           |
 | `/tt shop <action> …`    | Set up the server's shops (OP only)   |
 | `/tt admin [section]`    | Open the admin panel (OP only)        |
 
@@ -103,6 +112,10 @@ viewing someone else's history additionally needs `tritown.economy.admin.history
 `edit <id>` to change what it offers, `open <id> [player]` to open it for somebody, `bind <id> <npc>` and
 `unbind <npc>` to put an NPC behind the counter, and `stats <id>` for what it has traded. Each action has its own
 permission, `tritown.shop.admin.<action>`. Players have no shop command of their own — they click an NPC.
+
+`/trade` also takes `accept [player]` and `deny [player]`, which the request message offers as buttons. Both players
+have to be within `player-trades.distance` blocks of each other, and have to stay that close for as long as the menu
+is open. There is no permission node: whether players may trade at all is `player-trades.enabled`.
 
 `/tt admin` opens the panel itself, and `economy` or `shops` opens that section directly. Opening the panel needs
 `tritown.admin`; the sections need `tritown.admin.economy` and `tritown.admin.shops` on top of it.
@@ -147,9 +160,13 @@ version stays available as `/tritown:balance` and so on.
 | `economy.stats.retention-days`            | `30`               | How far back those figures reach; `0` keeps them forever                        |
 | `shops.enabled`                           | `true`             | Turn shops off entirely                                                         |
 | `shops.save-interval`                     | `60`               | Seconds between writing stock and sales figures; edits are saved immediately    |
+| `shops.global-id`                         | `trades`           | The shop `/trades` opens; created empty if missing, and not deletable           |
 | `shops.confirm-above`                     | `1000.0`           | Purchase total that asks for confirmation first; `0` never asks                 |
 | `shops.sell-rate`                         | `0.5`              | What the editor suggests as a payout, as a fraction of the buy price            |
 | `shops.discounts.<standing>`              | `0.0`              | Money off for `has-town`, `has-nation`, `is-mayor` or `is-king`                 |
+| `player-trades.enabled`                   | `true`             | Turn player-to-player trading off entirely                                      |
+| `player-trades.distance`                  | `10.0`             | How close two players must be to trade, and stay while the menu is open         |
+| `player-trades.request-expiry`            | `60`               | Seconds an unanswered trade request stands                                      |
 | `scoreboard.enabled`                      | `true`             | Turn the sidebar off entirely                                                   |
 | `scoreboard.refresh-interval`             | `2`                | Seconds between redraws of a sidebar nothing has changed on                     |
 | `scoreboard.default-on`                   | `true`             | Whether a player who has never used `/tt scoreboard` sees one                   |
@@ -182,9 +199,17 @@ A shop is created with `/tt shop create <id>`, which opens its editor. Everythin
 - **Pricing it.** An entry has a buy side and a sell side, and each may be switched on or off on its own. Either side
   can ask for money, for items, or for both at once. Money is typed in chat when you click the price; items are added
   by clicking them in your inventory, and the stack size is the quantity.
+- **Reaching it.** A shop normally stands behind an NPC. One does not: the shop named by `shops.global-id`
+  (`trades` by default) opens from anywhere with `/trades`, for the goods the server always trades. It is created
+  empty on first start, is edited like any other shop, and cannot be deleted while it is the one `/trades` opens.
+- **Buying it.** A player left-clicks an entry to buy one purchase of it, and shift-left-clicks anything that stacks to
+  pick an amount instead — 1, 8, 16, 32 or 64, priced at the entry's own rate, so eight of something sold sixteen at a
+  time costs half. An amount they cannot take is greyed out with the reason rather than refusing after the click. Right
+  -click sells one purchase back, and shift-right-click sells everything they are carrying.
 - **Limiting it.** *Stock* is shared by everybody and refills to full on a timer. A *limit* is per player and resets
-  daily, weekly, or never. Both are optional, and an entry with neither is unlimited, which is what an admin shop
-  usually wants.
+  daily, weekly, or never; buying and selling have one each, and they are counted separately. All of them are counted
+  in items rather than in purchases — a limit of 64 on an entry that sells 16 at a time is four purchases — and all of
+  them are optional. An entry with none is unlimited, which is what an admin shop usually wants.
 - **Locking it.** A shop, and each entry inside it, can require a permission node or a standing in Towny — being in a
   town, being without one, being in a nation, being a mayor or being a king. A locked entry shows the reason by
   default, or can be hidden entirely.
@@ -204,6 +229,22 @@ in the transaction log and appears in `/eco history` as a shop movement naming t
 Shops live in `plugins/TriTown/shops/shops.json`, written atomically with a `.bak` copy beside it. A shop you edit is
 written straight away; stock levels and sales figures are written every `shops.save-interval` seconds, so a crash costs
 at most that long of counters and never a shop.
+
+### Player trades
+
+Shift-right-click the other player, or run `/trade <player>`. They get a request with **Accept** and **Deny** buttons,
+and nothing opens until they take it. Both of you have to be standing close by, and have to stay there.
+
+In the menu, click an item in your inventory to put it up — right-click puts up a single one — and click it again in
+the menu to take it back. The gold ingot is your money: left-click adds, right-click takes off, hold shift for ten
+times as much, and press **Q** to type an exact amount in chat. You can never put up more than you actually have.
+
+Anything either of you changes clears both confirmations and greys the button for a moment, so nothing can be swapped
+out after the other person has agreed to it. When you have both confirmed, the items change hands and any difference
+in money is paid across in one payment, recorded in the transaction log like any other.
+
+Closing the menu calls the trade off and everything goes straight back. So does walking too far apart, disconnecting,
+or the server stopping.
 
 ### The sidebar
 

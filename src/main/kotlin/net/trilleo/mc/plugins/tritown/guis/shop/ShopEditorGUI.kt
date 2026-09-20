@@ -281,7 +281,7 @@ class ShopEditorGUI : PagedPluginGUI(
             }
         }
 
-        val icon = ShopRender.withLore(entry.displayStack(), lore)
+        val icon = LoreUtil.withLore(entry.displayStack(), lore)
         return if (heldId == entry.id) ShopRender.glowing(icon) else icon
     }
 
@@ -293,7 +293,7 @@ class ShopEditorGUI : PagedPluginGUI(
 
     /** The entry being moved, in the navigation row so it is on screen whatever page is open. */
     private fun heldButton(player: Player, entry: ShopEntry): ItemStack = ShopRender.glowing(
-        ShopRender.withLore(
+        LoreUtil.withLore(
             entry.displayStack(),
             listOf(player.tr("gui.shop-editor.holding"), player.tr("gui.shop-editor.click-put-down")),
         )

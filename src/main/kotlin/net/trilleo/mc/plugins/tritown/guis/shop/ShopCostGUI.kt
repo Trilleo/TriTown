@@ -130,7 +130,7 @@ class ShopCostGUI : PluginGUI(
         (if (buying) entry.buy else entry.sell) ?: ShopCost.FREE
 
     private fun describe(player: Player, item: ItemStack): ItemStack =
-        ShopRender.withLore(item, listOf(player.tr("gui.shop-cost.click-remove")))
+        LoreUtil.withLore(item, listOf(player.tr("gui.shop-cost.click-remove")))
 
     private fun button(player: Player, material: Material, nameKey: String, loreKey: String): ItemStack =
         itemStack(material) {
