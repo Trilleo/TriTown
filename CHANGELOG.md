@@ -35,6 +35,34 @@
 + `main-menu.item.enabled` turns the item off (the menu stays reachable with `/tritown menu`), and
   `main-menu.item.material` picks what it is — a nether star by default.
 
+#### News
+
++ Added server news: update notes administrators write in game and every player reads from the main menu or with
+  `/tritown news`.
+    + A post has a title, an optional summary and label (such as `v1.3`), and categories of short entries — a line
+      or two about one change each. Every entry carries a tag: New, Changed, Fixed, Removed or Note.
+    + Posts are listed pinned first, then newest. A category's entries are read straight off its card; a long one
+      opens to show them one by one, and **Read as a book** shows the whole post as pages.
++ Players are told what they have missed.
+    + Joining with unread posts lists them in chat a moment later, each one a link to the post.
+    + The **News** button in the main menu glows while anything is unread and stacks up to the number unread, and the
+      menu item's description counts them too.
+    + Publishing a post can announce it to everyone online with a title, a sound and a link, or go out quietly.
+    + A new player only has the newest post waiting for them, not the whole backlog. `/tritown news readall` (or
+      **Mark all as read**) clears the rest.
++ Posts are written entirely in menus, with `tritown.news.manage`: open **Manage** in the news, or run
+  `/tritown news manage`.
+    + A post starts as a draft that only editors can see, can be previewed exactly as players will see it, and is
+      published when it is ready. It can be taken back to drafts, and deleting it asks first.
+    + **Write entries** takes one line after another in chat until you type `done`. Starting a line with `+`, `*`,
+      `!`, `-` or `?` tags it New, Changed, Fixed, Removed or Note; without one it keeps the tag of the line before.
+    + Categories and entries can be reordered, retagged and removed, a post can be pinned to the top, and a post or
+      category takes its icon from any item you click in your inventory.
+    + Every title, summary, category name and entry can be translated into each language the server has, and players
+      read their own language, falling back to the text as first written.
++ The `news` block of `config.yml` switches the news off, sets the join message's delay and length, what an
+  announcement shows and plays, and how long an entry may be (`max-entry-length`, default 200).
+
 ### Improvements
 
 #### Economy
@@ -59,6 +87,10 @@
   refuse a click knowing no menu will act on it.
 + `CommandRegistrar.find`, `canRun` and `run` let a menu run one of TriTown's commands directly, with its permission
   check, whatever label it ended up registered under.
++ `ConfirmGUI` asks before something that cannot be undone: a subject, up to three choices with actions, and Cancel.
++ `Lang.idFor` gives the language a sender reads, for text kept outside the language files.
++ The atomic write the shop file used (temporary file, `.bak`, atomic move) is now `AtomicFile`, shared with the news
+  file.
 
 ## Version 1.2.0
 

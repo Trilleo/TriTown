@@ -20,6 +20,7 @@ command:
     trade: "交易"
     admin: "管理"
     menu: "菜单"
+    news: "公告"
 
   help:
     header: "TriTown 命令"
@@ -28,6 +29,14 @@ command:
   menu:
     description: "打开主菜单"
     players-only: "<red>主菜单是菜单，只有玩家能打开。"
+
+  news:
+    description: "阅读服务器公告"
+    players-only: "<red>公告需要在菜单中阅读，只有玩家能打开。"
+    unavailable: "<red>本服务器的公告暂时不可用。"
+    unknown: "<red>没有这篇公告。"
+    all-read: "已将所有公告标记为已读。"
+    usage: "<red>用法：<white>/tritown news [open <id>|readall|manage]</white>"
 
   admin:
     description: "打开管理面板"
@@ -179,11 +188,49 @@ menu-item:
   lore: "<gray>右键打开菜单。<newline><dark_gray>它固定在这一格，无法丢弃、移动或存放。"
   relocated: "<gray>TriTown 菜单固定在快捷栏最后一格，原本在那里的物品已移入你的背包。"
   dropped: "<gray>TriTown 菜单固定在快捷栏最后一格，而你的背包已满，原本在那里的物品已掉落在你脚下。"
+  unread: "<gold>✉ {amount} 条未读的服务器公告"
 
 founding-credit:
   granted: "你获得了 <white>{amount}</white> 的建镇资金。使用 <white>/t new</white> 创建你的第一个城镇时会自动抵扣费用，不能用于其他任何用途。加入其他城镇会失去这笔资金。"
   applied: "你的建镇资金抵扣了 <white>{amount}</white> 的城镇创建费用。"
   forfeited: "<gray>你已加入一个城镇，建镇资金已失效。"
+
+# 服务器公告：在游戏内撰写、从主菜单阅读的更新日志。
+news:
+  # 单条条目的显示格式：先是标签，然后是内容。
+  entry: "{tag} <gray>{text}"
+  tag:
+    new: "<green>✚ 新增</green>"
+    changed: "<gold>✎ 调整</gold>"
+    fixed: "<dark_aqua>✔ 修复</dark_aqua>"
+    removed: "<red>✖ 移除</red>"
+    note: "<gray>✦ 备注</gray>"
+  join:
+    header: "<gold>✉</gold> 你有 <white>{amount}</white> 条未读的服务器公告："
+    entry: " <dark_gray>•</dark_gray> <click:run_command:'/tritown news open {id}'><white>{title}</white> <yellow>[阅读]</yellow></click>"
+    more: " <dark_gray>……还有 {amount} 条。"
+    open: " <click:run_command:'/tritown news'><gold><bold>[打开公告]</bold></gold></click>"
+  broadcast:
+    title: "<gold><bold>服务器更新</bold></gold>"
+    chat: "<gold>✉ 新的服务器公告：</gold> <white>{title}</white> <click:run_command:'/tritown news open {id}'><yellow><bold>[阅读]</bold></yellow></click>"
+  # 以成书形式显示的公告。书页底色较浅，深色文字更易阅读。
+  book:
+    title: "<bold>{title}</bold>"
+    label: "<dark_gray>{label}"
+    date: "<dark_gray>{date}"
+    summary: "{text}"
+    category: "<bold><underlined>{name}</underlined></bold>"
+    entry: "{tag} <black>{text}"
+  editor:
+    created: "已创建草稿。添加分类后，准备好即可发布。"
+    deleted: "公告已删除。"
+    published: "公告已发布。"
+    unpublished: "公告已撤回为草稿，玩家将无法再看到它。"
+    publish-empty: "<red>公告至少需要一条条目才能发布。"
+    category-removed: "分类已移除。"
+    entry-added: "已添加：{entry}"
+    entry-removed: "条目已移除。"
+    too-long: "<red>内容太长了，请控制在 <white>{amount}</white> 个字符以内。"
 
 common:
   unknown: "未知"
@@ -307,6 +354,10 @@ gui:
     sidebar-show: "<yellow>点击 <gray>显示"
     admin: "<red><bold>管理面板</bold></red>"
     admin-lore: "<gray>查看服务器的经济与商店数据。"
+    news: "<gold><bold>公告</bold></gold>"
+    news-lore: "<gray>服务器最近的变化。"
+    news-unread: "<yellow>{amount} 条未读"
+    news-entry: "<dark_gray>• <white>{title}"
 
   menu-leaderboard:
     title: "<dark_gray>财富排行"
@@ -774,6 +825,188 @@ gui:
     status-both: "<gray>双方都确认之前，任何东西都不会易手。"
     status-close: "<gray>关闭此菜单将取消交易。"
     status-locked: "<red>交易内容刚刚发生变化，请重新确认。"
+
+  # 公告：阅读界面，以及管理员撰写公告的编辑器。
+  # 标题、名称和条目内容均为管理员所写。
+  news:
+    title: "<gold><bold>{title}</bold></gold>"
+    pinned-title: "<gold>★</gold> <gold><bold>{title}</bold></gold>"
+    label: "<gray>{label}"
+    published: "<gray>发布于 <white>{date}</white>"
+    edited: "<gray>编辑于 <white>{date}</white>"
+    author: "<gray>作者：<white>{name}</white>"
+    summary: "<white>{text}"
+    category-count: "<gray>{name}<dark_gray>：</dark_gray><white>{amount}</white> 项变动"
+
+  news-list:
+    title: "<dark_gray>服务器公告"
+    empty: "<gray>暂时没有公告"
+    empty-lore: "<gray>服务器有更新时，更新日志会出现在这里。"
+    unread: "<yellow><bold>新</bold> <gray>- 你还没有读过这篇"
+    click-read: "<yellow>点击 <gray>阅读"
+    read-all: "<aqua>全部标为已读"
+    read-all-lore: "<gray>无需逐篇打开，直接清除所有未读标记。"
+    manage: "<red>管理公告"
+    manage-lore: "<gray>撰写、编辑并发布公告。"
+
+  news-post:
+    title: "<dark_gray>{title}"
+    back: "<yellow>全部公告"
+    back-lore: "<gray>返回公告列表。"
+    back-editor: "<yellow>返回编辑器"
+    back-editor-lore: "<gray>结束预览。"
+    book: "<gold>以书本形式阅读"
+    book-lore: "<gray>把整篇公告排成书页，内容较长时更便于阅读。"
+    edit: "<red>编辑这篇公告"
+    edit-lore: "<gray>在公告编辑器中打开。"
+    more: "<dark_gray>……还有 {amount} 条"
+    click-category: "<yellow>点击 <gray>逐条查看"
+    preview-draft: "<light_purple>预览 - 这篇草稿尚未发布"
+    preview-published: "<light_purple>预览 - 玩家看到的样子"
+
+  news-category:
+    title: "<dark_gray>{name}"
+    text: "<white>{text}"
+    back: "<yellow>返回公告"
+    back-lore: "<gray>回到整篇公告。"
+
+  news-manage:
+    title: "<dark_gray>管理公告"
+    empty: "<gray>还没有公告"
+    empty-lore: "<gray>点击下方按钮开始撰写。"
+    draft: "<light_purple>草稿 <gray>- 仅编辑者可见"
+    published: "<green>已发布"
+    id: "<dark_gray>ID：{id}"
+    entries: "<gray><white>{categories}</white> 个分类，<white>{amount}</white> 条条目"
+    click-edit: "<yellow>点击 <gray>编辑"
+    shift-click-delete: "<yellow>Shift+点击 <gray>删除"
+    back: "<yellow>返回"
+    back-lore: "<gray>回到公告。"
+    new: "<green>新建公告"
+    new-lore: "<gray>创建一篇草稿，随后会在聊天栏中询问标题。"
+    prompt-title: "<gray>请在聊天栏中输入新公告的标题，支持 MiniMessage。"
+    delete-title: "<dark_gray>删除这篇公告？"
+    delete: "<red><bold>删除</bold>"
+    delete-lore: "<gray>永久删除这篇公告，此操作无法撤销。"
+
+  news-editor:
+    title: "<dark_gray>编辑：{title}"
+    entries: "<gray>条目：<white>{amount}</white>"
+    click-category: "<yellow>点击 <gray>编辑其中的条目"
+    right-click-category: "<yellow>右键 <gray>移动到其他位置"
+    shift-click-category: "<yellow>Shift+点击 <gray>移除"
+    being-moved: "<aqua>正在移动"
+    click-put-down: "<yellow>点击 <gray>放回原处"
+    click-place-before: "<yellow>点击 <gray>将移动中的分类放到这一项前面"
+    holding: "<aqua>你正在移动这个分类"
+    move-first: "<aqua>移到最前"
+    move-first-lore: "<gray>把正在移动的分类放到第一个。"
+    move-last: "<aqua>移到最后"
+    move-last-lore: "<gray>把正在移动的分类放到最后一个。"
+    add: "<green>添加分类"
+    add-lore: "<gray>例如城镇、经济或修复。随后会在聊天栏中询问分类名称。"
+    prompt-category: "<gray>请在聊天栏中输入分类名称，支持 MiniMessage。"
+    settings: "<gold>公告设置"
+    settings-lore: "<gray>标题、摘要、标签、图标与置顶。"
+    preview: "<aqua>预览"
+    preview-lore: "<gray>以玩家的视角查看这篇公告。"
+    back: "<yellow>全部公告"
+    back-lore: "<gray>返回公告列表。"
+    publish: "<green><bold>发布</bold>"
+    publish-lore: "<gray>让所有玩家都能看到这篇公告。"
+    unpublish: "<gray>撤回发布"
+    unpublish-lore: "<gray>把公告撤回为草稿，玩家将看不到它。"
+    delete: "<red>删除公告"
+    delete-lore: "<gray>永久删除这篇公告。"
+    publish-title: "<dark_gray>发布这篇公告？"
+    publish-announce: "<gold><bold>发布并通知</bold>"
+    publish-announce-lore: "<gray>向所有在线玩家显示标题和公告链接。"
+    publish-quiet: "<green><bold>静默发布</bold>"
+    publish-quiet-lore: "<gray>发布时不打扰任何人，玩家仍会看到它显示为未读。"
+    remove-title: "<dark_gray>移除这个分类？"
+    remove: "<red><bold>移除</bold>"
+    remove-lore: "<gray>移除该分类及其中的所有条目。"
+
+  news-settings:
+    title: "<dark_gray>公告设置"
+    title-name: "<gold>标题"
+    summary: "<gold>摘要"
+    summary-lore: "<gray>标题下方的一句话，说明这次更新的内容。"
+    label: "<gold>标签"
+    label-lore: "<gray>版本号或季节，例如 v1.3 或秋季更新。"
+    icon: "<gold>图标"
+    icon-lore: "<gray>点击你背包中的任意物品即可设为图标，物品本身不会被拿走。"
+    pin: "<gold>置顶"
+    pinned: "<green>已置顶在公告最上方"
+    not-pinned: "<gray>未置顶"
+    value: "<gray>当前：<white>{value}</white>"
+    translated: "<gray>翻译：<white>{amount}</white>"
+    click-edit: "<yellow>点击 <gray>输入新内容"
+    click-toggle: "<yellow>点击 <gray>切换"
+    right-click-translate: "<yellow>右键 <gray>翻译"
+    right-click-clear: "<yellow>右键 <gray>清除"
+    right-click-reset: "<yellow>右键 <gray>恢复默认"
+    shift-click-clear: "<yellow>Shift+点击 <gray>移除"
+    prompt-title: "<gray>请在聊天栏中输入公告的新标题，支持 MiniMessage。"
+    prompt-summary: "<gray>请在聊天栏中输入摘要，支持 MiniMessage。"
+    prompt-label: "<gray>请在聊天栏中输入标签，例如 <white>v1.3</white>。"
+    back: "<yellow>返回"
+    back-lore: "<gray>回到公告的分类列表。"
+
+  news-category-editor:
+    title: "<dark_gray>分类：{name}"
+    click-entry: "<yellow>点击 <gray>编辑这条条目"
+    right-click-entry: "<yellow>右键 <gray>切换到下一个标签"
+    shift-right-click-entry: "<yellow>Shift+右键 <gray>移动"
+    shift-click-entry: "<yellow>Shift+点击 <gray>移除"
+    being-moved: "<aqua>正在移动"
+    click-put-down: "<yellow>点击 <gray>放回原处"
+    click-place-before: "<yellow>点击 <gray>将移动中的条目放到这一项前面"
+    holding: "<aqua>你正在移动这条条目"
+    move-first: "<aqua>移到最前"
+    move-first-lore: "<gray>把正在移动的条目放到第一条。"
+    move-last: "<aqua>移到最后"
+    move-last-lore: "<gray>把正在移动的条目放到最后一条。"
+    add: "<green>撰写条目"
+    add-lore: "<gray>在聊天栏中逐行输入条目。行首可加 <white>+</white> 新增、<white>*</white> 调整、<white>!</white> 修复、<white>-</white> 移除或 <white>?</white> 备注。"
+    name: "<gold>分类名称"
+    icon: "<gold>图标"
+    icon-lore: "<gray>点击你背包中的任意物品即可设为图标，物品本身不会被拿走。"
+    prompt-name: "<gray>请在聊天栏中输入分类的新名称，支持 MiniMessage。"
+    prompt-entries: "<gray>请在聊天栏中输入条目，每行一项变动。行首可加 <white>+</white> 新增、<white>*</white> 调整、<white>!</white> 修复、<white>-</white> 移除或 <white>?</white> 备注；不加则沿用上一条的标签。完成后输入 <white>{done}</white>。"
+    prompt-next: "<gray>请输入下一条，或输入 <white>{done}</white> 结束。"
+    back: "<yellow>返回"
+    back-lore: "<gray>回到公告的分类列表。"
+
+  news-entry:
+    title: "<dark_gray>条目"
+    tag-current: "<green>当前标签"
+    tag-click: "<yellow>点击 <gray>使用这个标签"
+    prompt-text: "<gray>请在聊天栏中输入条目的新内容，支持 MiniMessage。"
+    back: "<yellow>返回"
+    back-lore: "<gray>回到分类。"
+    delete: "<red>移除条目"
+    delete-lore: "<gray>把这条条目从分类中移除。"
+
+  news-text:
+    title: "<dark_gray>翻译"
+    main: "<gold>默认文本"
+    main-lore: "<gray>当玩家的语言没有对应翻译时显示此文本。"
+    current: "<white>{text}"
+    untranslated: "<dark_gray>未翻译：将显示默认文本"
+    language: "<aqua>{language}"
+    click-edit: "<yellow>点击 <gray>输入文本"
+    right-click-clear: "<yellow>右键 <gray>删除翻译"
+    prompt-main: "<gray>请在聊天栏中输入默认文本，支持 MiniMessage。"
+    prompt-language: "<gray>请在聊天栏中输入 <white>{language}</white> 的文本，支持 MiniMessage。"
+    back: "<yellow>返回"
+    back-lore: "<gray>回到之前的界面。"
+
+  # 执行无法撤销的操作前进行确认。
+  confirm:
+    title: "<dark_gray>确定吗？"
+    cancel: "<red><bold>取消</bold>"
+    cancel-lore: "<gray>返回，不做任何修改。"
 
 # 商店在菜单之外发给玩家的消息。
 shop:

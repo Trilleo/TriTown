@@ -190,6 +190,35 @@ towns:
   # Set to 0 to turn it off.
   founding-credit: 100.0
 
+# ── News ────────────────────────────────────────────────────────────────────
+# Update notes for the server, read from the main menu or with /tritown news.
+# Posts are written in game — /tritown news manage, or the Manage button in the
+# news — and nothing about them lives here. Writing them needs
+# tritown.news.manage.
+news:
+  # Switch the news off entirely: no menu button, no messages, no command.
+  enabled: true
+  join-message:
+    # Tell a player with unread posts about them a moment after they join, with
+    # a link to each one.
+    enabled: true
+    # How long after joining, so the message is not lost among the welcome ones.
+    delay-seconds: 3
+    # How many unread titles to list before pointing at the rest.
+    preview: 3
+  # What everyone online gets when a post is published with "Publish & announce".
+  # "Publish quietly" skips all of it.
+  announce:
+    # A title across the middle of the screen.
+    title: true
+    # A chat line with a link to the post.
+    chat: true
+    # A sound key, or "" for none.
+    sound: "minecraft:block.note_block.chime"
+  # The most characters one entry may be, not counting colour tags. An entry is
+  # meant to be a line or two about a single change.
+  max-entry-length: 200
+
 # ── Sidebar ─────────────────────────────────────────────────────────────────
 # The scoreboard shown at the right of the screen. Each board names a condition
 # and a priority, and a player sees the highest-priority board whose condition

@@ -68,7 +68,7 @@ The server console reads commands from the terminal running Gradle.
 src/main/kotlin/net/trilleo/mc/plugins/tritown/
 ├── Main.kt                  # Plugin entry point (Main.instance, Main.reload())
 ├── commands/                # Sub-commands (auto-registered)
-│   ├── admin/  economy/  info/  menu/
+│   ├── admin/  economy/  info/  menu/  news/
 │   └── moderation/  scoreboard/  shop/  trade/
 ├── config/                  # PluginConfig (typed config.yml wrapper), EconomySettings
 ├── data/                    # JSON-persisted PlayerData / ServerData and their managers
@@ -76,10 +76,11 @@ src/main/kotlin/net/trilleo/mc/plugins/tritown/
 │                            # storage (not scanned)
 ├── enums/                   # AccountType, FlowCategory, StatsWindow, TransactionType, FillMode, …
 ├── guis/                    # GUIs (auto-registered, extend PluginGUI / PagedPluginGUI); admin/ is the panel,
-│                            # menu/ the main menu
+│                            # menu/ the main menu, news/ the news; ConfirmGUI asks before the irreversible
 ├── items/                   # Custom items (auto-registered, extend PluginItem)
 ├── listeners/               # Event listeners, including Towny events (auto-registered)
 ├── menu/                    # The main menu item and the invariant that keeps it unique (not scanned)
+├── news/                    # Server news: posts, storage, read state, notifications (not scanned)
 ├── recipes/                 # Recipes (auto-registered, implement PluginRecipe)
 ├── registration/            # Auto-registration engine (do not modify lightly)
 ├── shops/                   # Admin shops: model, trading, storage, FancyNpcs bridge (not scanned)
@@ -87,7 +88,7 @@ src/main/kotlin/net/trilleo/mc/plugins/tritown/
 ├── towns/                   # Town founding credit (not scanned)
 ├── trades/                  # Player trades: sessions, escrow, the swap (not scanned)
 └── utils/                   # Lang, EconomyUtil, InventoryUtil, itemStack DSL, MessageUtil, LoreUtil,
-                             # ChatPrompt, CountdownUtil, TeamUtil, TagUtil, PDCUtil, GameRuleUtil
+                             # ChatPrompt, CountdownUtil, TeamUtil, TagUtil, PDCUtil, GameRuleUtil, AtomicFile
 src/main/resources/
 ├── config.yml  plugin.yml
 └── lang/                    # en_US.yml, zh_CN.yml — every player-facing string
@@ -97,8 +98,8 @@ src/main/resources/
 
 The plugin uses `PackageScanner` to discover components at startup — you **never** edit `plugin.yml` or wire things
 manually. Just extend the right base class and place the file in the correct package. Packages outside the table below
-are never scanned, which is why the economy core lives in `economy/`, the shop core in `shops/` and the trade core
-in `trades/`: each has to be alive before the registrars build the commands and menus that read it. `menu/` is outside
+are never scanned, which is why the economy core lives in `economy/`, the shop core in `shops/`, the trade core
+in `trades/` and the news core in `news/`: each has to be alive before the registrars build the commands and menus that read it. `menu/` is outside
 the scan for a simpler reason: `MenuItem` is not a `PluginItem`, because it is named in each holder's language.
 
 | Component   | Base Class                     | Package                 |
@@ -286,6 +287,22 @@ The main menu (`guis/menu`) is how players reach TriTown, opened from the menu i
   `reconcileLater` if the client may be out of step), never a second place that hands out or restores a copy.
 - **Never let a menu act on a cancelled click.** `GUIManager` already skips them; a GUI that listens to inventory
   events itself must do the same, or a refused click on the menu item reaches it anyway.
+
+## Working with News
+
+**Update notes administrators write in game and every player reads.** See
+[Server News](docs/DEVELOPER_GUIDE.md#server-news).
+
+- **Go through `NewsManager`** — it is the only thing that reads or writes a post. After editing a post in place, call
+  `NewsManager.changed(post)`, which saves at once and dates a published post as edited.
+- **A post's words are the administrator's, not translation keys.** Titles, summaries, category names and entries are
+  `LocalizedText` MiniMessage, embedded as written; read them with `forViewer(player)`, never `tr`. Only the words
+  around a post live in the language files.
+- **Unread comes from `NewsReadState` and nowhere else**, and `unread` must stay one pass over the published posts:
+  the menu item reads it every second for every player.
+- **Keep the model free of Bukkit types** — it is the file's shape. An icon is a material's name, read back through
+  `NewsRender.material`.
+- **Every editor click re-checks `tritown.news.manage`**, not only the command that opened the menu.
 
 ## Versioning & Releases
 

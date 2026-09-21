@@ -2,7 +2,7 @@
 
 This guide explains how to create **commands**, **listeners**, **GUIs**, **tasks**, **custom items**, **recipes**, work
 with **translations** and the **configuration** system using TriTown's registration system, and how to build on
-**Towny**, the **Vault economy**, the **admin panel**, **shops**, **player trades** and the **sidebar**. Commands, listeners, GUIs, tasks, custom items, and recipes all
+**Towny**, the **Vault economy**, the **admin panel**, **shops**, **player trades**, the **news** and the **sidebar**. Commands, listeners, GUIs, tasks, custom items, and recipes all
 follow the same pattern: extend a base class (or implement an interface), place the file in the correct package, and the
 plugin handles the rest automatically at startup. The configuration system provides typed access to `config.yml` values.
 
@@ -420,6 +420,22 @@ pure arithmetic apart from `pane` and `draw`, and `GUIFrameTest` pins it down.
 A menu of buttons whose set depends on the viewer — a permission, a feature switched off — should lay each row out with
 `spacedColumns` from the buttons it actually has, rather than fixing slots and leaving a hole where one is missing.
 `MainMenuGUI` and `AdminPanelGUI` both do this.
+
+### ConfirmGUI
+
+`ConfirmGUI` (in `guis/`) asks before something that cannot be undone. It shows what is at stake at the top and the
+answers along a row beneath it — one to three choices of the caller's, then Cancel — and runs whichever is clicked on
+the next tick, so an answer may open another menu. Closing it answers nothing.
+
+```kotlin
+ConfirmGUI.show(
+    player,
+    title = player.tr("gui.news-manage.delete-title"),
+    subject = card,
+    choices = listOf(ConfirmGUI.Choice(deleteButton) { NewsManager.delete(post); NewsManageGUI.show(it) }),
+    onCancel = { NewsEditorGUI.show(it, post) },
+)
+```
 
 ### Example
 
@@ -2484,13 +2500,13 @@ Every one of them opens at six rows. `MainMenuGUI` puts the profile alone at the
 up to three with `GUIFrame.spacedColumns`. **A button for something switched off or not permitted is left out, not
 greyed**, and each row is centred on what remains: the global shop only when shops are on and the viewer passes its
 gate, trading only when `player-trades.enabled`, pay and the leaderboard only with the economy running and the
-command's permission (`CommandRegistrar.canRun`), the sidebar switch only while the sidebar runs, the admin panel only
-with `tritown.admin`, and the TownyMenu shortcut only when TownyMenu is enabled. Empty rows are dropped, so the menu
+command's permission (`CommandRegistrar.canRun`), the news only while `NewsManager.isAvailable`, the sidebar switch
+only while the sidebar runs, the admin panel only with `tritown.admin`, and the TownyMenu shortcut only when TownyMenu is enabled. Empty rows are dropped, so the menu
 never has a hole in it. The two list menus use `PagedLayout.CENTERED` and keep *Back* and one extra button either side
 of the page number (`MenuRender.BACK_OFFSET`, `EXTRA_OFFSET`).
 
 **The menu points the way; it does not do the work.** Each button runs the command or opens the menu that already owns
-the action — `/trades`, `/trade <name>`, `/pay <name> <amount>` through `CommandRegistrar.run`, the admin panel,
+the action — `/trades`, `/trade <name>`, `/pay <name> <amount>`, `/tritown news` through `CommandRegistrar.run`, the admin panel,
 TownyMenu through its own `/townymenu` — so there is exactly one place each rule and message lives. Paying asks for the
 amount with `ChatPrompt` and hands it to `/pay`, which validates it.
 
@@ -2996,6 +3012,111 @@ calls the trade off if they leave it hanging.
 
 `TradeSettings` is a snapshot swapped in whole on a reload, the way `ShopSettings` is.
 
+
+## Server News
+
+Update notes for the server. Administrators write a post in game — a title, an optional summary and label, and
+categories of short entries, each tagged New, Changed, Fixed, Removed or Note — and every player reads it from the main
+menu or with `/tritown news`. Nothing about a post lives in `config.yml`; the `news` block only sets the rules.
+
+The core lives under `news/`, which is **not a scanned package**, for the same reason `shops/` is not: `NewsManager`
+has to be loaded before the main menu, the command and the menu item read it. The menus are in `guis/news/`, the
+command is `commands/news/NewsCommand`, and the join summary is `listeners/news/NewsJoinListener`.
+
+### The model
+
+| Type            | What it is                                                                                 |
+|:----------------|:-------------------------------------------------------------------------------------------|
+| `NewsPost`      | A post: title, summary, label, icon, categories, draft or published, pinned, dates, author |
+| `NewsCategory`  | A named group of entries with an icon                                                      |
+| `NewsEntry`     | One change in a sentence or two, with an `EntryTag`                                        |
+| `LocalizedText` | Text an administrator wrote, plus an optional translation for each language id             |
+| `NewsManager`   | Every post, drafts included, and the only thing that reads or writes one                   |
+| `NewsReadState` | Which posts each player has read, kept in their `PlayerData`                               |
+| `NewsNotifier`  | The join summary and the announcement sent when a post is published                        |
+| `NewsShorthand` | Reads a tag off the front of a line typed in chat (`+`, `*`, `!`, `-`, `?`)                |
+
+The model classes are also the file's shape, so they name no Bukkit types: an icon is a material's name, read back
+through `NewsRender.material`. Every field has a default, so Gson fills in whatever an older file lacks, and
+`NewsPost.repair` puts back anything a hand edit left `null` — Gson writes a JSON `null`, or an enum name it does not
+know, into a non-null Kotlin field without complaint.
+
+### Text is written, not translated
+
+Everything a post says is an administrator's MiniMessage, not a translation key, and is embedded as written the way a
+shop's name is. `LocalizedText.forViewer(player)` picks the viewer's translation through `Lang.idFor`, falling back to
+the text as first written, so a post written in one language still reads for everyone. The words *around* a post —
+buttons, tags, dates, the join message — are ordinary `news.*` and `gui.news*` keys.
+
+### Storage
+
+`JsonNewsStorage` keeps every post in `<dataFolder>/news/posts.json`, written through `AtomicFile` with the previous
+copy kept as `.bak`, and read back from the backup when the file will not parse. A file written by a newer build is
+refused rather than overwritten, and if the posts cannot be loaded at all `NewsManager.isReady` stays false and the
+feature switches itself off rather than start empty.
+
+Every change is written at once — call `NewsManager.changed(post)` after editing a post in place. It also dates a
+published post as edited, without making it unread again: a typo fix should not call everyone back.
+
+### Unread
+
+`NewsReadState` stores the ids a player has read (`news-read`) and the moment they first met the news
+(`news-since`). A post published before that moment does not count as unread, except the newest post, which always
+does until it is read — so a player joining a server with a year of notes has one waiting, not all of them. Publishing
+dates a post now, so a post unpublished and published again is news to everyone again.
+
+`MenuItem.create` counts the unread posts for the menu item's lore, and `MenuItem.reconcile` compares against a fresh
+copy every second, so **`NewsReadState.unread` must stay cheap**: one pass over the published posts, nothing more.
+The comparison is also what keeps the count current — nothing hands the item out again when a post is read.
+
+### Notifications
+
+| When                             | What the player gets                                                                            |
+|:---------------------------------|:------------------------------------------------------------------------------------------------|
+| Joining with unread posts        | A chat list of the unread titles, each a link to `/tritown news open <id>`                      |
+| A post published and announced   | A title, a sound and a chat link, per `news.announce.*`                                         |
+| Always, while anything is unread | The main menu's **News** button glows and stacks to the count; the menu item's lore counts them |
+
+The join summary waits `news.join-message.delay-seconds` (at least a second), so the client has sent its locale and the
+summary is not lost among the welcome messages. **Publish quietly** skips the announcement entirely; the post is still
+unread for everyone.
+
+### The menus
+
+| Menu                    | What it does                                                                       |
+|:------------------------|:-----------------------------------------------------------------------------------|
+| `NewsListGUI`           | Published posts, pinned first then newest; unread ones glow. Mark all read; Manage |
+| `NewsPostGUI`           | A post's card, then a card per category listing its entries; **Read as a book**    |
+| `NewsCategoryGUI`       | One category, an entry to an item, for a category too long for its card            |
+| `NewsManageGUI`         | Drafts then published posts; new post; delete (through `ConfirmGUI`)               |
+| `NewsEditorGUI`         | A post's categories: add, reorder, remove; settings, preview, publish, delete      |
+| `NewsSettingsGUI`       | Title, summary, label, icon (click an item in your own inventory) and pin          |
+| `NewsCategoryEditorGUI` | A category's entries: write them in chat, retag, reorder, remove; rename; icon     |
+| `NewsEntryGUI`          | One entry's text and tag                                                           |
+| `NewsTextGUI`           | One piece of text in every installed language; shared by every field               |
+
+`NewsPostGUI` opened with `preview = true` shows a draft as players will see it, does not mark it read, and leads back
+to the editor; `/tritown news open <id>` only ever previews a draft for an editor. Categories and entries are moved the
+way shop entries are — a click marks one, the next click says where it goes — and `NewsRender` draws everything the
+menus share, including the book.
+
+Writing, publishing and deleting need `tritown.news.manage` (`NewsCommand.MANAGE_PERMISSION`), which every editor menu
+checks on each click as well as the command.
+
+### Settings
+
+| Key                               | What it does                                                     |
+|:----------------------------------|:-----------------------------------------------------------------|
+| `news.enabled`                    | Turns the news off entirely: no button, no messages, no command  |
+| `news.join-message.enabled`       | Lists unread posts to a player as they join                      |
+| `news.join-message.delay-seconds` | How long after joining                                           |
+| `news.join-message.preview`       | How many unread titles the list names                            |
+| `news.announce.title` / `.chat`   | What everyone online gets when a post is published and announced |
+| `news.announce.sound`             | A sound key, or `""` for none                                    |
+| `news.max-entry-length`           | The most visible characters one entry may have                   |
+
+`NewsSettings` is a snapshot swapped in whole on a reload. The posts themselves are never re-read on a reload; every
+change to them is already on disk.
 
 ## Sidebar
 

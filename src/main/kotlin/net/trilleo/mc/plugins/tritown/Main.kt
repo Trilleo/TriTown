@@ -12,6 +12,8 @@ import net.trilleo.mc.plugins.tritown.economy.vault.TriTownVaultEconomy
 import net.trilleo.mc.plugins.tritown.economy.vault.VaultRegistration
 import net.trilleo.mc.plugins.tritown.enums.ProviderMode
 import net.trilleo.mc.plugins.tritown.menu.MenuItem
+import net.trilleo.mc.plugins.tritown.news.NewsManager
+import net.trilleo.mc.plugins.tritown.news.storage.JsonNewsStorage
 import net.trilleo.mc.plugins.tritown.registration.*
 import net.trilleo.mc.plugins.tritown.scoreboard.ScoreboardService
 import net.trilleo.mc.plugins.tritown.shops.ShopManager
@@ -106,6 +108,10 @@ class Main : JavaPlugin() {
         TownSettings.load(pluginConfig)
         MainMenuSettings.load(pluginConfig, logger)
 
+        // Before the registrars, for the same reason as the shops: the main menu reads the news as it is drawn.
+        NewsSettings.load(pluginConfig, logger)
+        NewsManager.start(JsonNewsStorage(dataFolder, logger), logger)
+
         ItemRegistrar.registerAll(this)
         RecipeRegistrar.registerAll(this)
 
@@ -149,6 +155,8 @@ class Main : JavaPlugin() {
 
         TradeSettings.load(pluginConfig)
         TownSettings.load(pluginConfig)
+        // Only the settings, as with the shops: every change to a post is already on disk.
+        NewsSettings.load(pluginConfig, logger)
 
         // The material may have changed, or the item been switched off.
         MainMenuSettings.load(pluginConfig, logger)

@@ -8,6 +8,8 @@ import net.trilleo.mc.plugins.tritown.economy.EconomyService
 import net.trilleo.mc.plugins.tritown.enums.FillMode
 import net.trilleo.mc.plugins.tritown.guis.admin.AdminPanelGUI
 import net.trilleo.mc.plugins.tritown.guis.admin.PanelRender
+import net.trilleo.mc.plugins.tritown.news.NewsManager
+import net.trilleo.mc.plugins.tritown.news.NewsReadState
 import net.trilleo.mc.plugins.tritown.registration.CommandRegistrar
 import net.trilleo.mc.plugins.tritown.registration.GUIFrame
 import net.trilleo.mc.plugins.tritown.registration.GUIManager
@@ -52,7 +54,7 @@ class MainMenuGUI : PluginGUI(
     fillMode = FillMode.NONE,
 ) {
 
-    private enum class Button { PROFILE, TOWN, SHOP, TRADE, PAY, LEADERBOARD, SERVER, SIDEBAR, ADMIN, CLOSE }
+    private enum class Button { PROFILE, TOWN, SHOP, TRADE, PAY, LEADERBOARD, SERVER, NEWS, SIDEBAR, ADMIN, CLOSE }
 
     /** Which button each slot holds, per viewer, since the buttons shown depend on who is looking. */
     private val layouts = ConcurrentHashMap<UUID, Map<Int, Button>>()
@@ -76,6 +78,7 @@ class MainMenuGUI : PluginGUI(
             Button.TRADE -> MenuRender.later(player) { PlayerPickerGUI.show(player, PlayerPickerGUI.Mode.TRADE) }
             Button.PAY -> MenuRender.later(player) { PlayerPickerGUI.show(player, PlayerPickerGUI.Mode.PAY) }
             Button.LEADERBOARD -> MenuRender.later(player) { LeaderboardGUI.show(player) }
+            Button.NEWS -> MenuRender.later(player) { CommandRegistrar.run(player, "news") }
             Button.ADMIN -> MenuRender.later(player) { GUIManager.open(player, AdminPanelGUI.ID) }
             Button.CLOSE -> MenuRender.later(player) { player.closeInventory() }
             Button.SIDEBAR -> {
@@ -113,6 +116,7 @@ class MainMenuGUI : PluginGUI(
                 Button.SERVER,
             ),
             listOfNotNull(
+                Button.NEWS.takeIf { NewsManager.isAvailable },
                 Button.SIDEBAR.takeIf { ScoreboardService.isRunning },
                 Button.ADMIN.takeIf { player.hasPermission(AdminPanelGUI.PERMISSION) },
             ),
@@ -148,6 +152,7 @@ class MainMenuGUI : PluginGUI(
         Button.PAY -> card(player, Material.GOLD_INGOT, "gui.menu.pay", "gui.menu.pay-lore")
         Button.LEADERBOARD -> leaderboard(player)
         Button.SERVER -> server(player)
+        Button.NEWS -> news(player)
         Button.SIDEBAR -> sidebar(player)
         Button.ADMIN -> card(player, Material.COMMAND_BLOCK, "gui.menu.admin", "gui.menu.admin-lore")
         Button.CLOSE -> itemStack(Material.BARRIER) { name(player.tr("gui.menu.close")) }
@@ -253,6 +258,32 @@ class MainMenuGUI : PluginGUI(
             player.tr("gui.admin.server-newday", "time" to TownyUtil.duration(player, TownyUtil.secondsUntilNewDay())),
         )
         return PanelRender.card(Material.CLOCK, player.tr("gui.menu.server"), lines)
+    }
+
+    /**
+     * Glows while anything is unread, and stacks up to the number unread — a
+     * count the viewer can see without opening it — with the newest titles in
+     * its lore.
+     */
+    private fun news(player: Player): ItemStack {
+        val unread = NewsReadState.unread(player)
+        val lines = mutableListOf(player.tr("gui.menu.news-lore"))
+        if (unread.isNotEmpty()) {
+            lines += ""
+            lines += player.tr("gui.menu.news-unread", "amount" to unread.size)
+            unread.take(PREVIEW_SIZE).forEach { post ->
+                lines += player.tr("gui.menu.news-entry", "title" to post.title.forViewer(player))
+            }
+        }
+        lines += ""
+        lines += player.tr("gui.admin.click-open")
+
+        return PanelRender.card(Material.BOOK, player.tr("gui.menu.news"), lines).also { item ->
+            if (unread.isNotEmpty()) {
+                item.amount = unread.size.coerceAtMost(item.maxStackSize)
+                item.editMeta { it.setEnchantmentGlintOverride(true) }
+            }
+        }
     }
 
     private fun sidebar(player: Player): ItemStack {

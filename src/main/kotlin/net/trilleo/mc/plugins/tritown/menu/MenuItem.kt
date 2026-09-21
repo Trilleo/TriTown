@@ -2,6 +2,7 @@ package net.trilleo.mc.plugins.tritown.menu
 
 import net.trilleo.mc.plugins.tritown.Main
 import net.trilleo.mc.plugins.tritown.config.MainMenuSettings
+import net.trilleo.mc.plugins.tritown.news.NewsReadState
 import net.trilleo.mc.plugins.tritown.registration.PluginItem
 import net.trilleo.mc.plugins.tritown.utils.LoreUtil
 import net.trilleo.mc.plugins.tritown.utils.itemStack
@@ -60,13 +61,21 @@ object MenuItem {
      *
      * It never stacks, so two copies can never become one stack of two that
      * looks like a single legitimate item.
+     *
+     * Its lore counts the news the player has not read. [reconcile] compares
+     * against a fresh copy every second, so the count follows along without
+     * anything else having to hand the item out again.
      */
     fun create(player: Player): ItemStack = itemStack(MainMenuSettings.snapshot.itemMaterial) {
+        val unread = NewsReadState.unreadCount(player)
+        val lore = player.tr("menu-item.lore") +
+                if (unread > 0) "<newline>" + player.tr("menu-item.unread", "amount" to unread) else ""
+
         name(player.tr("menu-item.name"))
         flag(ItemFlag.HIDE_ATTRIBUTES)
         pdc(PluginItem.ITEM_ID_KEY, PersistentDataType.STRING, ID)
         meta {
-            lore(LoreUtil.wrapLore(player.tr("menu-item.lore")))
+            lore(LoreUtil.wrapLore(lore))
             setMaxStackSize(1)
             setEnchantmentGlintOverride(true)
         }
