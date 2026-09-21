@@ -176,6 +176,18 @@ abstract class PagedPluginGUI(
      */
     open fun onNavClick(event: InventoryClickEvent, offset: Int) {}
 
+    /**
+     * Items to place in the top row of a framed menu, keyed by their offset in
+     * that row (0 to 8), over the border.
+     *
+     * Something that belongs to the whole menu rather than to one page — what
+     * a list is a list *of* — sits here, so it stays put while the pages turn.
+     * Ignored in [PagedLayout.FULL], where the top row is content.
+     *
+     * @param player the player the GUI is being drawn for
+     */
+    open fun topButtons(player: Player): Map<Int, ItemStack> = emptyMap()
+
     /** The inventory slots that hold content, in reading order. */
     private val contentSlots: List<Int> by lazy {
         when (layout) {
@@ -298,7 +310,12 @@ abstract class PagedPluginGUI(
         inventory.clear()
 
         fillInventory(this, inventory)
-        if (layout != PagedLayout.FULL) GUIFrame.draw(inventory, contentSlots)
+        if (layout != PagedLayout.FULL) {
+            GUIFrame.draw(inventory, contentSlots)
+            for ((offset, button) in topButtons(player)) {
+                if (offset in 0 until ROW_SIZE) inventory.setItem(offset, button)
+            }
+        }
 
         val totalPages = totalPages(player)
         var slots = contentSlots

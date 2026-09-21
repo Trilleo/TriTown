@@ -590,6 +590,7 @@ override fun onContentClick(event: InventoryClickEvent, page: Int) {
 | `onContentClick` | Both   | No       | Handle clicks on content slots (clicks are cancelled by default) |
 | `navButtons`     | Both   | No       | Buttons to place in the navigation row, keyed by offset           |
 | `onNavClick`     | Both   | No       | Handle clicks on those buttons                                    |
+| `topButtons`     | Both   | No       | Items over the top border of a framed menu, by offset (0 to 8)    |
 
 A `SET` position is an index into the content area, not an inventory slot, for the same reason `contentIndex` exists.
 
@@ -3086,7 +3087,7 @@ unread for everyone.
 | Menu                    | What it does                                                                       |
 |:------------------------|:-----------------------------------------------------------------------------------|
 | `NewsListGUI`           | Published posts, pinned first then newest; unread ones glow. Mark all read; Manage |
-| `NewsPostGUI`           | A post's card, then a card per category listing its entries; **Read as a book**    |
+| `NewsPostGUI`           | A post's card atop the frame, its categories listed in order; **Read as a book**   |
 | `NewsCategoryGUI`       | One category, an entry to an item, for a category too long for its card            |
 | `NewsManageGUI`         | Drafts then published posts; new post; delete (through `ConfirmGUI`)               |
 | `NewsEditorGUI`         | A post's categories: add, reorder, remove; settings, preview, publish, delete      |

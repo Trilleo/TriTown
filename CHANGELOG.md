@@ -41,8 +41,9 @@
   `/tritown news`.
     + A post has a title, an optional summary and label (such as `v1.3`), and categories of short entries — a line
       or two about one change each. Every entry carries a tag: New, Changed, Fixed, Removed or Note.
-    + Posts are listed pinned first, then newest. A category's entries are read straight off its card; a long one
-      opens to show them one by one, and **Read as a book** shows the whole post as pages.
+    + Posts are listed pinned first, then newest. Inside a post, its card sits at the top and its categories follow
+      in order, each one's entries read straight off its card; a long one opens to show them one by one, and
+      **Read as a book** shows the whole post as pages.
 + Players are told what they have missed.
     + Joining with unread posts lists them in chat a moment later, each one a link to the post.
     + The **News** button in the main menu glows while anything is unread and stacks up to the number unread, and the
@@ -87,6 +88,7 @@
   refuse a click knowing no menu will act on it.
 + `CommandRegistrar.find`, `canRun` and `run` let a menu run one of TriTown's commands directly, with its permission
   check, whatever label it ended up registered under.
++ `PagedPluginGUI.topButtons` places items over the top border of a framed menu, where they stay put as the pages turn.
 + `ConfirmGUI` asks before something that cannot be undone: a subject, up to three choices with actions, and Cancel.
 + `Lang.idFor` gives the language a sender reads, for text kept outside the language files.
 + The atomic write the shop file used (temporary file, `.bak`, atomic move) is now `AtomicFile`, shared with the news

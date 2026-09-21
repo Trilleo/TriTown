@@ -22,8 +22,9 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * One post: a card saying what it is, then a card per category listing its
- * entries, which is how most posts are read in full without a click.
+ * One post: its card in the middle of the top row, then a card per category,
+ * in the post's order, listing its entries — which is how most posts are read
+ * in full without a click.
  *
  * A category too long for its card is cut short with a count of the rest, and
  * clicking it lists the entries one by one. The book button shows the whole
@@ -37,7 +38,7 @@ class NewsPostGUI : PagedPluginGUI(
     titleKey = "gui.news-post.title",
     rows = 6,
     fillMode = FillMode.NONE,
-    layout = PagedLayout.CENTERED,
+    layout = PagedLayout.FRAMED,
 ) {
 
     private class Viewing(val postId: String, val preview: Boolean)
@@ -57,7 +58,12 @@ class NewsPostGUI : PagedPluginGUI(
 
     override fun getItems(player: Player): List<ItemStack> {
         val post = postOf(player) ?: return emptyList()
-        return listOf(header(player, post)) + categories(post).map { category(player, it) }
+        return categories(post).map { category(player, it) }
+    }
+
+    override fun topButtons(player: Player): Map<Int, ItemStack> {
+        val post = postOf(player) ?: return emptyMap()
+        return mapOf(HEADER_OFFSET to header(player, post))
     }
 
     override fun navButtons(player: Player): Map<Int, ItemStack> {
@@ -104,8 +110,7 @@ class NewsPostGUI : PagedPluginGUI(
         val state = viewing[player.uniqueId] ?: return
         val post = postOf(player) ?: return
 
-        // Position 0 is the post's own card.
-        val index = (contentIndex(event, page) ?: return) - 1
+        val index = contentIndex(event, page) ?: return
         val category = categories(post).getOrNull(index) ?: return
         MenuRender.later(player) { NewsCategoryGUI.show(player, post, category, state.preview) }
     }
@@ -145,6 +150,7 @@ class NewsPostGUI : PagedPluginGUI(
         const val ID = "news-post"
 
         private const val EDIT_OFFSET = 7
+        private const val HEADER_OFFSET = 4
 
         fun show(player: Player, post: NewsPost, preview: Boolean): Boolean {
             val gui = GUIManager.getGUI(ID) as? NewsPostGUI ?: return false
