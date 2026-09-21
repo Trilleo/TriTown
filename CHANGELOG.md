@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Improvements
+
+#### Economy
+
++ Raised the default starting balance from 100 to 200. Existing servers keep the value already in their
+  `config.yml`.
+
 ## Version 1.2.0
 
 ### New Features

@@ -140,7 +140,7 @@ version stays available as `/tritown:balance` and so on.
 | `economy.currency.fractional-digits`      | `2`                | Digits kept after the decimal point (see below)                                 |
 | `economy.currency.format`                 | `%symbol%%amount%` | Plain pattern other plugins print verbatim — no MiniMessage tags                |
 | `economy.currency.rich-format`            | `<gold>…</gold>`   | MiniMessage pattern for TriTown's own messages                                  |
-| `economy.starting-balance`                | `100.0`            | Balance granted on a player's first join                                        |
+| `economy.starting-balance`                | `200.0`            | Balance granted on a player's first join                                        |
 | `economy.balance-cap`                     | `1000000000.0`     | Largest balance an account may hold; `0` removes the cap                        |
 | `economy.minimum-payment`                 | `0.01`             | Smallest amount a payment will accept                                           |
 | `economy.allow-negative-balances`         | `false`            | Whether a withdrawal may take an account below zero                             |

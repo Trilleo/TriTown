@@ -50,7 +50,7 @@ economy:
     rich-format: "<gold>%symbol%%amount%</gold>"
 
   # Balance granted to a player the first time they join.
-  starting-balance: 100.0
+  starting-balance: 200.0
   # Largest balance an account may hold. Set to 0 to remove the cap.
   # A payment that would break the cap fails rather than being trimmed to fit.
   balance-cap: 1000000000.0
