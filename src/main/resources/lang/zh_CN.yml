@@ -21,6 +21,7 @@ command:
     admin: "管理"
     menu: "菜单"
     news: "公告"
+    storage: "仓库"
 
   help:
     header: "TriTown 命令"
@@ -126,6 +127,13 @@ command:
     pinned: "侧边栏已固定为 <white>{board}</white> 板面。"
     unpinned: "侧边栏已恢复为根据所在位置自动切换。"
     unknown-board: "<red>不存在名为 <white>{board}</white> 的板面。"
+
+  storage:
+    description: "打开你的仓库"
+    players-only: "<red>仓库是一个菜单，只有玩家才能打开。"
+    usage: "<red>用法：<white>/tritown storage [view <player>|pages <player> <add|set> <amount>]</white>"
+    not-found: "没有名为 {name} 的玩家来过本服务器。"
+    pages-set: "<white>{name}</white> 现在拥有 <white>{amount}</white> 页仓库。"
 
   trades:
     description: "打开服务器的全局商店"
@@ -277,11 +285,13 @@ money:
     shop-buy: "在 {shop} 购买"
     shop-sell: "在 {shop} 出售"
     trade: "玩家交易"
+    storage-page: "仓库第 {page} 页"
 
   # 资金的来源与去向，管理面板按此归类统计。
   flow:
     starting-balance: "新玩家"
     shop: "商店"
+    storage: "仓库页"
     towny: "Towny"
     admin: "管理操作"
     payment: "玩家转账"
@@ -294,6 +304,7 @@ money:
     command: "TriTown 命令"
     towny: "Towny"
     shop: "商店"
+    storage: "仓库"
 
   account-type:
     player: "玩家"
@@ -338,6 +349,10 @@ gui:
     town-open: "<yellow>点击 <gray>打开 TownyMenu"
     shop: "<green><bold>全局商店</bold></green>"
     shop-lore: "<gray>无论身在何处，都能向服务器购买物品或把物品卖回给它。"
+    storage: "<light_purple><bold>仓库</bold></light_purple>"
+    storage-lore: "<gray>属于你自己的仓库，随时随地都能打开。原版箱子现在只能取出物品。"
+    storage-pages: "<gray>页数：<white>{amount}</white><dark_gray>/{max}"
+    storage-next: "<gray>下一页价格：<gold>{amount}</gold>"
     trade: "<aqua><bold>交易</bold></aqua>"
     trade-lore: "<gray>与身边的玩家交换物品和金钱。也可以潜行右键点击对方发起交易。"
     trade-waiting: "<yellow>{amount} 人正在等待你的回复"
@@ -404,6 +419,12 @@ gui:
     shops-taken: "<gray>收取：<gold>{amount}</gold>"
     shops-paid: "<gray>支付：<green>{amount}</green>"
     shops-off: "<red>商店已关闭。"
+    storage: "<light_purple><bold>仓库</bold></light_purple>"
+    storage-lore: "<gray>所有玩家的仓库，以及仓库页带来的收入。"
+    storage-free: "<gray>免费页数：<white>{amount}</white> <dark_gray>（上限 {max} 页）"
+    storage-open: "<gray>当前已加载：<white>{amount}</white>"
+    storage-revenue: "<gray>{window}售出仓库页：<gold>{amount}</gold>"
+    storage-off: "<red>仓库已关闭。"
     server: "<aqua><bold>服务器</bold></aqua>"
     server-version: "<gray>TriTown <white>{version}</white>"
     server-provider: "<gray>经济提供方：<white>{provider}</white>"
@@ -564,6 +585,7 @@ gui:
     paid: "<gray>支出：<red>{amount}</red>"
     about-starting-balance: "<dark_gray>每名新玩家只发放一次。"
     about-shop: "<dark_gray>服务器自己的商店卖出与回收。"
+    about-storage: "<dark_gray>玩家购买更多仓库页。"
     about-towny: "<dark_gray>维护费、税收、地块交易与银行存取。"
     about-admin: "<dark_gray>管理员发放、收回、设定或重置余额。"
     about-payment: "<dark_gray>玩家之间的转账。"
@@ -1003,6 +1025,81 @@ gui:
     back-lore: "<gray>回到之前的界面。"
 
   # 执行无法撤销的操作前进行确认。
+  storage:
+    title: "<dark_gray>{name} <gray>· {page}/{total}"
+    title-inspect: "<dark_gray>{owner} 的仓库 <gray>· {page}/{total}"
+    page-default: "第 {page} 页"
+    previous: "<yellow>上一页"
+    previous-lore: "<gray>返回上一页。"
+    next: "<yellow>下一页"
+    next-lore: "<gray>前往下一页。"
+    overview: "<aqua><bold>全部页面</bold></aqua>"
+    overview-lore: "<gray>一次查看所有页面，并直接跳到其中一页。"
+    deposit: "<green><bold>快速存入</bold></green>"
+    deposit-lore: "<gray>把背包里仓库中已有同类的物品全部存入仓库。快捷栏不受影响。"
+    sort: "<gold><bold>整理</bold></gold>"
+    sort-lore: "<gray>合并并排序本页。<newline><yellow>Shift+点击 <gray>整理所有页面。"
+    withdraw: "<red><bold>取出本页</bold></red>"
+    withdraw-lore: "<gray>把本页物品尽可能多地移入你的背包。"
+    unpack: "<light_purple><bold>拆包</bold></light_purple>"
+    unpack-lore: "<gray>手持潜影盒或收纳袋点击这里，把里面的物品倒进仓库。装有物品的潜影盒和收纳袋已无法存放或放置。"
+    settings: "<white><bold>页面设置</bold></white>"
+    settings-lore: "<gray>重命名本页或选择它的图标。"
+    info: "<white><bold>{name}</bold></white>"
+    info-page: "<gray>第 <white>{page}</white> 页，共 <white>{total}</white> 页"
+    info-owner: "<gray>所有者：<white>{owner}</white>"
+    info-read-only: "<red>只读"
+    info-back: "<yellow>点击 <gray>返回菜单"
+    info-back-admin: "<yellow>点击 <gray>返回列表"
+    overview-name: "<white>{name}"
+    overview-used: "<gray>已用：<white>{amount}</white><dark_gray>/{total}"
+    overview-item: "<dark_gray>• <gray>{amount}× <white>{name}</white>"
+    overview-current: "<green>你正在这一页"
+    overview-open: "<yellow>点击 <gray>打开"
+    buy: "<green><bold>购买第 {page} 页</bold></green>"
+    buy-cost: "<gray>价格：<gold>{amount}</gold>"
+    buy-balance: "<gray>你的余额：<white>{amount}</white>"
+    buy-click: "<yellow>点击 <gray>购买"
+    buy-title: "<dark_gray>购买一页仓库？"
+    buy-confirm: "<green><bold>购买</bold></green>"
+
+  storage-pages:
+    title: "<dark_gray>你的仓库"
+    title-inspect: "<dark_gray>{owner} 的仓库"
+    back: "<yellow>返回"
+    back-lore: "<gray>回到你之前所在的页面。"
+
+  storage-settings:
+    title: "<dark_gray>页面设置"
+    rename: "<white><bold>重命名</bold></white>"
+    rename-lore: "<gray>在聊天栏输入新名称。"
+    rename-prompt: "<gray>请输入本页的名称，最多 <white>{amount}</white> 个字符。"
+    icon: "<white><bold>图标</bold></white>"
+    icon-lore: "<gray>点击背包中的任意物品，把它设为本页的图标。"
+    icon-hint: "<gray>点击你自己背包中的物品，把它设为图标。"
+    reset: "<red><bold>重置</bold></red>"
+    reset-lore: "<gray>恢复为页码名称和默认图标。"
+    back: "<yellow>返回"
+    back-lore: "<gray>回到该页面。"
+
+  admin-storage:
+    title: "<dark_gray>仓库"
+    header: "<gold><bold>所有仓库</bold></gold>"
+    header-lore: "<dark_gray>数据在打开此列表时从磁盘读取。"
+    count: "<gray>仓库数：<white>{amount}</white>"
+    bought: "<gray>已购页数：<white>{amount}</white>"
+    slots: "<gray>已用格子：<white>{amount}</white>"
+    revenue: "<gray>{window}售出仓库页：<gold>{amount}</gold>"
+    owner: "<white>{name}"
+    pages: "<gray>页数：<white>{amount}</white> <dark_gray>（已购 {bought} 页）"
+    used: "<gray>已用：<white>{amount}</white><dark_gray>/{total}"
+    click-view: "<yellow>点击 <gray>查看"
+    click-edit: "<yellow>Shift+点击 <gray>修改"
+    disabled: "<red>仓库已关闭"
+    disabled-lore: "<gray>在 config.yml 中把 <white>storage.enabled</white> 设为 true 并重启服务器。"
+    back: "<yellow>返回"
+    back-lore: "<gray>返回管理面板。"
+
   confirm:
     title: "<dark_gray>确定吗？"
     cancel: "<red><bold>取消</bold>"
@@ -1038,6 +1135,32 @@ shop:
 
 
 # 玩家之间的交易在菜单之外发出的消息。
+# 玩家自己的仓库，以及被它取代的原版容器。
+storage:
+  bought: "你购买了仓库的第 <white>{page}</white> 页。"
+  deposited: "已存入 <white>{amount}</white> 个物品。"
+  unpacked: "已把 <white>{amount}</white> 个物品拆包存入仓库。"
+  renamed: "页面已重命名为 <white>{name}</white>。"
+
+  # 显示在 common.error 中，由它上色。
+  error:
+    unavailable: "本服务器的仓库暂时不可用。"
+    unreadable: "无法读取该仓库。请联系管理员查看服务器日志。"
+    busy: "其他人正在修改这个仓库，请稍后再试。"
+    not-allowed: "装有物品的潜影盒、收纳袋以及菜单物品不能放入仓库。请改用拆包。"
+    no-room: "你的仓库没有足够的空间放下这些物品。"
+    inventory-full: "你的背包已满。"
+    nothing-to-deposit: "背包里没有与仓库中已有物品相同的物品。"
+    unpack-hint: "先拿起一个潜影盒或收纳袋，再用它点击拆包。"
+    unpack-empty: "它已经是空的了。"
+    cannot-afford: "你买不起这一页。"
+    max-pages: "你的仓库已达到页数上限。"
+    bad-name: "页面名称须为 1 到 {amount} 个字符。"
+
+  lock:
+    no-place: "本服务器已停用容器方块。请把物品存放在你的仓库中：/tritown storage"
+    withdraw-only: "<yellow>这个容器只能取出物品。请从菜单打开你的仓库。"
+
 trade:
   done: "已与 <white>{name}</white> 完成交易。"
   money-prompt: "<gray>请输入要放上的金额。你拥有 <white>{amount}</white>。"

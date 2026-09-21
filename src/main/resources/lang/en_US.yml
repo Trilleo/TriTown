@@ -21,6 +21,7 @@ command:
     admin: "Admin"
     menu: "Menu"
     news: "News"
+    storage: "Storage"
 
   help:
     header: "TriTown Commands"
@@ -126,6 +127,13 @@ command:
     pinned: "Sidebar pinned to the <white>{board}</white> board."
     unpinned: "Sidebar back to matching where you stand."
     unknown-board: "<red>No board named <white>{board}</white>."
+
+  storage:
+    description: "Open your storage"
+    players-only: "<red>Your storage is a menu, so only players can open it."
+    usage: "<red>Usage: <white>/tritown storage [view <player>|pages <player> <add|set> <amount>]</white>"
+    not-found: "No player called {name} has played here."
+    pages-set: "<white>{name}</white> now has <white>{amount}</white> storage pages."
 
   trades:
     description: "Open the server's global shop"
@@ -278,11 +286,13 @@ money:
     shop-buy: "Bought at {shop}"
     shop-sell: "Sold at {shop}"
     trade: "Player trade"
+    storage-page: "Storage page {page}"
 
   # Where money comes from and where it goes, as the admin panel groups it.
   flow:
     starting-balance: "New players"
     shop: "Shops"
+    storage: "Storage pages"
     towny: "Towny"
     admin: "Administration"
     payment: "Player payments"
@@ -295,6 +305,7 @@ money:
     command: "TriTown command"
     towny: "Towny"
     shop: "Shop"
+    storage: "Storage"
 
   account-type:
     player: "player"
@@ -339,6 +350,10 @@ gui:
     town-open: "<yellow>Click <gray>to open TownyMenu"
     shop: "<green><bold>Global Shop</bold></green>"
     shop-lore: "<gray>Buy from the server and sell back to it, wherever you are standing."
+    storage: "<light_purple><bold>Storage</bold></light_purple>"
+    storage-lore: "<gray>Your own storage, open from anywhere. Vanilla chests can only be emptied now."
+    storage-pages: "<gray>Pages: <white>{amount}</white><dark_gray>/{max}"
+    storage-next: "<gray>Next page: <gold>{amount}</gold>"
     trade: "<aqua><bold>Trade</bold></aqua>"
     trade-lore: "<gray>Swap items and money with a player standing near you. Shift-right-clicking them works too."
     trade-waiting: "<yellow>{amount} waiting for your answer"
@@ -405,6 +420,12 @@ gui:
     shops-taken: "<gray>Taken in: <gold>{amount}</gold>"
     shops-paid: "<gray>Paid out: <green>{amount}</green>"
     shops-off: "<red>Shops are switched off."
+    storage: "<light_purple><bold>Storage</bold></light_purple>"
+    storage-lore: "<gray>Every player's storage, and what its pages have earned."
+    storage-free: "<gray>Free pages: <white>{amount}</white> <dark_gray>of up to {max}"
+    storage-open: "<gray>Loaded now: <white>{amount}</white>"
+    storage-revenue: "<gray>Pages sold over {window}: <gold>{amount}</gold>"
+    storage-off: "<red>Storage is switched off."
     server: "<aqua><bold>Server</bold></aqua>"
     server-version: "<gray>TriTown <white>{version}</white>"
     server-provider: "<gray>Economy: <white>{provider}</white>"
@@ -565,6 +586,7 @@ gui:
     paid: "<gray>Paid: <red>{amount}</red>"
     about-starting-balance: "<dark_gray>Paid once to each new player."
     about-shop: "<dark_gray>The server's own shops selling and buying back."
+    about-storage: "<dark_gray>Players buying more pages of storage."
     about-towny: "<dark_gray>Upkeep, taxes, plot sales and bank movements."
     about-admin: "<dark_gray>Balances given, taken, set or reset by an administrator."
     about-payment: "<dark_gray>Players paying each other."
@@ -1003,6 +1025,81 @@ gui:
     back-lore: "<gray>Return to where you were."
 
   # Asked before something that cannot be undone.
+  storage:
+    title: "<dark_gray>{name} <gray>· {page}/{total}"
+    title-inspect: "<dark_gray>{owner}'s storage <gray>· {page}/{total}"
+    page-default: "Page {page}"
+    previous: "<yellow>Previous page"
+    previous-lore: "<gray>Go back one page."
+    next: "<yellow>Next page"
+    next-lore: "<gray>Go on to the next page."
+    overview: "<aqua><bold>All pages</bold></aqua>"
+    overview-lore: "<gray>See every page at once and jump straight to one."
+    deposit: "<green><bold>Quick deposit</bold></green>"
+    deposit-lore: "<gray>Store everything in your inventory that your storage already holds some of. Your hotbar is left alone."
+    sort: "<gold><bold>Sort</bold></gold>"
+    sort-lore: "<gray>Merge and order this page.<newline><yellow>Shift-click <gray>to sort every page."
+    withdraw: "<red><bold>Take page</bold></red>"
+    withdraw-lore: "<gray>Move as much of this page as fits into your inventory."
+    unpack: "<light_purple><bold>Unpack</bold></light_purple>"
+    unpack-lore: "<gray>Click here holding a shulker box or bundle to empty it into your storage. Full ones can't be stored or placed any more."
+    settings: "<white><bold>Page settings</bold></white>"
+    settings-lore: "<gray>Rename this page or pick its icon."
+    info: "<white><bold>{name}</bold></white>"
+    info-page: "<gray>Page <white>{page}</white> of <white>{total}</white>"
+    info-owner: "<gray>Owner: <white>{owner}</white>"
+    info-read-only: "<red>Read only"
+    info-back: "<yellow>Click <gray>to go back to the menu"
+    info-back-admin: "<yellow>Click <gray>to go back to the list"
+    overview-name: "<white>{name}"
+    overview-used: "<gray>Used: <white>{amount}</white><dark_gray>/{total}"
+    overview-item: "<dark_gray>• <gray>{amount}× <white>{name}</white>"
+    overview-current: "<green>You are on this page"
+    overview-open: "<yellow>Click <gray>to open"
+    buy: "<green><bold>Buy page {page}</bold></green>"
+    buy-cost: "<gray>Costs: <gold>{amount}</gold>"
+    buy-balance: "<gray>You have: <white>{amount}</white>"
+    buy-click: "<yellow>Click <gray>to buy"
+    buy-title: "<dark_gray>Buy a storage page?"
+    buy-confirm: "<green><bold>Buy</bold></green>"
+
+  storage-pages:
+    title: "<dark_gray>Your storage"
+    title-inspect: "<dark_gray>{owner}'s storage"
+    back: "<yellow>Back"
+    back-lore: "<gray>Return to the page you were on."
+
+  storage-settings:
+    title: "<dark_gray>Page settings"
+    rename: "<white><bold>Rename</bold></white>"
+    rename-lore: "<gray>Type a new name in chat."
+    rename-prompt: "<gray>Type a name for this page, up to <white>{amount}</white> characters."
+    icon: "<white><bold>Icon</bold></white>"
+    icon-lore: "<gray>Click any item in your inventory to show this page as it."
+    icon-hint: "<gray>Click an item in your own inventory to use it as the icon."
+    reset: "<red><bold>Reset</bold></red>"
+    reset-lore: "<gray>Go back to the page number and the default icon."
+    back: "<yellow>Back"
+    back-lore: "<gray>Return to the page."
+
+  admin-storage:
+    title: "<dark_gray>Storage"
+    header: "<gold><bold>Every storage</bold></gold>"
+    header-lore: "<dark_gray>Read from disk when this list was opened."
+    count: "<gray>Storages: <white>{amount}</white>"
+    bought: "<gray>Pages bought: <white>{amount}</white>"
+    slots: "<gray>Slots in use: <white>{amount}</white>"
+    revenue: "<gray>Pages sold over {window}: <gold>{amount}</gold>"
+    owner: "<white>{name}"
+    pages: "<gray>Pages: <white>{amount}</white> <dark_gray>({bought} bought)"
+    used: "<gray>Used: <white>{amount}</white><dark_gray>/{total}"
+    click-view: "<yellow>Click <gray>to look through it"
+    click-edit: "<yellow>Shift-click <gray>to change it"
+    disabled: "<red>Storage is switched off"
+    disabled-lore: "<gray>Set <white>storage.enabled</white> to true in config.yml and restart."
+    back: "<yellow>Back"
+    back-lore: "<gray>Return to the admin panel."
+
   confirm:
     title: "<dark_gray>Are you sure?"
     cancel: "<red><bold>Cancel</bold>"
@@ -1038,6 +1135,32 @@ shop:
 
 
 # Player-to-player trading, outside the menu itself.
+# A player's own storage, and the vanilla containers it replaces.
+storage:
+  bought: "You bought page <white>{page}</white> of your storage."
+  deposited: "Deposited <white>{amount}</white> items."
+  unpacked: "Unpacked <white>{amount}</white> items into your storage."
+  renamed: "Page renamed to <white>{name}</white>."
+
+  # Shown inside common.error, which colours them.
+  error:
+    unavailable: "Storage is not available on this server right now."
+    unreadable: "That storage could not be read. Ask an administrator to check the server log."
+    busy: "Someone else is changing that storage right now. Try again in a moment."
+    not-allowed: "Full shulker boxes, full bundles and the menu item can't go in your storage. Unpack boxes and bundles instead."
+    no-room: "Your storage doesn't have room for all of that."
+    inventory-full: "Your inventory is full."
+    nothing-to-deposit: "Nothing in your inventory matches what you already have stored."
+    unpack-hint: "Pick up a shulker box or bundle, then click Unpack with it."
+    unpack-empty: "That is already empty."
+    cannot-afford: "You can't afford that page."
+    max-pages: "Your storage already has every page it can."
+    bad-name: "A page name has to be 1 to {amount} characters."
+
+  lock:
+    no-place: "Containers are retired on this server. Keep your items in your storage instead: /tritown storage"
+    withdraw-only: "<yellow>This container is withdraw-only. Open your storage from the menu."
+
 trade:
   done: "Traded with <white>{name}</white>."
   money-prompt: "<gray>Type how much to put up. You have <white>{amount}</white>."

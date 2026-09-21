@@ -2,7 +2,7 @@
 
 This guide explains how to create **commands**, **listeners**, **GUIs**, **tasks**, **custom items**, **recipes**, work
 with **translations** and the **configuration** system using TriTown's registration system, and how to build on
-**Towny**, the **Vault economy**, the **admin panel**, **shops**, **player trades**, the **news** and the **sidebar**. Commands, listeners, GUIs, tasks, custom items, and recipes all
+**Towny**, the **Vault economy**, the **admin panel**, **shops**, **player trades**, **personal storage**, the **news** and the **sidebar**. Commands, listeners, GUIs, tasks, custom items, and recipes all
 follow the same pattern: extend a base class (or implement an interface), place the file in the correct package, and the
 plugin handles the rest automatically at startup. The configuration system provides typed access to `config.yml` values.
 
@@ -2498,16 +2498,16 @@ right-clicking the menu item or with `/tritown menu` (`commands/menu/MenuCommand
 | `LeaderboardGUI`  | `menu-leaderboard` | The top 112 of `BaltopCache` as heads, with the viewer's rank on each page |
 
 Every one of them opens at six rows. `MainMenuGUI` puts the profile alone at the top and lays the buttons out in rows of
-up to three with `GUIFrame.spacedColumns`. **A button for something switched off or not permitted is left out, not
+up to four with `GUIFrame.spacedColumns`. **A button for something switched off or not permitted is left out, not
 greyed**, and each row is centred on what remains: the global shop only when shops are on and the viewer passes its
-gate, trading only when `player-trades.enabled`, pay and the leaderboard only with the economy running and the
+gate, the storage only while `StorageManager.isAvailable`, trading only when `player-trades.enabled`, pay and the leaderboard only with the economy running and the
 command's permission (`CommandRegistrar.canRun`), the news only while `NewsManager.isAvailable`, the sidebar switch
 only while the sidebar runs, the admin panel only with `tritown.admin`, and the TownyMenu shortcut only when TownyMenu is enabled. Empty rows are dropped, so the menu
 never has a hole in it. The two list menus use `PagedLayout.CENTERED` and keep *Back* and one extra button either side
 of the page number (`MenuRender.BACK_OFFSET`, `EXTRA_OFFSET`).
 
 **The menu points the way; it does not do the work.** Each button runs the command or opens the menu that already owns
-the action — `/trades`, `/trade <name>`, `/pay <name> <amount>`, `/tritown news` through `CommandRegistrar.run`, the admin panel,
+the action — `/trades`, `/tritown storage`, `/trade <name>`, `/pay <name> <amount>`, `/tritown news` through `CommandRegistrar.run`, the admin panel,
 TownyMenu through its own `/townymenu` — so there is exactly one place each rule and message lives. Paying asks for the
 amount with `ChatPrompt` and hands it to `/pay`, which validates it.
 
@@ -2560,6 +2560,7 @@ surface: apart from writing the economy to disk on request, nothing in it change
 | `EconomyPanelGUI`  | `admin-economy`  | Supply, accounts, distribution, faucets, sinks, net, and the chart  |
 | `EconomyFlowGUI`   | `admin-flow`     | Every category and every kind of account, in full                   |
 | `AdminShopsGUI`    | `admin-shops`    | Every shop's takings, opening into that shop's own figures          |
+| `AdminStorageGUI`  | `admin-storage`  | Every storage on file, fullest first, opening into it read-only     |
 
 Adding a section means adding a card to `AdminPanelGUI` and a menu of its own — nothing else in the panel changes.
 
@@ -2575,8 +2576,10 @@ account-type names, and the cards themselves — so the same number reads the sa
 next to the largest one, green where the supply grew and red where it shrank. It reads as a chart at a glance without
 a single custom texture, and the exact figures are in the lore.
 
-Permissions: `tritown.admin` (`AdminPanelGUI.PERMISSION`) opens the panel, `tritown.admin.economy` and
-`tritown.admin.shops` open the sections. A card the viewer may not open is not drawn at all, and the rest are centred
+Permissions: `tritown.admin` (`AdminPanelGUI.PERMISSION`) opens the panel, `tritown.admin.economy`,
+`tritown.admin.shops` and `tritown.admin.storage` open the sections. The storage list opens a storage read-only; only
+an administrator who also holds `tritown.storage.admin` can shift-click into one to change it, and then it is the
+storage menu doing the changing, not the panel. A card the viewer may not open is not drawn at all, and the rest are centred
 along the row with `GUIFrame.spacedColumns`, so a missing card leaves no gap. The panel is reached from the
 [main menu](#main-menu) as well as by command, so its bottom row leads back there.
 
@@ -3012,6 +3015,140 @@ calls the trade off if they leave it hanging.
 | `player-trades.request-expiry` | Seconds an unanswered request stands                           |
 
 `TradeSettings` is a snapshot swapped in whole on a reload, the way `ShopSettings` is.
+
+
+## Personal Storage
+
+Every player's own paged storage, reached from the main menu or with `/tritown storage`. It replaces vanilla
+containers: chests, barrels, shulker boxes and ender chests can no longer be placed, and the ones already in the world
+are withdraw-only.
+
+The core lives under `storage/`, which is **not a scanned package** — the same reason `shops/` and `trades/` are not.
+`StorageManager` has to be alive before the registrars build the main menu that reads it. The menus are in
+`guis/storage` (plus `guis/admin/AdminStorageGUI`), the command is `commands/storage/StorageCommand`, the listeners
+are `listeners/storage/ContainerLockListener` and `StorageSessionListener`, and the flush is
+`tasks/storage/StorageSaveTask`.
+
+### The model
+
+| Type               | What it is                                                                          |
+|:-------------------|:------------------------------------------------------------------------------------|
+| `StoragePage`      | 45 slots (a large chest less the button row), plus a name and icon the owner picked |
+| `PlayerStorage`    | One player's pages, how many they bought, and items a load could not decode          |
+| `StorageManager`   | Loading, the viewer lock, pages and prices, depositing, and saving                  |
+| `StoragePricing`   | What the next page costs, free of Bukkit so it can be tested                        |
+| `SlotFill`         | Depositing into and sorting slots, written against `Rules<T>` so it can be tested   |
+| `StorageItems`     | `SlotFill`'s rules for real items, what a storage accepts, and unpacking containers |
+| `JsonStorageStore` | One file per player under `storage/`, written through `AtomicFile`                  |
+
+A storage owns `free-pages + purchased` pages, capped at `max-pages`. **`purchased` is stored rather than a page
+count**, so raising `free-pages` applies to everyone and the price of the next page stays where each player left it.
+`pageCount` never drops below the last page that still holds anything, so lowering the allowance can never hide a
+player's items. Pages are only created when they are opened or filled.
+
+Go through `StorageManager` for everything. It loads a storage the first time it is asked for and keeps it while its
+owner is online or anyone is looking at it; `unloadIfIdle` writes it and lets it go after that.
+
+### The viewer lock
+
+**One person at a time may change a storage.** `StorageManager.claim` hands out `Access.EDIT` to the first viewer and
+`Access.READ` to anyone else who may inspect (`tritown.storage.admin`); a player who may not is refused with
+`storage.error.busy`. `release` gives it back. This is what lets the storage menu copy its screen back into the model
+without ever overwriting another window's changes: there is never another window that can change it.
+
+A read-only viewer follows the editor. Every copy-back redraws the other viewers of the same page.
+
+### The menu lets the game move items
+
+`StorageGUI` is **the one menu in TriTown that does not cancel clicks** on its content. Players sort their storage the
+way they would sort a chest, so the top five rows are real slots, and everything around them is guarded instead:
+
+* **The button row is untouchable.** A click, number-key swap or drag that reaches slot 45 or beyond is cancelled.
+* **`COLLECT_TO_CURSOR` is cancelled everywhere**, because a double-click gathers from every slot on screen, buttons
+  included.
+* **A shift-click from the player's inventory is done by hand** into the page's own slots. Left to the game it would
+  merge into any matching stack on screen, and a button is a stack on screen.
+* **Only a whitelist of actions may touch a page slot** (`CONTENT_ACTIONS`), and anything being placed there must pass
+  `StorageItems.accepts`. That refuses a shulker box or bundle with anything in it — a page of full boxes would hold
+  many pages' worth and nobody would buy one — and the menu item.
+* **A read-only view cancels every click** that touches the storage.
+
+The screen is copied back into the model on the tick after every allowed click or drag, when the page is switched, and
+when the menu closes. A button that changes the storage itself (deposit, sort, take page, unpack) copies the screen
+back first, changes the model, then redraws from the model.
+
+**Opening another menu from here does not deliver a close to this one**, because `GUIManager` has already moved on to
+the new inventory. Every button that leaves the storage goes through `leave`, which calls `finish` — copy back, write,
+release — on the tick the next menu opens. `finish` is idempotent, so the quit listener and a real close can both call
+it.
+
+Buttons: previous and next page (next becomes **Buy page** on the last page), the overview (`StoragePagesGUI`), quick
+deposit (the main inventory without the hotbar, only materials already stored), sort (shift for every page), take
+page, **Unpack** (click it holding a shulker box or bundle; nothing moves unless all of it fits), page settings
+(`StoragePageSettingsGUI`: rename through `ChatPrompt`, icon from any item in the player's inventory), and the page
+info, which leads back to the main menu or, for an administrator, the storage list.
+
+### Buying pages
+
+`StorageManager.buyPage` charges first and grants the page only once the money has gone: the four-argument
+`EconomyUtil.withdraw` with `EconomyContext.SOURCE_STORAGE` and `TransactionReason.STORAGE_PAGE`, which
+`FlowCategory.of` maps to `STORAGE`. Storage pages are a pure sink. The price is
+`base × multiplier^(n − 1)` for the n-th page bought, rounded to the currency's smallest unit; a page too dear to
+hold in a `Money` is simply not for sale. A purchase always goes through `ConfirmGUI`.
+
+`/tritown storage pages <player> <add|set> <amount>` hands pages out without moving money, so there is nothing to
+attribute.
+
+### Saving
+
+Items can only be encoded on the server thread, so `toStored` runs there, and the finished text is handed to a
+**single writer thread**, so two saves of one storage can never land out of order. Closing a storage and turning its
+page both write it straight away; `StorageSaveTask` flushes whatever is still dirty every `storage.save-interval`
+seconds. `Main.onDisable` closes every open storage (`StorageGUI.closeAll`) before `StorageManager.shutdown` drains
+the writer and writes everything once more.
+
+A file that will not parse falls back to its `.bak`, and when neither can be read the storage is **unavailable, not
+empty** — an empty one would be written over the player's items the moment they closed it. A single item that cannot be
+decoded is set aside in `unreadable` and carried through every save untouched.
+
+**Crash window.** The server writes a player's inventory on its own schedule. A crash after an item is taken out of a
+storage, but before that storage is next written, can leave the item in both places. Writing on close and on every
+page turn keeps the window to the time someone is actively moving items around in one page.
+
+### The container lock
+
+`ContainerLockListener` refuses placing a chest, trapped chest, barrel, ender chest or any shulker box, placing a
+chest or hopper minecart or a chest boat, and a dispenser doing either. Crafting is left alone, since chests go into
+hoppers and minecarts.
+
+A container already in the world is **withdraw-only**. The listener recognises one by **the holder of its inventory**
+(`Chest`, `DoubleChest`, `Barrel`, `ShulkerBox`, `StorageMinecart`, `ChestBoat`, or the `ENDER_CHEST` type), never by
+`InventoryType` — TriTown's own menus and other plugins' are chest-shaped too, and they have no holder. It cancels
+anything that would put an item in: placing or swapping into a top slot, a shift-click from the player's inventory,
+a number key that carries an item in, and any drag touching the top. Taking out is always allowed.
+`InventoryMoveItemEvent` is cancelled when the **destination** is locked, so hoppers can still empty a chest but not
+fill one. A hopper minecart already running is left unlocked for the same reason: it is part of a machine.
+
+Each group has its own switch under `storage.lock-containers`, the whole lock follows `storage.enabled`, and
+`tritown.storage.bypass` exempts a player.
+
+### Settings
+
+| Key                                   | What it does                                                 |
+|:--------------------------------------|:-------------------------------------------------------------|
+| `storage.enabled`                     | Turns the storage and the lock off; turning it on needs a restart |
+| `storage.free-pages`                  | Pages every player has without paying                        |
+| `storage.max-pages`                   | The most pages a storage can reach (at most 256)             |
+| `storage.price.base`                  | What the first bought page costs                             |
+| `storage.price.multiplier`            | How much dearer each page is than the one before (1 to 10)   |
+| `storage.save-interval`               | Seconds between flushes of changed storages                  |
+| `storage.lock-containers.enabled`     | The lock as a whole                                          |
+| `storage.lock-containers.chests`      | Chests, trapped chests, barrels, chest minecarts, chest boats |
+| `storage.lock-containers.shulker-boxes` | Every colour of shulker box                                |
+| `storage.lock-containers.ender-chest` | The ender chest                                              |
+
+`StorageSettings` is a snapshot swapped in whole on a reload, the way `ShopSettings` is. A reload never re-reads the
+storage files.
 
 
 ## Server News

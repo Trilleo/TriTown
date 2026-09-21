@@ -69,7 +69,7 @@ src/main/kotlin/net/trilleo/mc/plugins/tritown/
 ├── Main.kt                  # Plugin entry point (Main.instance, Main.reload())
 ├── commands/                # Sub-commands (auto-registered)
 │   ├── admin/  economy/  info/  menu/  news/
-│   └── moderation/  scoreboard/  shop/  trade/
+│   └── moderation/  scoreboard/  shop/  storage/  trade/
 ├── config/                  # PluginConfig (typed config.yml wrapper), EconomySettings
 ├── data/                    # JSON-persisted PlayerData / ServerData and their managers
 ├── economy/                 # The economy: ledger, accounts, currencies, Vault provider, statistics,
@@ -84,6 +84,7 @@ src/main/kotlin/net/trilleo/mc/plugins/tritown/
 ├── recipes/                 # Recipes (auto-registered, implement PluginRecipe)
 ├── registration/            # Auto-registration engine (do not modify lightly)
 ├── shops/                   # Admin shops: model, trading, storage, FancyNpcs bridge (not scanned)
+├── storage/                 # Personal storage: pages, pricing, the viewer lock, files (not scanned)
 ├── tasks/                   # Scheduled tasks (auto-registered, extend PluginTask)
 ├── towns/                   # Town founding credit (not scanned)
 ├── trades/                  # Player trades: sessions, escrow, the swap (not scanned)
@@ -99,7 +100,7 @@ src/main/resources/
 The plugin uses `PackageScanner` to discover components at startup — you **never** edit `plugin.yml` or wire things
 manually. Just extend the right base class and place the file in the correct package. Packages outside the table below
 are never scanned, which is why the economy core lives in `economy/`, the shop core in `shops/`, the trade core
-in `trades/` and the news core in `news/`: each has to be alive before the registrars build the commands and menus that read it. `menu/` is outside
+in `trades/`, the storage core in `storage/` and the news core in `news/`: each has to be alive before the registrars build the commands and menus that read it. `menu/` is outside
 the scan for a simpler reason: `MenuItem` is not a `PluginItem`, because it is named in each holder's language.
 
 | Component   | Base Class                     | Package                 |
@@ -271,6 +272,25 @@ The panel in `guis/admin` is where an owner reads the server; `/tritown admin` o
   handed over, and money settles as a single net payment so a trade can never be half paid for.
 - **Both windows are drawn for their viewer**, never for a side, and anything that changes the table calls
   `TradeGUI.redraw` so the two can never disagree.
+
+## Working with Storage
+
+**A storage holds a player's belongings, and replaces vanilla containers.** See
+[Personal Storage](docs/DEVELOPER_GUIDE.md#personal-storage).
+
+- **Go through `StorageManager`** — it is the only thing that loads, changes or writes a storage. Charge for a page with
+  `buyPage`, which withdraws before granting.
+- **One editor per storage.** Open one through `StorageGUI.open`, which takes the lock with `StorageManager.claim`;
+  anything that changes a storage's items without holding it would be overwritten by the editor's next copy-back.
+- **`StorageGUI` is the only menu that lets the game move items.** Every other GUI cancels its clicks. A change to it
+  keeps the button row untouchable, keeps shift-clicks and `COLLECT_TO_CURSOR` out of the game's hands, and checks
+  `StorageItems.accepts` before anything lands on a page.
+- **Leave the storage menu through `leave`**, never by opening another menu directly: `GUIManager` does not deliver a
+  close to a menu that is replaced, and `finish` is what copies the page back and lets go of the lock.
+- **Encode on the server thread, write on the writer.** Items are encoded in `StorageManager.toStored`; `StorageStore`
+  only ever sees text.
+- **Recognise a vanilla container by its inventory's holder**, never by `InventoryType`: TriTown's own menus are
+  chest-shaped too and have no holder.
 
 ## Working with the Main Menu
 

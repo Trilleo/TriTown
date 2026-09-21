@@ -2,6 +2,44 @@
 
 ## Unreleased
 
+### New Features
+
+#### Storage
+
++ Added a storage for every player, opened from the main menu or with `/tritown storage`. Each page is the size of a
+  large chest and works like one, with a row of buttons beneath it.
+    + **Quick deposit** stores everything in your main inventory that your storage already holds some of, **Sort**
+      merges and orders a page (shift-click for every page), and **Take page** moves a page into your inventory.
+    + **Unpack** empties a shulker box or bundle straight into your storage. Full ones can't be stored as they are.
+    + Name your pages, give them icons, and jump between them from an overview of every page.
+    + Every player starts with `storage.free-pages` pages (default `2`). More can be bought up to `storage.max-pages`
+      (default `27`), each costing `storage.price.multiplier` times the one before, starting at `storage.price.base`.
+      Every purchase asks for confirmation first.
++ Administrators with `tritown.storage.admin` can open anyone's storage, online or not, with
+  `/tritown storage view <player>`, and hand out pages with `/tritown storage pages <player> <add|set> <amount>`.
++ Added a **Storage** section to the admin panel (`tritown.admin.storage`). It lists every storage, fullest first, with
+  how many pages were bought and what they earned, and opens any of them read-only.
+
+#### Misc
+
++ Vanilla containers are retired in favour of the storage. Chests, trapped chests, barrels, shulker boxes, ender
+  chests, chest and hopper minecarts and chest boats can no longer be placed, by players or by dispensers.
+    + The ones already placed become withdraw-only, so nothing stored in them is lost. Hoppers can still empty them but
+      can no longer fill them.
+    + Each group can be left alone under `storage.lock-containers`, and `tritown.storage.bypass` exempts builders.
+
+#### Economy
+
++ Storage pages are a new money sink, listed as **Storage pages** in the admin panel's economy breakdown and in
+  `/eco history`.
+
+### Technical Details
+
++ Added the storage core under `storage/`: `StorageManager` (loading, the one-editor lock, pricing and saving),
+  one JSON file per player under `plugins/TriTown/storage/`, written atomically with a backup, on a single writer thread.
++ `StorageGUI` is the first menu that lets the game move items itself, with the button row, shift-clicks and
+  double-clicks guarded by hand.
+
 ## Version 1.3.0
 
 ### New Features

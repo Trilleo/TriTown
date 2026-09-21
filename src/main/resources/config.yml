@@ -9,9 +9,9 @@ message-prefix: "<click:run_command:/tritown help><gradient:yellow:gold>[TriTown
 language: auto
 
 # ── Main Menu ───────────────────────────────────────────────────────────────
-# The menu players reach everything TriTown offers from: their balance and town,
-# the global shop, trading and paying other players, the leaderboard, the
-# sidebar switch and a shortcut into TownyMenu. /tritown menu opens it too.
+# The menu players reach everything TriTown offers from: their balance, town and
+# storage, the global shop, trading and paying other players, the leaderboard,
+# the sidebar switch and a shortcut into TownyMenu. /tritown menu opens it too.
 main-menu:
   item:
     # Keep the menu item in the last slot of every player's hotbar. Right-clicking
@@ -179,6 +179,41 @@ player-trades:
   distance: 10.0
   # Seconds an unanswered request stands before it lapses.
   request-expiry: 60
+
+# ── Storage ─────────────────────────────────────────────────────────────────
+# Every player's own storage, opened from the main menu or with /tritown storage.
+# A page is a large chest: five rows for items above a row of buttons for moving
+# between pages, depositing, sorting, and unpacking shulker boxes and bundles.
+#
+# It replaces vanilla containers, which can no longer be placed. The ones already
+# in the world can only be emptied, so nothing anyone stored is lost.
+# tritown.storage.bypass lets a builder place and fill them anyway.
+storage:
+  # Turn the storage off entirely. Containers are then left as vanilla has them.
+  # Switching it back on needs a restart.
+  enabled: true
+  # Pages every player has without paying.
+  free-pages: 2
+  # The most pages a storage can reach, free ones included.
+  max-pages: 27
+  # Each page bought costs base × multiplier for every page bought before it:
+  # with these, 500, then 750, 1125, 1687.50 and so on. A multiplier of 1 keeps
+  # every page at the same price. Buying pages takes money out of the economy.
+  price:
+    base: 500.0
+    multiplier: 1.5
+  # Seconds between writing changed storages to disk. Closing a storage or
+  # turning its page writes it straight away, so this only covers a crash while
+  # someone is still moving items around in one.
+  save-interval: 30
+  lock-containers:
+    # Stop the containers below being placed, and make the ones already placed
+    # withdraw-only. Hoppers can still pull items out of them, but not push in.
+    enabled: true
+    # Chests, trapped chests, barrels, chest and hopper minecarts, and chest boats.
+    chests: true
+    shulker-boxes: true
+    ender-chest: true
 
 # ── Towns ───────────────────────────────────────────────────────────────────
 towns:

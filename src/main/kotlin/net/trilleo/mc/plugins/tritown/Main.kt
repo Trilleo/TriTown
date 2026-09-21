@@ -11,6 +11,7 @@ import net.trilleo.mc.plugins.tritown.economy.storage.JsonPulseStorage
 import net.trilleo.mc.plugins.tritown.economy.vault.TriTownVaultEconomy
 import net.trilleo.mc.plugins.tritown.economy.vault.VaultRegistration
 import net.trilleo.mc.plugins.tritown.enums.ProviderMode
+import net.trilleo.mc.plugins.tritown.guis.storage.StorageGUI
 import net.trilleo.mc.plugins.tritown.menu.MenuItem
 import net.trilleo.mc.plugins.tritown.news.NewsManager
 import net.trilleo.mc.plugins.tritown.news.storage.JsonNewsStorage
@@ -18,6 +19,8 @@ import net.trilleo.mc.plugins.tritown.registration.*
 import net.trilleo.mc.plugins.tritown.scoreboard.ScoreboardService
 import net.trilleo.mc.plugins.tritown.shops.ShopManager
 import net.trilleo.mc.plugins.tritown.shops.storage.JsonShopStorage
+import net.trilleo.mc.plugins.tritown.storage.StorageManager
+import net.trilleo.mc.plugins.tritown.storage.storage.JsonStorageStore
 import net.trilleo.mc.plugins.tritown.trades.TradeManager
 import net.trilleo.mc.plugins.tritown.utils.EconomyUtil
 import net.trilleo.mc.plugins.tritown.utils.Lang
@@ -108,6 +111,10 @@ class Main : JavaPlugin() {
         TownSettings.load(pluginConfig)
         MainMenuSettings.load(pluginConfig, logger)
 
+        // Before the registrars, like the shops: the main menu reads a player's storage as it is drawn.
+        StorageSettings.load(pluginConfig)
+        if (StorageSettings.snapshot.enabled) StorageManager.start(JsonStorageStore(dataFolder, logger), logger)
+
         // Before the registrars, for the same reason as the shops: the main menu reads the news as it is drawn.
         NewsSettings.load(pluginConfig, logger)
         NewsManager.start(JsonNewsStorage(dataFolder, logger), logger)
@@ -155,6 +162,8 @@ class Main : JavaPlugin() {
 
         TradeSettings.load(pluginConfig)
         TownSettings.load(pluginConfig)
+        // Only the settings, as with the shops: the storage files are never re-read while players hold them open.
+        StorageSettings.load(pluginConfig)
         // Only the settings, as with the shops: every change to a post is already on disk.
         NewsSettings.load(pluginConfig, logger)
 
@@ -176,6 +185,10 @@ class Main : JavaPlugin() {
         // are still online: every escrowed item has to be back in an inventory
         // the server is about to save.
         TradeManager.shutdown()
+
+        // Every open storage copies its page back before the storages are written for the last time.
+        StorageGUI.closeAll()
+        StorageManager.shutdown()
 
         // So no menu item is saved into an inventory and left behind once TriTown is gone.
         MenuItem.stripAll()

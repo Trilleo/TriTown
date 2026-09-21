@@ -173,6 +173,7 @@ class EconomyFlowGUI : PagedPluginGUI(
     private fun material(category: FlowCategory): Material = when (category) {
         FlowCategory.STARTING_BALANCE -> Material.EGG
         FlowCategory.SHOP -> Material.EMERALD
+        FlowCategory.STORAGE -> Material.ENDER_CHEST
         FlowCategory.TOWNY -> Material.BELL
         FlowCategory.ADMIN -> Material.COMMAND_BLOCK
         FlowCategory.PAYMENT -> Material.ENDER_PEARL
@@ -193,6 +194,7 @@ class EconomyFlowGUI : PagedPluginGUI(
     private fun descriptionOf(category: FlowCategory): String = when (category) {
         FlowCategory.STARTING_BALANCE -> "gui.admin-flow.about-starting-balance"
         FlowCategory.SHOP -> "gui.admin-flow.about-shop"
+        FlowCategory.STORAGE -> "gui.admin-flow.about-storage"
         FlowCategory.TOWNY -> "gui.admin-flow.about-towny"
         FlowCategory.ADMIN -> "gui.admin-flow.about-admin"
         FlowCategory.PAYMENT -> "gui.admin-flow.about-payment"
