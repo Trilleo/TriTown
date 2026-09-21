@@ -102,6 +102,7 @@ class Main : JavaPlugin() {
         }
 
         TradeSettings.load(pluginConfig)
+        TownSettings.load(pluginConfig)
 
         ItemRegistrar.registerAll(this)
         RecipeRegistrar.registerAll(this)
@@ -145,6 +146,7 @@ class Main : JavaPlugin() {
         ShopManager.global()
 
         TradeSettings.load(pluginConfig)
+        TownSettings.load(pluginConfig)
     }
 
     override fun onDisable() {

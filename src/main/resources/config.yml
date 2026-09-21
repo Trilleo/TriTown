@@ -164,6 +164,16 @@ player-trades:
   # Seconds an unanswered request stands before it lapses.
   request-expiry: 60
 
+# ── Towns ───────────────────────────────────────────────────────────────────
+towns:
+  # Money set aside for a player's first town, on top of their starting balance.
+  # Only /t new can spend it: TriTown takes it off the price Towny charges, so a
+  # new player who spends their balance by mistake can still found a town.
+  # Every player without a town is given it once, the next time they join, and
+  # joining someone else's town gives it up. It is never paid out as money.
+  # Set to 0 to turn it off.
+  founding-credit: 100.0
+
 # ── Sidebar ─────────────────────────────────────────────────────────────────
 # The scoreboard shown at the right of the screen. Each board names a condition
 # and a priority, and a player sees the highest-priority board whose condition

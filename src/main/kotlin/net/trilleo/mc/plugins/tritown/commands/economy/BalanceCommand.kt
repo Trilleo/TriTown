@@ -2,6 +2,7 @@ package net.trilleo.mc.plugins.tritown.commands.economy
 
 import net.trilleo.mc.plugins.tritown.economy.EconomyService
 import net.trilleo.mc.plugins.tritown.registration.PluginCommand
+import net.trilleo.mc.plugins.tritown.towns.FoundingCredit
 import net.trilleo.mc.plugins.tritown.utils.sendPrefixed
 import net.trilleo.mc.plugins.tritown.utils.tr
 import org.bukkit.command.CommandSender
@@ -30,6 +31,9 @@ class BalanceCommand : PluginCommand(
             }
             val balance = EconomyService.balance(player.uniqueId, currency)
             sender.sendPrefixed(sender.tr("command.balance.yours", "balance" to display(balance, currency)))
+            if (FoundingCredit.holds(player)) {
+                sender.sendPrefixed(sender.tr("command.balance.founding-credit", "amount" to FoundingCredit.display()))
+            }
             return true
         }
 

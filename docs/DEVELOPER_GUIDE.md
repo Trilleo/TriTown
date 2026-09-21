@@ -2085,6 +2085,24 @@ class NewTownListener : Listener {
 }
 ```
 
+### Founding Credit
+
+`towns/FoundingCredit` (not scanned) holds a credit that only `/t new` can spend. It is sized by `towns.founding-credit`
+(`TownSettings`) and wired up by `listeners/town/FoundingCreditListener`:
+
+- **Granted and forfeited on join.** A player whose `PlayerData` has no `founding-credit` state is given the credit if
+  Towny says they have no town, and marked `ineligible` otherwise. A player still holding one who has a town by the
+  time they join (someone added them while they were offline) forfeits it. The join handler runs at `HIGH` so the
+  player's data has loaded first.
+- **Spent through the price, never paid out.** `PreNewTownEvent` fires before Towny checks funds, and the handler at
+  `HIGHEST` lowers `price` by the credit. Towny then confirms and charges the rest itself, and a price of 0 skips the
+  withdrawal. No money moves, so there is nothing for the economy statistics to record. Founding just drains less.
+- **Settled on `TownAddResidentEvent`.** Towny adds the founder as the first resident part-way through creating a
+  town, so that one event sees both outcomes. If the town is the one the player was just quoted a reduced price for
+  and they are its only resident, the credit is `used`. Any other town makes it `forfeited`. A `/t new` that is never
+  confirmed spends nothing.
+- **The amount is read live** from the config, so only the state is stored per player.
+
 ### Bumping Towny
 
 Change `towny_version` in `gradle.properties` and the Requirements table in `README.md` together.

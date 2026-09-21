@@ -39,6 +39,7 @@ command:
   balance:
     description: "Check your balance"
     yours: "Your balance: <white>{balance}</white>"
+    founding-credit: "Founding credit: <white>{amount}</white> <gray>(only for founding a town with /t new)"
     other: "<white>{name}</white>: <white>{balance}</white>"
     console-needs-player: "<red>Specify a player: <white>/balance <player></white>"
     no-permission-others: "<red>You don't have permission to check another player's balance!"
@@ -166,6 +167,11 @@ command:
       unbind: "<white>/tritown shop unbind <npc></white> <gray>- take an NPC off its shop"
       stats: "<white>/tritown shop stats <id></white> <gray>- what a shop has traded"
 
+
+founding-credit:
+  granted: "You have a <white>{amount}</white> founding credit. It pays towards your first town when you found one with <white>/t new</white>, and nothing else can spend it. Joining someone else's town gives it up."
+  applied: "Your founding credit covers <white>{amount}</white> of the cost of your town."
+  forfeited: "<gray>You joined a town, so your founding credit has been given up."
 
 common:
   unknown: "unknown"

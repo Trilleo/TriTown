@@ -18,6 +18,11 @@ smallest denomination, so they never drift, and they are written to disk atomica
 starting balance, balance cap and formatting are all configurable. If you would rather keep another economy plugin,
 `economy.provider.mode` tells TriTown to stand aside and use it instead.
 
+**A first town nobody can lose.** Every player without a town is given a founding credit once, on top of their
+starting balance. Only founding a town with `/t new` can spend it: TriTown takes it off the price Towny charges, so a
+new player who spends their balance by mistake can still found a town. Joining someone else's town gives it up, and
+`/balance` shows it while you hold it.
+
 **A sidebar that follows you.** A scoreboard that changes with where you are standing: a new player without a town is
 pointed at joining one, your own claims show your town's level, residents, land, bank, upkeep and any warning, another
 town's claims show whose land it is and what the plot costs, and enemy territory says so. Values sit under headings that
@@ -167,6 +172,7 @@ version stays available as `/tritown:balance` and so on.
 | `player-trades.enabled`                   | `true`             | Turn player-to-player trading off entirely                                      |
 | `player-trades.distance`                  | `10.0`             | How close two players must be to trade, and stay while the menu is open         |
 | `player-trades.request-expiry`            | `60`               | Seconds an unanswered trade request stands                                      |
+| `towns.founding-credit`                   | `100.0`            | Credit only `/t new` can spend, given once to players without a town; `0` is off |
 | `scoreboard.enabled`                      | `true`             | Turn the sidebar off entirely                                                   |
 | `scoreboard.refresh-interval`             | `2`                | Seconds between redraws of a sidebar nothing has changed on                     |
 | `scoreboard.default-on`                   | `true`             | Whether a player who has never used `/tt scoreboard` sees one                   |

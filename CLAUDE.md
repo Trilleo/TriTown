@@ -82,6 +82,7 @@ src/main/kotlin/net/trilleo/mc/plugins/tritown/
 ├── registration/            # Auto-registration engine (do not modify lightly)
 ├── shops/                   # Admin shops: model, trading, storage, FancyNpcs bridge (not scanned)
 ├── tasks/                   # Scheduled tasks (auto-registered, extend PluginTask)
+├── towns/                   # Town founding credit (not scanned)
 ├── trades/                  # Player trades: sessions, escrow, the swap (not scanned)
 └── utils/                   # Lang, EconomyUtil, InventoryUtil, itemStack DSL, MessageUtil, LoreUtil,
                              # ChatPrompt, CountdownUtil, TeamUtil, TagUtil, PDCUtil, GameRuleUtil

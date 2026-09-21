@@ -39,6 +39,7 @@ command:
   balance:
     description: "查看你的余额"
     yours: "你的余额：<white>{balance}</white>"
+    founding-credit: "建镇资金：<white>{amount}</white> <gray>（仅可用于 /t new 创建城镇）"
     other: "<white>{name}</white>：<white>{balance}</white>"
     console-needs-player: "<red>请指定一名玩家：<white>/balance <player></white>"
     no-permission-others: "<red>你没有权限查看其他玩家的余额！"
@@ -166,6 +167,11 @@ command:
       unbind: "<white>/tritown shop unbind <npc></white> <gray>- 解除 NPC 的商店绑定"
       stats: "<white>/tritown shop stats <id></white> <gray>- 商店的交易统计"
 
+
+founding-credit:
+  granted: "你获得了 <white>{amount}</white> 的建镇资金。使用 <white>/t new</white> 创建你的第一个城镇时会自动抵扣费用，不能用于其他任何用途。加入其他城镇会失去这笔资金。"
+  applied: "你的建镇资金抵扣了 <white>{amount}</white> 的城镇创建费用。"
+  forfeited: "<gray>你已加入一个城镇，建镇资金已失效。"
 
 common:
   unknown: "未知"

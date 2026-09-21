@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### New Features
+
+#### Towns
+
++ Added a founding credit. Every player without a town is given one once, the next time they join, on top of their
+  starting balance. Only founding a town with `/t new` can spend it: it comes off the price Towny charges, so a new
+  player who spends their balance by mistake can still found a town.
+    + Joining someone else's town gives the credit up. It is never paid out as money.
+    + `/balance` shows the credit while you hold it.
+    + Set the amount with `towns.founding-credit` (default `100.0`), or `0` to turn it off.
+
 ### Improvements
 
 #### Economy
