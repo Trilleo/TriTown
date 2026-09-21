@@ -2,6 +2,100 @@
 
 ## Unreleased
 
+## Version 1.3.0
+
+### New Features
+
+#### Towns
+
++ Added a founding credit. Every player without a town is given one once, the next time they join, on top of their
+  starting balance. Only founding a town with `/t new` can spend it: it comes off the price Towny charges, so a new
+  player who spends their balance by mistake can still found a town.
+    + Joining someone else's town gives the credit up. It is never paid out as money.
+    + `/balance` shows the credit while you hold it.
+    + Set the amount with `towns.founding-credit` (default `100.0`), or `0` to turn it off.
+
+#### Main Menu
+
++ Added a main menu. Every player carries a glowing menu item in the last slot of their hotbar; right-click it — or
+  click it in your inventory, or run `/tritown menu` — to open it.
+    + Your profile sits at the top: balance, founding credit, leaderboard rank, town and nation.
+    + Below it: your town at a glance (residents, bank, upkeep, time to the new day) with a shortcut into TownyMenu,
+      the global shop, trading, paying, the leaderboard, the server's vital signs, a sidebar switch, and the admin
+      panel for those allowed it.
+    + Anything switched off on the server, or that you are not allowed to use, is left out rather than greyed, and
+      each row is centred on what remains.
+    + **Trade** lists the players close enough to trade with, nearest first, with anyone waiting for your answer
+      first and glowing; click one to ask, or to accept. **Pay** lists everyone online and asks for the amount in
+      chat. Both run `/trade` and `/pay`, so the same rules and permissions apply.
+    + **Leaderboard** shows the richest players as heads, gold, silver and bronze at the top, with your own rank on
+      every page.
++ The menu item cannot be moved, dropped, stored, crafted with, placed or handed to anything — including item
+  frames, armour stands, allays and the trade table. A copy that turns up anywhere but its slot is deleted within a
+  second, and it is taken off you when you log out, so it is never saved and never left behind. Whatever was in the
+  slot before is moved into your inventory, or dropped at your feet if it is full.
++ `main-menu.item.enabled` turns the item off (the menu stays reachable with `/tritown menu`), and
+  `main-menu.item.material` picks what it is — a nether star by default.
+
+#### News
+
++ Added server news: update notes administrators write in game and every player reads from the main menu or with
+  `/tritown news`.
+    + A post has a title, an optional summary and label (such as `v1.3`), and categories of short entries — a line
+      or two about one change each. Every entry carries a tag: New, Changed, Fixed, Removed or Note.
+    + Posts are listed pinned first, then newest. Inside a post, its card sits at the top and its categories follow
+      in order, each one's entries read straight off its card; a long one opens to show them one by one, and
+      **Read as a book** shows the whole post as pages.
++ Players are told what they have missed.
+    + Joining with unread posts lists them in chat a moment later, each one a link to the post.
+    + The **News** button in the main menu glows while anything is unread and stacks up to the number unread, and the
+      menu item's description counts them too.
+    + Publishing a post can announce it to everyone online with a title, a sound and a link, or go out quietly.
+    + A new player only has the newest post waiting for them, not the whole backlog. `/tritown news readall` (or
+      **Mark all as read**) clears the rest.
++ Posts are written entirely in menus, with `tritown.news.manage`: open **Manage** in the news, or run
+  `/tritown news manage`.
+    + A post starts as a draft that only editors can see, can be previewed exactly as players will see it, and is
+      published when it is ready. It can be taken back to drafts, and deleting it asks first.
+    + **Write entries** takes one line after another in chat until you type `done`. Starting a line with `+`, `*`,
+      `!`, `-` or `?` tags it New, Changed, Fixed, Removed or Note; without one it keeps the tag of the line before.
+    + Categories and entries can be reordered, retagged and removed, a post can be pinned to the top, and a post or
+      category takes its icon from any item you click in your inventory.
+    + Every title, summary, category name and entry can be translated into each language the server has, and players
+      read their own language, falling back to the text as first written.
++ The `news` block of `config.yml` switches the news off, sets the join message's delay and length, what an
+  announcement shows and plays, and how long an entry may be (`max-entry-length`, default 200).
+
+### Improvements
+
+#### Economy
+
++ Raised the default starting balance from 100 to 200. Existing servers keep the value already in their
+  `config.yml`.
+
+#### Admin Panel
+
++ The admin panel now opens at full size, keeps its cards centred when you may not open one of them, and has a
+  button back to the main menu.
+
+### Technical Details
+
+#### Misc
+
++ `PagedLayout.CENTERED` frames a paged menu like `FRAMED` and centres a page that is not full, and `GUIFrame` gained
+  `spacedColumns`, `packedColumns` and `centeredSlots` for laying out rows of buttons and short lists.
+  `PagedPluginGUI.contentIndex` now takes the click event, since on a centred page the slot an item lands in depends
+  on how many share it.
++ `GUIManager` no longer delivers clicks and drags that are already cancelled, so a guard at a lower priority can
+  refuse a click knowing no menu will act on it.
++ `CommandRegistrar.find`, `canRun` and `run` let a menu run one of TriTown's commands directly, with its permission
+  check, whatever label it ended up registered under.
++ `PagedPluginGUI.topButtons` places items over the top border of a framed menu, where they stay put as the pages turn.
++ `ConfirmGUI` asks before something that cannot be undone: a subject, up to three choices with actions, and Cancel.
++ `Lang.idFor` gives the language a sender reads, for text kept outside the language files.
++ The atomic write the shop file used (temporary file, `.bak`, atomic move) is now `AtomicFile`, shared with the news
+  file.
+
 ## Version 1.2.0
 
 ### New Features

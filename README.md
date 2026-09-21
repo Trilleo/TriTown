@@ -12,11 +12,26 @@
 
 TriTown is in early development; see the [change log](CHANGELOG.md) for what has shipped.
 
+**A menu in every hotbar.** Every player carries a glowing item in the last slot of their hotbar; right-click it, or
+run `/tt menu`, for everything TriTown offers in one place. Your profile sits at the top — balance, founding credit,
+leaderboard rank, town and nation — and below it are your town at a glance with a shortcut into
+[TownyMenu](https://github.com/Trilleo/TownyMenu), the global shop, a list of the players near enough to trade with
+(anyone waiting for your answer first), a list of players to pay, the richest players as heads, the server's vital signs,
+the server news, a sidebar switch, and the admin panel for those allowed it. Anything switched off on the server, or that you may not
+use, is simply left out, and what remains is centred. The item cannot be moved, dropped, stored, crafted with or handed
+to anything, a copy made any other way is deleted within a second, and it is taken off you when you log out, so there
+is nothing to duplicate and nothing left behind if TriTown is ever removed.
+
 **A built-in economy.** TriTown supplies the server's Vault economy itself, so Towny gets working player wallets and
 town and nation banks without a separate economy plugin such as EssentialsX. Balances are stored as whole units of the
 smallest denomination, so they never drift, and they are written to disk atomically with a backup copy. The currency,
 starting balance, balance cap and formatting are all configurable. If you would rather keep another economy plugin,
 `economy.provider.mode` tells TriTown to stand aside and use it instead.
+
+**A first town nobody can lose.** Every player without a town is given a founding credit once, on top of their
+starting balance. Only founding a town with `/t new` can spend it: TriTown takes it off the price Towny charges, so a
+new player who spends their balance by mistake can still found a town. Joining someone else's town gives it up, and
+`/balance` shows it while you hold it.
 
 **A sidebar that follows you.** A scoreboard that changes with where you are standing: a new player without a town is
 pointed at joining one, your own claims show your town's level, residents, land, bank, upkeep and any warning, another
@@ -39,6 +54,15 @@ Items leave your inventory the moment you put them up and are held by the trade,
 cannot be spent behind their back, and anything changing on the table clears both confirmations — nothing can be
 swapped out after somebody has agreed to it. Everything comes straight back if either of you closes the menu, walks
 away or disconnects.
+
+**Server news.** Update notes, written in game and read from the main menu or with `/tt news`. A post is a title and
+categories of short entries — a line or two about one change each, tagged New, Changed, Fixed, Removed or Note — read
+straight off the menu, or as a book when it runs long. Players hear about what they have missed: a list of unread posts,
+each a link, a moment after they join; a **News** button that glows and counts them; and, when a post is published, an
+announcement to everyone online (or none, for a small post). Posts are written entirely in menus: start a draft,
+type entries into chat one line after another (a leading `+`, `*`, `!`, `-` or `?` picks the tag), preview it as
+players will see it, pin it, and publish it when it is ready. Every title and entry can be translated into each of the
+server's languages, and players read their own.
 
 **An admin panel.** `/tt admin` opens a menu that reads the server back to you. The economy section shows how much
 currency exists and who holds it, what created it and what removed it — new players, shops, Towny, administrators or
@@ -63,11 +87,13 @@ built on.
 | Towny          | 0.103.2.7+                          |
 | Vault          | 1.7+                                |
 | FancyNpcs      | 2.9+ — optional, for shop NPCs       |
+| TownyMenu      | Optional — for the town shortcut     |
 | Economy plugin | Not required — TriTown provides one |
 
 TriTown is an addon: Towny and Vault must both be installed, or TriTown will not load. An economy plugin is optional —
 install one only if you want it to supply the economy instead of TriTown, and set `economy.provider.mode` accordingly.
-FancyNpcs is optional too: without it shops still work, they just cannot be opened by clicking an NPC.
+FancyNpcs is optional too: without it shops still work, they just cannot be opened by clicking an NPC. So is
+TownyMenu: without it the main menu simply has no town button.
 
 ## Building
 
@@ -92,6 +118,7 @@ Prebuilt jars are attached to every [GitHub release](https://github.com/Trilleo/
 | Command                  | Description                           |
 |:-------------------------|:--------------------------------------|
 | `/tt help`               | List all available commands           |
+| `/tt menu`               | Open the main menu                    |
 | `/tt reload`             | Reload the configuration (OP only)    |
 | `/balance [player]`      | Check your balance, or someone else's |
 | `/pay <player> <amount>` | Send money to another player          |
@@ -101,6 +128,7 @@ Prebuilt jars are attached to every [GitHub release](https://github.com/Trilleo/
 | `/trades`                | Open the server's global shop         |
 | `/trade <player>`        | Ask another player to trade           |
 | `/tt shop <action> …`    | Set up the server's shops (OP only)   |
+| `/tt news`               | Read the server news                  |
 | `/tt admin [section]`    | Open the admin panel (OP only)        |
 
 `/eco` takes `give`, `take` and `set` (`<player> <amount> [currency]`), `reset <player>` back to the starting balance,
@@ -117,6 +145,10 @@ permission, `tritown.shop.admin.<action>`. Players have no shop command of their
 have to be within `player-trades.distance` blocks of each other, and have to stay that close for as long as the menu
 is open. There is no permission node: whether players may trade at all is `player-trades.enabled`.
 
+`/tt news` opens the news; it also takes `open <id>` for one post (what the links in chat run), `readall` to mark
+every post read, and `manage` to write them, which needs `tritown.news.manage` — as does the **Manage** button in the
+news.
+
 `/tt admin` opens the panel itself, and `economy` or `shops` opens that section directly. Opening the panel needs
 `tritown.admin`; the sections need `tritown.admin.economy` and `tritown.admin.shops` on top of it.
 
@@ -131,6 +163,8 @@ version stays available as `/tritown:balance` and so on.
 |:------------------------------------------|:-------------------|:--------------------------------------------------------------------------------|
 | `message-prefix`                          | —                  | MiniMessage prefix shown before plugin messages                                 |
 | `language`                                | `auto`             | `auto` follows each player's client, or a language id such as `zh_CN`           |
+| `main-menu.item.enabled`                  | `true`             | Keep the menu item in the last hotbar slot of every player                      |
+| `main-menu.item.material`                 | `NETHER_STAR`      | What the menu item is; any item works                                           |
 | `economy.enabled`                         | `true`             | Turn the economy off entirely                                                   |
 | `economy.provider.mode`                   | `auto`             | `internal`, `external` or `auto` — who supplies the Vault economy (restart)     |
 | `economy.provider.defer-to`               | common eco plugins | Which installed plugins `auto` stands aside for                                 |
@@ -140,7 +174,7 @@ version stays available as `/tritown:balance` and so on.
 | `economy.currency.fractional-digits`      | `2`                | Digits kept after the decimal point (see below)                                 |
 | `economy.currency.format`                 | `%symbol%%amount%` | Plain pattern other plugins print verbatim — no MiniMessage tags                |
 | `economy.currency.rich-format`            | `<gold>…</gold>`   | MiniMessage pattern for TriTown's own messages                                  |
-| `economy.starting-balance`                | `100.0`            | Balance granted on a player's first join                                        |
+| `economy.starting-balance`                | `200.0`            | Balance granted on a player's first join                                        |
 | `economy.balance-cap`                     | `1000000000.0`     | Largest balance an account may hold; `0` removes the cap                        |
 | `economy.minimum-payment`                 | `0.01`             | Smallest amount a payment will accept                                           |
 | `economy.allow-negative-balances`         | `false`            | Whether a withdrawal may take an account below zero                             |
@@ -167,6 +201,14 @@ version stays available as `/tritown:balance` and so on.
 | `player-trades.enabled`                   | `true`             | Turn player-to-player trading off entirely                                      |
 | `player-trades.distance`                  | `10.0`             | How close two players must be to trade, and stay while the menu is open         |
 | `player-trades.request-expiry`            | `60`               | Seconds an unanswered trade request stands                                      |
+| `towns.founding-credit`                   | `100.0`            | Credit only `/t new` can spend, given once to players without a town; `0` is off |
+| `news.enabled`                            | `true`             | Turn the server news off entirely                                               |
+| `news.join-message.enabled`               | `true`             | List a player's unread posts a moment after they join                           |
+| `news.join-message.delay-seconds`         | `3`                | How long after joining                                                          |
+| `news.join-message.preview`               | `3`                | How many unread titles that list names                                          |
+| `news.announce.title` / `.chat`           | `true`             | Title and chat link everyone online gets when a post is announced               |
+| `news.announce.sound`                     | a chime            | Sound played with the announcement; `""` for none                               |
+| `news.max-entry-length`                   | `200`              | Most characters one entry may have, not counting colour tags                    |
 | `scoreboard.enabled`                      | `true`             | Turn the sidebar off entirely                                                   |
 | `scoreboard.refresh-interval`             | `2`                | Seconds between redraws of a sidebar nothing has changed on                     |
 | `scoreboard.default-on`                   | `true`             | Whether a player who has never used `/tt scoreboard` sees one                   |

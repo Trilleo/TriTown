@@ -19,4 +19,15 @@ enum class PagedLayout {
      * grid of loose items.
      */
     FRAMED,
+
+    /**
+     * Framed, with each page's items centred inside the border rather than
+     * filled from its top-left corner.
+     *
+     * A full page looks exactly like [FRAMED]. A page holding a few — the last
+     * one, or a list that is short to begin with — keeps its items together in
+     * the middle of the menu, with the last row packed around the centre column.
+     * Meant for lists that are often short, such as the players online.
+     */
+    CENTERED,
 }

@@ -6,6 +6,8 @@ import net.trilleo.mc.plugins.tritown.config.ShopSettings
 import net.trilleo.mc.plugins.tritown.economy.EconomyPulse
 import net.trilleo.mc.plugins.tritown.enums.FillMode
 import net.trilleo.mc.plugins.tritown.enums.StatsWindow
+import net.trilleo.mc.plugins.tritown.guis.menu.MainMenuGUI
+import net.trilleo.mc.plugins.tritown.guis.menu.MenuRender
 import net.trilleo.mc.plugins.tritown.guis.shop.ShopRender
 import net.trilleo.mc.plugins.tritown.registration.GUIFrame
 import net.trilleo.mc.plugins.tritown.registration.GUIManager
@@ -25,37 +27,60 @@ import org.bukkit.inventory.ItemStack
  * The way in to everything an administrator runs the server from.
  *
  * Deliberately thin: it names the sections and shows just enough of each to say
- * whether it is worth opening. Everything a section knows lives in that
+ * whether it is worth opening. It is reached from the main menu as well as by
+ * command, so it leads back there. Everything a section knows lives in that
  * section's own menu, so adding one here is adding a card, not rewriting this.
  */
 class AdminPanelGUI : PluginGUI(
     id = ID,
     titleKey = "gui.admin.title",
-    rows = 3,
+    rows = 6,
     fillMode = FillMode.NONE,
 ) {
 
-    override fun setup(player: Player, inventory: Inventory) {
-        GUIFrame.draw(inventory, listOf(ECONOMY_SLOT, SHOPS_SLOT, SERVER_SLOT))
+    private enum class Card { ECONOMY, SHOPS, SERVER }
 
-        if (player.hasPermission(ECONOMY_PERMISSION)) inventory.setItem(ECONOMY_SLOT, economy(player))
-        if (player.hasPermission(SHOPS_PERMISSION)) inventory.setItem(SHOPS_SLOT, shops(player))
-        inventory.setItem(SERVER_SLOT, server(player))
+    override fun setup(player: Player, inventory: Inventory) {
+        val cards = cardsFor(player)
+        GUIFrame.draw(inventory, cards.keys + BACK_SLOT)
+
+        cards.forEach { (slot, card) ->
+            val item = when (card) {
+                Card.ECONOMY -> economy(player)
+                Card.SHOPS -> shops(player)
+                Card.SERVER -> server(player)
+            }
+            inventory.setItem(slot, item)
+        }
+        inventory.setItem(BACK_SLOT, MenuRender.back(player))
     }
 
     override fun onClick(event: InventoryClickEvent) {
         event.isCancelled = true
         val player = event.whoClicked as? Player ?: return
+        if (event.clickedInventory !== event.view.topInventory) return
 
-        when (event.rawSlot) {
-            ECONOMY_SLOT -> if (player.hasPermission(ECONOMY_PERMISSION)) {
-                GUIManager.openLater(player, EconomyPanelGUI.ID)
-            }
-
-            SHOPS_SLOT -> if (player.hasPermission(SHOPS_PERMISSION)) {
-                GUIManager.openLater(player, AdminShopsGUI.ID)
-            }
+        if (event.rawSlot == BACK_SLOT) {
+            MenuRender.later(player) { MainMenuGUI.show(player) }
+            return
         }
+
+        when (cardsFor(player)[event.rawSlot]) {
+            Card.ECONOMY -> GUIManager.openLater(player, EconomyPanelGUI.ID)
+            Card.SHOPS -> GUIManager.openLater(player, AdminShopsGUI.ID)
+            Card.SERVER, null -> Unit
+        }
+    }
+
+    /** The cards [player] may open, centred along the row, so one they lack leaves no gap. */
+    private fun cardsFor(player: Player): Map<Int, Card> {
+        val cards = listOfNotNull(
+            Card.ECONOMY.takeIf { player.hasPermission(ECONOMY_PERMISSION) },
+            Card.SHOPS.takeIf { player.hasPermission(SHOPS_PERMISSION) },
+            Card.SERVER,
+        )
+        return GUIFrame.spacedColumns(cards.size).zip(cards)
+            .associate { (column, card) -> CARD_ROW * 9 + column to card }
     }
 
     // ── Cards ───────────────────────────────────────────────────────────
@@ -136,11 +161,13 @@ class AdminPanelGUI : PluginGUI(
     companion object {
         const val ID = "admin-panel"
 
+        /** Opening the panel at all; each section asks for its own node on top of it. */
+        const val PERMISSION = "tritown.admin"
+
         const val ECONOMY_PERMISSION = "tritown.admin.economy"
         const val SHOPS_PERMISSION = "tritown.admin.shops"
 
-        private const val ECONOMY_SLOT = 11
-        private const val SHOPS_SLOT = 13
-        private const val SERVER_SLOT = 15
+        private const val CARD_ROW = 2
+        private const val BACK_SLOT = 49
     }
 }

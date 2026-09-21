@@ -75,6 +75,12 @@ object Lang {
     /** The translation of [key] for [sender], or `null` when no language defines it. */
     fun find(sender: CommandSender?, key: String): String? = language(sender).values[key]
 
+    /**
+     * The id of the language [sender] reads, such as `zh_CN` — the same one [tr]
+     * picks, so text kept outside the language files can follow it.
+     */
+    fun idFor(sender: CommandSender?): String = language(sender).id
+
     private fun language(sender: CommandSender?): Language {
         val id =
             if (configured.equals(AUTO, ignoreCase = true)) (sender as? Player)?.locale()?.toString() else configured

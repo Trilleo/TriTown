@@ -114,7 +114,7 @@ data class EconomySettings(
                 deferTo = deferTo,
                 currencies = listOf(currency),
                 primaryCurrencyId = currency.id,
-                startingBalance = config.getDouble("economy.starting-balance", 100.0),
+                startingBalance = config.getDouble("economy.starting-balance", 200.0),
                 balanceCap = config.getDouble("economy.balance-cap", 1_000_000_000.0),
                 minimumPayment = config.getDouble("economy.minimum-payment", 0.01),
                 allowNegativeBalances = config.getBoolean("economy.allow-negative-balances", false),

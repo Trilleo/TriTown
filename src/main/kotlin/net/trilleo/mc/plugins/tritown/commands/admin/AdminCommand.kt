@@ -21,7 +21,7 @@ class AdminCommand : PluginCommand(
     name = "admin",
     description = "Open the admin panel",
     usage = "/tritown admin [economy|shops]",
-    permission = PERMISSION,
+    permission = AdminPanelGUI.PERMISSION,
 ) {
 
     override val extraPermissions = listOf(AdminPanelGUI.ECONOMY_PERMISSION, AdminPanelGUI.SHOPS_PERMISSION)
@@ -72,8 +72,6 @@ class AdminCommand : PluginCommand(
     }
 
     private companion object {
-        const val PERMISSION = "tritown.admin"
-
         val SECTIONS = listOf("economy", "shops")
     }
 }

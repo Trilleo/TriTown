@@ -8,6 +8,22 @@ message-prefix: "<click:run_command:/tritown help><gradient:yellow:gold>[TriTown
 # Translations live in plugins/TriTown/lang/ and can be edited or extended with new <id>.yml files.
 language: auto
 
+# ── Main Menu ───────────────────────────────────────────────────────────────
+# The menu players reach everything TriTown offers from: their balance and town,
+# the global shop, trading and paying other players, the leaderboard, the
+# sidebar switch and a shortcut into TownyMenu. /tritown menu opens it too.
+main-menu:
+  item:
+    # Keep the menu item in the last slot of every player's hotbar. Right-clicking
+    # it opens the menu. It cannot be moved, dropped, stored, crafted with or
+    # handed to anything, and one lost any other way is put straight back. Whatever
+    # was in that slot is moved into the player's inventory. When false, every
+    # copy is taken back.
+    enabled: true
+    # What the item is. Any item works; since it can never be crafted with, even a
+    # nether star cannot be spent on a beacon.
+    material: NETHER_STAR
+
 # ── Economy ─────────────────────────────────────────────────────────────────
 economy:
   # Turn the economy off entirely. TriTown then needs another plugin to supply one.
@@ -50,7 +66,7 @@ economy:
     rich-format: "<gold>%symbol%%amount%</gold>"
 
   # Balance granted to a player the first time they join.
-  starting-balance: 100.0
+  starting-balance: 200.0
   # Largest balance an account may hold. Set to 0 to remove the cap.
   # A payment that would break the cap fails rather than being trimmed to fit.
   balance-cap: 1000000000.0
@@ -163,6 +179,45 @@ player-trades:
   distance: 10.0
   # Seconds an unanswered request stands before it lapses.
   request-expiry: 60
+
+# ── Towns ───────────────────────────────────────────────────────────────────
+towns:
+  # Money set aside for a player's first town, on top of their starting balance.
+  # Only /t new can spend it: TriTown takes it off the price Towny charges, so a
+  # new player who spends their balance by mistake can still found a town.
+  # Every player without a town is given it once, the next time they join, and
+  # joining someone else's town gives it up. It is never paid out as money.
+  # Set to 0 to turn it off.
+  founding-credit: 100.0
+
+# ── News ────────────────────────────────────────────────────────────────────
+# Update notes for the server, read from the main menu or with /tritown news.
+# Posts are written in game — /tritown news manage, or the Manage button in the
+# news — and nothing about them lives here. Writing them needs
+# tritown.news.manage.
+news:
+  # Switch the news off entirely: no menu button, no messages, no command.
+  enabled: true
+  join-message:
+    # Tell a player with unread posts about them a moment after they join, with
+    # a link to each one.
+    enabled: true
+    # How long after joining, so the message is not lost among the welcome ones.
+    delay-seconds: 3
+    # How many unread titles to list before pointing at the rest.
+    preview: 3
+  # What everyone online gets when a post is published with "Publish & announce".
+  # "Publish quietly" skips all of it.
+  announce:
+    # A title across the middle of the screen.
+    title: true
+    # A chat line with a link to the post.
+    chat: true
+    # A sound key, or "" for none.
+    sound: "minecraft:block.note_block.chime"
+  # The most characters one entry may be, not counting colour tags. An entry is
+  # meant to be a line or two about a single change.
+  max-entry-length: 200
 
 # ── Sidebar ─────────────────────────────────────────────────────────────────
 # The scoreboard shown at the right of the screen. Each board names a condition

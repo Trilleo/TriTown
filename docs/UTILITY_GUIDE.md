@@ -19,6 +19,7 @@ reduce boilerplate and provide commonly needed functionality out of the box.
 | `InventoryUtil` | Gives items to a player, and asks first whether they would fit        |
 | `TownyUtil`     | Reads and formats Towny data: names, balances, upkeep, the new day     |
 | `ComponentUtil` | Parses a MiniMessage string into a Component, and escapes input        |
+| `AtomicFile`    | Replaces a file without ever leaving a truncated copy behind           |
 
 ---
 
@@ -376,6 +377,7 @@ has to follow.
 | `Lang.load(plugin, language)`        | Copies the bundled files to `plugins/TriTown/lang/` if missing and loads every language file.        |
 | `Lang.tr(sender, key, vararg args)`  | The translation of `key` for `sender`, with `{name}` placeholders filled; the key itself if missing. |
 | `Lang.find(sender, key)`             | The raw translation, or `null` when no language defines `key` (for runtime-built keys).              |
+| `Lang.idFor(sender)`                 | The id of the language `sender` reads, as `tr` picks it, for text kept outside the language files.   |
 | `Lang.ids`                           | Ids of every loaded language file (`en_US`, `zh_CN`, and any the server owner added).                |
 | `CommandSender.tr(key, vararg args)` | Extension shorthand for `Lang.tr(this, key, *args)`.                                                 |
 
@@ -584,6 +586,19 @@ where the editor went.
 
 Only one question can be waiting for a player at a time: asking a second drops the first, so two menus cannot both be
 listening.
+
+---
+
+## AtomicFile
+
+`AtomicFile.write(target, backup, content)` writes `content` to a temporary file beside `target`, moves the old
+`target` to `backup`, then moves the new file into place atomically where the file system allows it. A crash part-way
+leaves either the old file or the new one, never a truncated one, and a reader that finds `target` unreadable can fall
+back to `backup`. The shop file and the news file are both written this way.
+
+```kotlin
+AtomicFile.write(file.toPath(), File(file.path + ".bak").toPath(), gson.toJson(document))
+```
 
 ---
 

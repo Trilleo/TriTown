@@ -3,8 +3,8 @@ package net.trilleo.mc.plugins.tritown.shops.storage
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import net.trilleo.mc.plugins.tritown.utils.AtomicFile
 import java.io.File
-import java.nio.file.*
 import java.util.logging.Logger
 
 /**
@@ -73,7 +73,7 @@ class JsonShopStorage(directory: File, private val logger: Logger) : ShopStorage
         }
 
         try {
-            writeAtomically(shopsFile.toPath(), gson.toJson(document))
+            AtomicFile.write(shopsFile.toPath(), backupFile.toPath(), gson.toJson(document))
         } catch (e: Exception) {
             logger.severe("Failed to write ${shopsFile.name}: [${e.javaClass.simpleName}] ${e.message}")
         }
@@ -82,27 +82,6 @@ class JsonShopStorage(directory: File, private val logger: Logger) : ShopStorage
     private fun read(file: File): JsonObject? {
         if (!file.exists()) return null
         return runCatching { JsonParser.parseString(file.readText()).asJsonObject }.getOrNull()
-    }
-
-    private fun writeAtomically(target: Path, content: String) {
-        val temporary = target.resolveSibling("${target.fileName}.tmp")
-        Files.writeString(
-            temporary,
-            content,
-            StandardOpenOption.CREATE,
-            StandardOpenOption.TRUNCATE_EXISTING,
-            StandardOpenOption.WRITE,
-        )
-
-        if (Files.exists(target)) {
-            Files.move(target, backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
-        }
-
-        try {
-            Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-        } catch (_: AtomicMoveNotSupportedException) {
-            Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING)
-        }
     }
 
     private companion object {

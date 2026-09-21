@@ -81,7 +81,7 @@ class AdminShopsGUI : PagedPluginGUI(
         if (!ShopManager.isReady) return
 
         // The header takes the first position, so the shops start one behind it.
-        val index = (contentIndex(page, event.rawSlot) ?: return) - 1
+        val index = (contentIndex(event, page) ?: return) - 1
         val shop = ShopManager.all().getOrNull(index) ?: return
 
         if (event.click == ClickType.SHIFT_LEFT) {
