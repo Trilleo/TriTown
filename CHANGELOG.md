@@ -22,10 +22,11 @@
 
 #### Misc
 
-+ Vanilla containers are retired in favour of the storage. Chests, trapped chests, barrels, shulker boxes, ender
-  chests, chest and hopper minecarts and chest boats can no longer be placed, by players or by dispensers.
-    + The ones already placed become withdraw-only, so nothing stored in them is lost. Hoppers can still empty them but
-      can no longer fill them.
++ Vanilla containers are decoration now, in favour of the storage. Chests, trapped chests, barrels, shulker boxes,
+  ender chests, chest minecarts and chest boats can still be placed, with a warning, but nothing can be put in them.
+    + One with items inside opens only to take them out, so nothing stored in them is lost. An empty one does not open
+      at all.
+    + Hoppers can still empty them but can no longer fill them.
     + Each group can be left alone under `storage.lock-containers`, and `tritown.storage.bypass` exempts builders.
 
 #### Economy

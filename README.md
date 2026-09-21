@@ -45,8 +45,8 @@ size of a large chest, used exactly like one, with a row of buttons beneath for 
 you already store some of, sorting, emptying a page into your inventory, and unpacking a shulker box or bundle straight
 into it. Name your pages and give them icons, and see every page at once in an overview. The first pages are free and
 more can be bought, each a little dearer than the last. It replaces vanilla containers: chests, barrels, shulker boxes
-and ender chests can no longer be placed, and the ones already in the world can only be emptied — never filled, not
-even by a hopper — so nothing anyone stored is lost.
+and ender chests are decoration now. They can still be placed, but nothing can be put in them — not even by a hopper —
+one with items inside only lets them be taken out, and an empty one does not open. Nothing anyone stored is lost.
 
 **Shops the server runs.** Admin shops, set up entirely in game: click an item in your own inventory to put it on the
 shelf and it is sold exactly as you made it, custom name, enchantments and all. An entry can be sold, bought back, or
@@ -223,7 +223,7 @@ version stays available as `/tritown:balance` and so on.
 | `storage.price.base`                      | `500.0`            | What the first bought page costs                                                |
 | `storage.price.multiplier`                | `1.5`              | How much dearer each bought page is than the one before                         |
 | `storage.save-interval`                   | `30`               | Seconds between writing changed storages; closing one writes it at once         |
-| `storage.lock-containers.enabled`         | `true`             | Stop containers being placed, and make placed ones withdraw-only                |
+| `storage.lock-containers.enabled`         | `true`             | Make containers decoration: withdraw-only, and closed once empty                |
 | `storage.lock-containers.<group>`         | `true`             | Each of `chests`, `shulker-boxes` and `ender-chest` on its own                 |
 | `towns.founding-credit`                   | `100.0`            | Credit only `/t new` can spend, given once to players without a town; `0` is off |
 | `news.enabled`                            | `true`             | Turn the server news off entirely                                               |
@@ -309,13 +309,13 @@ items in and out of them just as you would a chest. The row beneath holds the bu
 - **Sort** merges and orders the page; shift-click sorts every page.
 - **Take page** moves as much of the page as fits into your inventory.
 - **Unpack** empties a shulker box or bundle into your storage: pick one up and click the button with it. A full box
-  or bundle cannot be stored as it is, and shulker boxes can no longer be placed, so this is how their contents come
-  home.
+  or bundle cannot be stored as it is, so this is how its contents come home.
 - **Page settings** renames the page (typed in chat) or gives it an icon (click any item in your inventory).
 
-Chests, trapped chests, barrels, shulker boxes, ender chests, chest and hopper minecarts and chest boats cannot be
-placed, by players or by dispensers. The ones already in the world still open, but only to take things out; hoppers
-can still empty them but not fill them. Each group can be left alone under `storage.lock-containers`.
+Chests, trapped chests, barrels, shulker boxes, ender chests, chest minecarts and chest boats are decoration. They can
+still be placed, with a warning, but nothing can be put in them: one with items inside opens only to take things out,
+and an empty one does not open at all. Hoppers can still empty them but not fill them. Each group can be left alone
+under `storage.lock-containers`.
 
 Storages live in `plugins/TriTown/storage/<uuid>.json`, one per player, written atomically with a `.bak` copy beside
 it. A storage is written when it is closed, when its page is turned, every `storage.save-interval` seconds while it

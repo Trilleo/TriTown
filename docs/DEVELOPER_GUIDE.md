@@ -3020,8 +3020,8 @@ calls the trade off if they leave it hanging.
 ## Personal Storage
 
 Every player's own paged storage, reached from the main menu or with `/tritown storage`. It replaces vanilla
-containers: chests, barrels, shulker boxes and ender chests can no longer be placed, and the ones already in the world
-are withdraw-only.
+containers: chests, barrels, shulker boxes and ender chests are decoration — withdraw-only while they hold anything, and
+closed once empty.
 
 The core lives under `storage/`, which is **not a scanned package** — the same reason `shops/` and `trades/` are not.
 `StorageManager` has to be alive before the registrars build the main menu that reads it. The menus are in
@@ -3117,17 +3117,19 @@ page turn keeps the window to the time someone is actively moving items around i
 
 ### The container lock
 
-`ContainerLockListener` refuses placing a chest, trapped chest, barrel, ender chest or any shulker box, placing a
-chest or hopper minecart or a chest boat, and a dispenser doing either. Crafting is left alone, since chests go into
-hoppers and minecarts.
+`ContainerLockListener` lets a chest, trapped chest, barrel, ender chest, shulker box, chest minecart or chest boat be
+placed, as decoration, and warns the player who placed it (`storage.lock.decoration`, at `MONITOR` so a placement
+something else refused says nothing). Crafting is left alone.
 
-A container already in the world is **withdraw-only**. The listener recognises one by **the holder of its inventory**
+**An empty container does not open**: `InventoryOpenEvent` is cancelled when the inventory is empty, so a decorative
+chest never shows an inventory that looks as if it were waiting to be filled. For an ender chest that is the viewer's
+own ender inventory. A container with anything in it opens, and is **withdraw-only**. The listener recognises one by **the holder of its inventory**
 (`Chest`, `DoubleChest`, `Barrel`, `ShulkerBox`, `StorageMinecart`, `ChestBoat`, or the `ENDER_CHEST` type), never by
 `InventoryType` — TriTown's own menus and other plugins' are chest-shaped too, and they have no holder. It cancels
 anything that would put an item in: placing or swapping into a top slot, a shift-click from the player's inventory,
 a number key that carries an item in, and any drag touching the top. Taking out is always allowed.
 `InventoryMoveItemEvent` is cancelled when the **destination** is locked, so hoppers can still empty a chest but not
-fill one. A hopper minecart already running is left unlocked for the same reason: it is part of a machine.
+fill one. A hopper minecart is left unlocked for the same reason: it is part of a machine.
 
 Each group has its own switch under `storage.lock-containers`, the whole lock follows `storage.enabled`, and
 `tritown.storage.bypass` exempts a player.

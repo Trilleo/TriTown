@@ -1158,8 +1158,9 @@ storage:
     bad-name: "页面名称须为 1 到 {amount} 个字符。"
 
   lock:
-    no-place: "本服务器已停用容器方块。请把物品存放在你的仓库中：/tritown storage"
+    decoration: "<yellow>本服务器的容器仅作装饰：无法放入物品，空的容器也无法打开。请把物品存放在你的仓库中：<white>/tritown storage</white>"
     withdraw-only: "<yellow>这个容器只能取出物品。请从菜单打开你的仓库。"
+    empty: "<gray>这个容器是空的，现在只是装饰。"
 
 trade:
   done: "已与 <white>{name}</white> 完成交易。"

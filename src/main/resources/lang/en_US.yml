@@ -1158,8 +1158,9 @@ storage:
     bad-name: "A page name has to be 1 to {amount} characters."
 
   lock:
-    no-place: "Containers are retired on this server. Keep your items in your storage instead: /tritown storage"
+    decoration: "<yellow>Containers are decoration on this server: nothing can be put in them, and an empty one won't open. Keep your items in your storage instead: <white>/tritown storage</white>"
     withdraw-only: "<yellow>This container is withdraw-only. Open your storage from the menu."
+    empty: "<gray>This container is empty. It is only decoration now."
 
 trade:
   done: "Traded with <white>{name}</white>."

@@ -185,9 +185,10 @@ player-trades:
 # A page is a large chest: five rows for items above a row of buttons for moving
 # between pages, depositing, sorting, and unpacking shulker boxes and bundles.
 #
-# It replaces vanilla containers, which can no longer be placed. The ones already
-# in the world can only be emptied, so nothing anyone stored is lost.
-# tritown.storage.bypass lets a builder place and fill them anyway.
+# It replaces vanilla containers. They can still be placed as decoration, with a
+# warning, but nothing can be put in them: one with items inside only lets them be
+# taken out, and an empty one does not open at all. Nothing anyone stored is lost.
+# tritown.storage.bypass lets a builder use them as vanilla does.
 storage:
   # Turn the storage off entirely. Containers are then left as vanilla has them.
   # Switching it back on needs a restart.
@@ -207,10 +208,11 @@ storage:
   # someone is still moving items around in one.
   save-interval: 30
   lock-containers:
-    # Stop the containers below being placed, and make the ones already placed
-    # withdraw-only. Hoppers can still pull items out of them, but not push in.
+    # Make the containers below decoration: withdraw-only while they hold
+    # anything, and closed once empty. Placing one warns the player. Hoppers can
+    # still pull items out of them, but not push in.
     enabled: true
-    # Chests, trapped chests, barrels, chest and hopper minecarts, and chest boats.
+    # Chests, trapped chests, barrels, chest minecarts and chest boats.
     chests: true
     shulker-boxes: true
     ender-chest: true
