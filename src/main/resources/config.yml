@@ -8,6 +8,22 @@ message-prefix: "<click:run_command:/tritown help><gradient:yellow:gold>[TriTown
 # Translations live in plugins/TriTown/lang/ and can be edited or extended with new <id>.yml files.
 language: auto
 
+# ── Main Menu ───────────────────────────────────────────────────────────────
+# The menu players reach everything TriTown offers from: their balance and town,
+# the global shop, trading and paying other players, the leaderboard, the
+# sidebar switch and a shortcut into TownyMenu. /tritown menu opens it too.
+main-menu:
+  item:
+    # Keep the menu item in the last slot of every player's hotbar. Right-clicking
+    # it opens the menu. It cannot be moved, dropped, stored, crafted with or
+    # handed to anything, and one lost any other way is put straight back. Whatever
+    # was in that slot is moved into the player's inventory. When false, every
+    # copy is taken back.
+    enabled: true
+    # What the item is. Any item works; since it can never be crafted with, even a
+    # nether star cannot be spent on a beacon.
+    material: NETHER_STAR
+
 # ── Economy ─────────────────────────────────────────────────────────────────
 economy:
   # Turn the economy off entirely. TriTown then needs another plugin to supply one.

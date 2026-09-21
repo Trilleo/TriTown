@@ -126,6 +126,22 @@ class EconomyAdminCommand : PluginCommand(
 | `execute`     | Yes      | Called when a player or console runs the command |
 | `tabComplete` | No       | Called when tab-completion is requested          |
 
+### Running a Command from Code
+
+A menu button that does what a command already does should run that command rather than repeat it, so every check and
+message stays in one place. `CommandRegistrar` finds a command by name whether it is a sub-command of `/tritown` or a
+command of its own, which matters because a main command whose label another plugin owns is only reachable as
+`/tritown:<name>` — dispatching a typed line would reach the wrong plugin:
+
+```kotlin
+CommandRegistrar.canRun(player, "pay")              // false when the command is missing or its permission is not held
+CommandRegistrar.run(player, "pay", target, amount) // checks the permission, then calls execute
+CommandRegistrar.find("pay")                        // the PluginCommand itself, or null
+```
+
+`run` returns `false` only when there is no such command; a sender without the permission is told so, as though they
+had typed it.
+
 ### Example (Sub-Command)
 
 This command is registered as `/tritown ping` (the default behavior):
@@ -354,6 +370,11 @@ Never open another inventory from inside a click handler: the click is still bei
 end up disagreeing about what is on screen. Use `GUIManager.openLater(player, id)`, which opens it on the following
 tick.
 
+**A click or drag that is already cancelled never reaches a GUI.** `GUIManager` listens with `ignoreCancelled = true`,
+so a guard that runs earlier — the [menu item's](#main-menu), at the lowest priority — can refuse a click and know that
+no menu will act on it anyway. This is what stops a menu that takes items out of the player's inventory, such as the
+trade table or the shop editor, from escrowing or selling something that must not move.
+
 ### Opening a GUI
 
 Use `GUIManager.open(player, id)` to open a registered GUI for a player:
@@ -381,6 +402,24 @@ if (open?.id == "settings") GUIManager.refresh(player)
 `refresh` writes into the inventory the player is already looking at rather than opening a replacement, which is what
 lets a menu change under somebody — the other side of a trade adding an item, a figure that has moved on. It works on
 any player, not only the one whose click you are handling, so a menu two people share can keep both windows the same.
+
+### GUIFrame
+
+`GUIFrame` holds the border every framed menu shares and the slot arithmetic for laying things out inside it. It is
+pure arithmetic apart from `pane` and `draw`, and `GUIFrameTest` pins it down.
+
+| Member                        | Returns                                                                                |
+|:------------------------------|:---------------------------------------------------------------------------------------|
+| `pane()`                      | One border slot: black glass with no tooltip                                           |
+| `contentSlots(rows)`          | The slots inside the border, in reading order                                          |
+| `draw(inventory, slots)`      | Fills every slot not in `slots` with the border                                        |
+| `spacedColumns(count)`        | Columns for up to 4 buttons spread with a gap between each, centred (`4`; `3, 5`; …)    |
+| `packedColumns(count)`        | Columns for up to 7 items side by side, centred; an even count leaves column 4 empty   |
+| `centeredSlots(rows, count)`  | Slots for `count` items in rows of seven, last row packed, the block centred vertically |
+
+A menu of buttons whose set depends on the viewer — a permission, a feature switched off — should lay each row out with
+`spacedColumns` from the buttons it actually has, rather than fixing slots and leaving a hole where one is missing.
+`MainMenuGUI` and `AdminPanelGUI` both do this.
 
 ### Example
 
@@ -473,22 +512,29 @@ For example, a 6-row GUI provides 45 content slots per page (rows 1–5).
 
 ### Layouts
 
-| Layout               | Content slots (6 rows) | Description                                                                |
-|:---------------------|:-----------------------|:----------------------------------------------------------------------------|
-| `PagedLayout.FULL`   | 45                     | Every slot above the navigation row is content                             |
-| `PagedLayout.FRAMED` | 28                     | Content is inset by one slot on every side, with a black glass border round it |
+| Layout                 | Content slots (6 rows) | Description                                                                    |
+|:-----------------------|:-----------------------|:-------------------------------------------------------------------------------|
+| `PagedLayout.FULL`     | 45                     | Every slot above the navigation row is content                                 |
+| `PagedLayout.FRAMED`   | 28                     | Content is inset by one slot on every side, with a black glass border round it |
+| `PagedLayout.CENTERED` | 28                     | Framed, and a page that is not full keeps its items centred inside the border  |
 
 A framed menu carries the border into its navigation row too, so the whole edge is one colour rather than changing
 where the controls start.
 
+`CENTERED` is for lists that are often short, such as the players online. A full page looks exactly like `FRAMED`; a
+page of a few items puts them in the middle of the menu rather than in its top-left corner, with the last row packed
+around the centre column (see [`GUIFrame`](#guiframe)). It only changes `LIST` mode — `SET` positions are explicit.
+
 **Do not index `getItems` by the raw slot.** Under a framed layout a slot is not a position in that list, because the
-border sits between them. Use `contentIndex(page, rawSlot)`, which returns the position or `null` when the slot holds
-no content:
+border sits between them, and on a centred page the slot an item lands in depends on how many share the page. Use
+`contentIndex(event, page)`, which reads the slots as they were drawn for that viewer and returns the position or
+`null` when the slot is not content (an empty slot inside a `FULL` or `FRAMED` area still has a position, one past the
+end of the list):
 
 ```kotlin
 override fun onContentClick(event: InventoryClickEvent, page: Int) {
     event.isCancelled = true
-    val index = contentIndex(page, event.rawSlot) ?: return
+    val index = contentIndex(event, page) ?: return
     val entry = entries.getOrNull(index) ?: return
     …
 }
@@ -504,7 +550,7 @@ leaving a page steps back rather than showing an empty one:
 ```kotlin
 override fun onContentClick(event: InventoryClickEvent, page: Int) {
     event.isCancelled = true
-    val index = contentIndex(page, event.rawSlot) ?: return
+    val index = contentIndex(event, page) ?: return
     entries.removeAt(index)
     refresh(event.whoClicked as Player, event.inventory)
 }
@@ -2423,6 +2469,69 @@ Amounts are **minor units** throughout, exactly as the ledger holds them; they b
 
 ---
 
+## Main Menu
+
+The main menu is where a player reaches everything TriTown offers. It lives in `guis/menu`, and is opened by
+right-clicking the menu item or with `/tritown menu` (`commands/menu/MenuCommand`, no permission).
+
+| Menu              | Id                 | Shows                                                                     |
+|:------------------|:-------------------|:--------------------------------------------------------------------------|
+| `MainMenuGUI`     | `main-menu`        | The viewer's profile, then rows of buttons for what they may use          |
+| `PlayerPickerGUI` | `menu-players`     | Players to trade with (`Mode.TRADE`, only those in range) or pay (`PAY`)  |
+| `LeaderboardGUI`  | `menu-leaderboard` | The top 112 of `BaltopCache` as heads, with the viewer's rank on each page |
+
+Every one of them opens at six rows. `MainMenuGUI` puts the profile alone at the top and lays the buttons out in rows of
+up to three with `GUIFrame.spacedColumns`. **A button for something switched off or not permitted is left out, not
+greyed**, and each row is centred on what remains: the global shop only when shops are on and the viewer passes its
+gate, trading only when `player-trades.enabled`, pay and the leaderboard only with the economy running and the
+command's permission (`CommandRegistrar.canRun`), the sidebar switch only while the sidebar runs, the admin panel only
+with `tritown.admin`, and the TownyMenu shortcut only when TownyMenu is enabled. Empty rows are dropped, so the menu
+never has a hole in it. The two list menus use `PagedLayout.CENTERED` and keep *Back* and one extra button either side
+of the page number (`MenuRender.BACK_OFFSET`, `EXTRA_OFFSET`).
+
+**The menu points the way; it does not do the work.** Each button runs the command or opens the menu that already owns
+the action — `/trades`, `/trade <name>`, `/pay <name> <amount>` through `CommandRegistrar.run`, the admin panel,
+TownyMenu through its own `/townymenu` — so there is exactly one place each rule and message lives. Paying asks for the
+amount with `ChatPrompt` and hands it to `/pay`, which validates it.
+
+`MenuRender` holds the shared pieces: the back button, player heads, and `later`, which plays the click and runs an
+action on the next tick — every button that opens or closes an inventory goes through it.
+
+### The menu item
+
+`menu/MenuItem` (not scanned) keeps a menu item in hotbar slot 8 (`MenuItem.SLOT`). It is identified by
+`PluginItem.ITEM_ID_KEY` = `main-menu`, never stacks, glows, and is named in the holder's language.
+
+It rests on one invariant: **while a player is online and the item is enabled, exactly one copy exists, in slot 8 of
+their own inventory, and none exists anywhere else.** The design is refuse, then reconcile:
+
+1. **Refuse.** `listeners/menu/MenuItemListener` runs at `LOWEST` and cancels anything that would move a copy: clicks
+   on the item or the slot (including number keys and swap-hands), drags onto the slot, dropping it, swapping hands,
+   placing it, using it on a block or an entity (item frames, armour stands, allays — players are let through, so
+   shift-right-click trading still works), crafting with it (a nether star is a beacon ingredient), hoppers, pickups
+   and item spawns. Death drops and kept items lose it. Because `GUIManager` skips cancelled clicks, no menu — the
+   trade table, the shop editor — ever sees a refused one.
+2. **Reconcile.** `MenuItem.reconcile(player)` is the only code that creates a copy. It deletes every copy outside the
+   slot (the rest of the inventory, the cursor, an open container), then puts a fresh one in the slot if the one there
+   is missing or stale (another language, another material). The listener calls it after anything that could leave the
+   inventory out of step — a cancelled drop, a creative-mode click, a respawn, a world or game-mode change, a locale
+   change — and `tasks/menu/MenuItemTask` runs it for everyone once a second, which catches what no event reports:
+   `/clear`, another plugin's `setItem`, pick-block.
+
+So a duplicate can never outlive the second it was made in, and cannot leave the player during it. Whatever was in the
+slot before is moved into the inventory, or dropped at the player's feet if it is full — never deleted.
+
+**The item never outlives the session.** It is stripped on quit — before the server saves the inventory, and after
+`TradeListener` hands escrow back, so escrow can never land in the slot — and from everyone in `Main.onDisable`. No copy
+is written to a player file, so removing TriTown leaves nothing behind. `MenuItem.purge` also empties a container of
+copies whenever anyone opens it, but never another player's inventory, whose slot 8 is legitimate.
+
+`main-menu.item.enabled` and `main-menu.item.material` live in `MainMenuSettings`. A reload calls
+`MenuItem.reconcileAll()`, so a new material or switching the item off applies to everyone at once. While the item is
+off, slot 8 is an ordinary slot again: the slot guards only apply while it is enabled.
+
+---
+
 ## Admin Panel
 
 The panel lives in `guis/admin` and is opened by `/tritown admin` (`commands/admin/AdminCommand`). It is a reading
@@ -2449,8 +2558,10 @@ account-type names, and the cards themselves — so the same number reads the sa
 next to the largest one, green where the supply grew and red where it shrank. It reads as a chart at a glance without
 a single custom texture, and the exact figures are in the lore.
 
-Permissions: `tritown.admin` opens the panel, `tritown.admin.economy` and `tritown.admin.shops` open the sections. A
-card the viewer may not open is not drawn at all.
+Permissions: `tritown.admin` (`AdminPanelGUI.PERMISSION`) opens the panel, `tritown.admin.economy` and
+`tritown.admin.shops` open the sections. A card the viewer may not open is not drawn at all, and the rest are centred
+along the row with `GUIFrame.spacedColumns`, so a missing card leaves no gap. The panel is reached from the
+[main menu](#main-menu) as well as by command, so its bottom row leads back there.
 
 ---
 

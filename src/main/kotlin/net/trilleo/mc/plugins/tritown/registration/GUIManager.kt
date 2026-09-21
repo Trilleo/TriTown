@@ -127,7 +127,15 @@ object GUIManager : Listener {
      */
     fun getRegisteredIds(): Set<String> = guis.keys.toSet()
 
-    @EventHandler
+    /**
+     * Routes a click to the GUI it landed in.
+     *
+     * A click something else has already cancelled is never delivered. Menus
+     * such as the trade table and the shop editor take whatever was clicked in
+     * the player's own inventory, so a click that the menu item's guard refused
+     * must not reach them, or the item would be escrowed or put on sale anyway.
+     */
+    @EventHandler(ignoreCancelled = true)
     fun onInventoryClick(event: InventoryClickEvent) {
         val player = event.whoClicked as? Player ?: return
         val (gui, inventory) = openGUIs[player] ?: return
@@ -135,7 +143,7 @@ object GUIManager : Listener {
         gui.onClick(event)
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     fun onInventoryDrag(event: InventoryDragEvent) {
         val player = event.whoClicked as? Player ?: return
         val (gui, inventory) = openGUIs[player] ?: return

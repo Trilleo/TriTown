@@ -12,6 +12,16 @@
 
 TriTown is in early development; see the [change log](CHANGELOG.md) for what has shipped.
 
+**A menu in every hotbar.** Every player carries a glowing item in the last slot of their hotbar; right-click it, or
+run `/tt menu`, for everything TriTown offers in one place. Your profile sits at the top — balance, founding credit,
+leaderboard rank, town and nation — and below it are your town at a glance with a shortcut into
+[TownyMenu](https://github.com/Trilleo/TownyMenu), the global shop, a list of the players near enough to trade with
+(anyone waiting for your answer first), a list of players to pay, the richest players as heads, the server's vital signs,
+a sidebar switch, and the admin panel for those allowed it. Anything switched off on the server, or that you may not
+use, is simply left out, and what remains is centred. The item cannot be moved, dropped, stored, crafted with or handed
+to anything, a copy made any other way is deleted within a second, and it is taken off you when you log out, so there
+is nothing to duplicate and nothing left behind if TriTown is ever removed.
+
 **A built-in economy.** TriTown supplies the server's Vault economy itself, so Towny gets working player wallets and
 town and nation banks without a separate economy plugin such as EssentialsX. Balances are stored as whole units of the
 smallest denomination, so they never drift, and they are written to disk atomically with a backup copy. The currency,
@@ -68,11 +78,13 @@ built on.
 | Towny          | 0.103.2.7+                          |
 | Vault          | 1.7+                                |
 | FancyNpcs      | 2.9+ — optional, for shop NPCs       |
+| TownyMenu      | Optional — for the town shortcut     |
 | Economy plugin | Not required — TriTown provides one |
 
 TriTown is an addon: Towny and Vault must both be installed, or TriTown will not load. An economy plugin is optional —
 install one only if you want it to supply the economy instead of TriTown, and set `economy.provider.mode` accordingly.
-FancyNpcs is optional too: without it shops still work, they just cannot be opened by clicking an NPC.
+FancyNpcs is optional too: without it shops still work, they just cannot be opened by clicking an NPC. So is
+TownyMenu: without it the main menu simply has no town button.
 
 ## Building
 
@@ -97,6 +109,7 @@ Prebuilt jars are attached to every [GitHub release](https://github.com/Trilleo/
 | Command                  | Description                           |
 |:-------------------------|:--------------------------------------|
 | `/tt help`               | List all available commands           |
+| `/tt menu`               | Open the main menu                    |
 | `/tt reload`             | Reload the configuration (OP only)    |
 | `/balance [player]`      | Check your balance, or someone else's |
 | `/pay <player> <amount>` | Send money to another player          |
@@ -136,6 +149,8 @@ version stays available as `/tritown:balance` and so on.
 |:------------------------------------------|:-------------------|:--------------------------------------------------------------------------------|
 | `message-prefix`                          | —                  | MiniMessage prefix shown before plugin messages                                 |
 | `language`                                | `auto`             | `auto` follows each player's client, or a language id such as `zh_CN`           |
+| `main-menu.item.enabled`                  | `true`             | Keep the menu item in the last hotbar slot of every player                      |
+| `main-menu.item.material`                 | `NETHER_STAR`      | What the menu item is; any item works                                           |
 | `economy.enabled`                         | `true`             | Turn the economy off entirely                                                   |
 | `economy.provider.mode`                   | `auto`             | `internal`, `external` or `auto` — who supplies the Vault economy (restart)     |
 | `economy.provider.defer-to`               | common eco plugins | Which installed plugins `auto` stands aside for                                 |

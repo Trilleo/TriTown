@@ -11,6 +11,7 @@ import net.trilleo.mc.plugins.tritown.economy.storage.JsonPulseStorage
 import net.trilleo.mc.plugins.tritown.economy.vault.TriTownVaultEconomy
 import net.trilleo.mc.plugins.tritown.economy.vault.VaultRegistration
 import net.trilleo.mc.plugins.tritown.enums.ProviderMode
+import net.trilleo.mc.plugins.tritown.menu.MenuItem
 import net.trilleo.mc.plugins.tritown.registration.*
 import net.trilleo.mc.plugins.tritown.scoreboard.ScoreboardService
 import net.trilleo.mc.plugins.tritown.shops.ShopManager
@@ -103,6 +104,7 @@ class Main : JavaPlugin() {
 
         TradeSettings.load(pluginConfig)
         TownSettings.load(pluginConfig)
+        MainMenuSettings.load(pluginConfig, logger)
 
         ItemRegistrar.registerAll(this)
         RecipeRegistrar.registerAll(this)
@@ -147,6 +149,10 @@ class Main : JavaPlugin() {
 
         TradeSettings.load(pluginConfig)
         TownSettings.load(pluginConfig)
+
+        // The material may have changed, or the item been switched off.
+        MainMenuSettings.load(pluginConfig, logger)
+        MenuItem.reconcileAll()
     }
 
     override fun onDisable() {
@@ -162,6 +168,9 @@ class Main : JavaPlugin() {
         // are still online: every escrowed item has to be back in an inventory
         // the server is about to save.
         TradeManager.shutdown()
+
+        // So no menu item is saved into an inventory and left behind once TriTown is gone.
+        MenuItem.stripAll()
 
         ShopManager.shutdown()
 

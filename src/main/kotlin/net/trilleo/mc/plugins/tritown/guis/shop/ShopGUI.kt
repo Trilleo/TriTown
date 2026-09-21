@@ -73,7 +73,7 @@ class ShopGUI : PagedPluginGUI(
         val view = views[player.uniqueId] ?: return
         val shop = ShopManager.get(view.shopId) ?: return
 
-        val index = contentIndex(page, event.rawSlot) ?: return
+        val index = contentIndex(event, page) ?: return
         val entry = view.entryIds.getOrNull(index)?.let(shop::entry) ?: return
 
         val result = when (event.click) {

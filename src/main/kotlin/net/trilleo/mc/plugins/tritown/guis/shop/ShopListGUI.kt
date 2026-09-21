@@ -47,7 +47,7 @@ class ShopListGUI : PagedPluginGUI(
         event.isCancelled = true
 
         val player = event.whoClicked as? Player ?: return
-        val index = contentIndex(page, event.rawSlot) ?: return
+        val index = contentIndex(event, page) ?: return
         val shop = ShopManager.all().getOrNull(index) ?: return
 
         ShopRender.navigate {

@@ -19,10 +19,15 @@ command:
     shop: "Shops"
     trade: "Trading"
     admin: "Admin"
+    menu: "Menu"
 
   help:
     header: "TriTown Commands"
     description: "Show all available commands"
+
+  menu:
+    description: "Open the main menu"
+    players-only: "<red>The main menu is a menu, so only players can open it."
 
   admin:
     description: "Open the admin panel"
@@ -168,6 +173,13 @@ command:
       stats: "<white>/tritown shop stats <id></white> <gray>- what a shop has traded"
 
 
+# The item in the last hotbar slot that opens the main menu.
+menu-item:
+  name: "<gradient:yellow:gold><bold>TriTown Menu</bold></gradient>"
+  lore: "<gray>Right-click to open the menu.<newline><dark_gray>It stays in this slot and cannot be dropped, moved or stored."
+  relocated: "<gray>The TriTown menu lives in your last hotbar slot, so what was there has moved into your inventory."
+  dropped: "<gray>The TriTown menu lives in your last hotbar slot, and your inventory was full, so what was there was dropped at your feet."
+
 founding-credit:
   granted: "You have a <white>{amount}</white> founding credit. It pays towards your first town when you found one with <white>/t new</white>, and nothing else can spend it. Joining someone else's town gives it up."
   applied: "Your founding credit covers <white>{amount}</white> of the cost of your town."
@@ -257,6 +269,75 @@ gui:
   previous-page: "<yellow>Previous Page"
   next-page: "<yellow>Next Page"
   page: "<white>Page {page}/{pages}"
+
+  # The main menu, opened from the menu item or with /tritown menu.
+  menu:
+    title: "<dark_gray>TriTown"
+    back: "<yellow>Back"
+    back-lore: "<gray>Return to the main menu."
+    close: "<red>Close"
+    profile: "<gold><bold>{name}</bold></gold>"
+    profile-balance: "<gray>Balance: <gold>{balance}</gold>"
+    profile-credit: "<gray>Founding credit: <white>{amount}</white>"
+    profile-rank: "<gray>Leaderboard: <white>#{rank}</white>"
+    profile-town: "<gray>Town: <white>{town}</white>"
+    profile-nation: "<gray>Nation: <white>{nation}</white>"
+    town: "<green><bold>Town</bold></green>"
+    town-name: "<gray>Town: <white>{town}</white>"
+    town-residents: "<gray>Residents: <white>{amount}</white>"
+    town-bank: "<gray>Bank: <gold>{amount}</gold>"
+    town-upkeep: "<gray>Upkeep: <white>{amount}</white>"
+    town-none: "<gray>You are not in a town yet. Browse the towns to join one, or found your own."
+    town-credit: "<gray>Your <white>{amount}</white> founding credit pays towards the first town you found."
+    town-open: "<yellow>Click <gray>to open TownyMenu"
+    shop: "<green><bold>Global Shop</bold></green>"
+    shop-lore: "<gray>Buy from the server and sell back to it, wherever you are standing."
+    trade: "<aqua><bold>Trade</bold></aqua>"
+    trade-lore: "<gray>Swap items and money with a player standing near you. Shift-right-clicking them works too."
+    trade-waiting: "<yellow>{amount} waiting for your answer"
+    pay: "<gold><bold>Pay</bold></gold>"
+    pay-lore: "<gray>Send money to another player who is online."
+    leaderboard: "<gold><bold>Leaderboard</bold></gold>"
+    leaderboard-lore: "<gray>The richest players on the server."
+    leaderboard-entry: "<gray>#{rank} <white>{name}</white> <dark_gray>-</dark_gray> <gold>{balance}</gold>"
+    server: "<aqua><bold>Server</bold></aqua>"
+    sidebar: "<yellow><bold>Sidebar</bold></yellow>"
+    sidebar-on: "<gray>The sidebar is <green>shown</green>."
+    sidebar-off: "<gray>The sidebar is <red>hidden</red>."
+    sidebar-hide: "<yellow>Click <gray>to hide it"
+    sidebar-show: "<yellow>Click <gray>to show it"
+    admin: "<red><bold>Admin Panel</bold></red>"
+    admin-lore: "<gray>Read the server's economy and shops."
+
+  menu-leaderboard:
+    title: "<dark_gray>Leaderboard"
+    first: "<gold><bold>#{rank}</bold></gold> <white>{name}</white>"
+    second: "<#d7dde4><bold>#{rank}</bold></#d7dde4> <white>{name}</white>"
+    third: "<#cd7f32><bold>#{rank}</bold></#cd7f32> <white>{name}</white>"
+    entry: "<yellow>#{rank}</yellow> <white>{name}</white>"
+    balance: "<gray>Balance: <gold>{balance}</gold>"
+    account: "<dark_gray>A {type} bank"
+    you: "<green>That's you!"
+    empty: "<gray>Nobody is on the leaderboard yet"
+    your-rank: "<gold><bold>Your Rank</bold></gold>"
+    ranked: "<gray>You are <white>#{rank}</white> with <gold>{balance}</gold>."
+    unranked: "<gray>You are not on the leaderboard yet."
+
+  menu-players:
+    title-trade: "<dark_gray>Trade with…"
+    title-pay: "<dark_gray>Pay…"
+    name: "<yellow>{name}"
+    request: "<green>Wants to trade with you.<newline><yellow>Click <gray>to accept"
+    distance: "<gray>{amount} blocks away"
+    ask: "<yellow>Click <gray>to ask them to trade"
+    pay: "<yellow>Click <gray>to choose how much to pay"
+    pay-prompt: "<gray>How much do you want to pay <white>{name}</white>? You have <gold>{balance}</gold>."
+    nobody-near: "<gray>Nobody is close enough to trade"
+    nobody-near-lore: "<gray>Stand within <white>{amount}</white> blocks of another player to trade with them."
+    nobody-online: "<gray>Nobody else is online"
+    gone: "That player is no longer online."
+    refresh: "<aqua>Refresh"
+    refresh-lore: "<gray>Look again for players, since people move about."
 
   # The admin panel. Amounts, counts and percentages are filled in by TriTown.
   admin:

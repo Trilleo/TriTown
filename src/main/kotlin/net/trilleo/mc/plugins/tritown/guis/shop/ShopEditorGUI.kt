@@ -151,7 +151,7 @@ class ShopEditorGUI : PagedPluginGUI(
         val player = event.whoClicked as? Player ?: return
         val shop = shopOf(player) ?: return
 
-        val index = contentIndex(page, event.rawSlot) ?: return
+        val index = contentIndex(event, page) ?: return
         val held = moving[player.uniqueId]
         if (held != null) {
             place(player, shop, held, index, event.inventory)

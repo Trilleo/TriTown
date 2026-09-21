@@ -49,4 +49,51 @@ class GUIFrameTest {
         assertEquals(emptyList(), GUIFrame.contentSlots(2))
         assertEquals(emptyList(), GUIFrame.contentSlots(1))
     }
+
+    @Test
+    fun `spaced buttons sit either side of the middle column`() {
+        assertEquals(emptyList(), GUIFrame.spacedColumns(0))
+        assertEquals(listOf(4), GUIFrame.spacedColumns(1))
+        assertEquals(listOf(3, 5), GUIFrame.spacedColumns(2))
+        assertEquals(listOf(2, 4, 6), GUIFrame.spacedColumns(3))
+        assertEquals(listOf(1, 3, 5, 7), GUIFrame.spacedColumns(4))
+    }
+
+    @Test
+    fun `packed items stay inside the border and mirror around the middle`() {
+        for (count in 0..7) {
+            val columns = GUIFrame.packedColumns(count)
+            assertEquals(count, columns.size)
+            assertTrue(columns.all { it in 1..7 })
+            assertEquals(columns.map { 8 - it }.sorted(), columns, "$count items are not symmetrical")
+        }
+    }
+
+    @Test
+    fun `an even count leaves the middle column empty`() {
+        assertEquals(listOf(3, 5), GUIFrame.packedColumns(2))
+        assertEquals(listOf(2, 3, 5, 6), GUIFrame.packedColumns(4))
+        assertEquals(listOf(1, 2, 3, 5, 6, 7), GUIFrame.packedColumns(6))
+    }
+
+    @Test
+    fun `a few items sit in the middle of the menu`() {
+        assertEquals(listOf(22), GUIFrame.centeredSlots(6, 1))
+        assertEquals(listOf(21, 23), GUIFrame.centeredSlots(6, 2))
+    }
+
+    @Test
+    fun `a partial page centres its last row under full ones`() {
+        assertEquals((19..25).toList() + listOf(30, 32), GUIFrame.centeredSlots(6, 9))
+    }
+
+    @Test
+    fun `a full page is exactly the framed content`() {
+        assertEquals(GUIFrame.contentSlots(6), GUIFrame.centeredSlots(6, 28))
+    }
+
+    @Test
+    fun `nothing to show takes no slots`() {
+        assertEquals(emptyList(), GUIFrame.centeredSlots(6, 0))
+    }
 }

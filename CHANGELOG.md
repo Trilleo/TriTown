@@ -13,12 +13,52 @@
     + `/balance` shows the credit while you hold it.
     + Set the amount with `towns.founding-credit` (default `100.0`), or `0` to turn it off.
 
+#### Main Menu
+
++ Added a main menu. Every player carries a glowing menu item in the last slot of their hotbar; right-click it — or
+  click it in your inventory, or run `/tritown menu` — to open it.
+    + Your profile sits at the top: balance, founding credit, leaderboard rank, town and nation.
+    + Below it: your town at a glance (residents, bank, upkeep, time to the new day) with a shortcut into TownyMenu,
+      the global shop, trading, paying, the leaderboard, the server's vital signs, a sidebar switch, and the admin
+      panel for those allowed it.
+    + Anything switched off on the server, or that you are not allowed to use, is left out rather than greyed, and
+      each row is centred on what remains.
+    + **Trade** lists the players close enough to trade with, nearest first, with anyone waiting for your answer
+      first and glowing; click one to ask, or to accept. **Pay** lists everyone online and asks for the amount in
+      chat. Both run `/trade` and `/pay`, so the same rules and permissions apply.
+    + **Leaderboard** shows the richest players as heads, gold, silver and bronze at the top, with your own rank on
+      every page.
++ The menu item cannot be moved, dropped, stored, crafted with, placed or handed to anything — including item
+  frames, armour stands, allays and the trade table. A copy that turns up anywhere but its slot is deleted within a
+  second, and it is taken off you when you log out, so it is never saved and never left behind. Whatever was in the
+  slot before is moved into your inventory, or dropped at your feet if it is full.
++ `main-menu.item.enabled` turns the item off (the menu stays reachable with `/tritown menu`), and
+  `main-menu.item.material` picks what it is — a nether star by default.
+
 ### Improvements
 
 #### Economy
 
 + Raised the default starting balance from 100 to 200. Existing servers keep the value already in their
   `config.yml`.
+
+#### Admin Panel
+
++ The admin panel now opens at full size, keeps its cards centred when you may not open one of them, and has a
+  button back to the main menu.
+
+### Technical Details
+
+#### Misc
+
++ `PagedLayout.CENTERED` frames a paged menu like `FRAMED` and centres a page that is not full, and `GUIFrame` gained
+  `spacedColumns`, `packedColumns` and `centeredSlots` for laying out rows of buttons and short lists.
+  `PagedPluginGUI.contentIndex` now takes the click event, since on a centred page the slot an item lands in depends
+  on how many share it.
++ `GUIManager` no longer delivers clicks and drags that are already cancelled, so a guard at a lower priority can
+  refuse a click knowing no menu will act on it.
++ `CommandRegistrar.find`, `canRun` and `run` let a menu run one of TriTown's commands directly, with its permission
+  check, whatever label it ended up registered under.
 
 ## Version 1.2.0
 

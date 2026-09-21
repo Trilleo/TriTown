@@ -66,6 +66,40 @@ object CommandRegistrar {
     }
 
     /**
+     * The registered command called [name], whether it is a sub-command of
+     * `/tritown` or a command of its own, or `null` when there is none.
+     */
+    fun find(name: String): PluginCommand? =
+        allCommands.firstOrNull { it.command.name.equals(name, ignoreCase = true) }?.command
+
+    /** Whether [sender] may run the command called [name]; `false` when there is no such command. */
+    fun canRun(sender: CommandSender, name: String): Boolean {
+        val command = find(name) ?: return false
+        return command.permission?.let(sender::hasPermission) ?: true
+    }
+
+    /**
+     * Runs the command called [name] for [sender], as though they had typed it.
+     *
+     * For a menu button that does what a command already does. Going through
+     * the command rather than repeating its logic keeps every check and message
+     * in one place, and calling it directly rather than dispatching a typed line
+     * works whatever label it ended up registered under — a main command whose
+     * name another plugin owns is only reachable as `/tritown:<name>`.
+     *
+     * @return `false` when no command has that name
+     */
+    fun run(sender: CommandSender, name: String, vararg args: String): Boolean {
+        val command = find(name) ?: return false
+        if (!canRun(sender, name)) {
+            sender.sendPrefixed(sender.tr("command.no-permission"))
+            return true
+        }
+        command.execute(sender, args)
+        return true
+    }
+
+    /**
      * Scans the commands package, instantiates every [PluginCommand] found,
      * and registers it either as a sub-command of `/tritown` or as a
      * standalone main command.

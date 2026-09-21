@@ -54,7 +54,7 @@ class ShopStatsGUI : PagedPluginGUI(
         val player = event.whoClicked as? Player ?: return
         val shop = shopOf(player) ?: return
 
-        val index = contentIndex(page, event.rawSlot) ?: return
+        val index = contentIndex(event, page) ?: return
         if (index != 0 || event.click != ClickType.SHIFT_LEFT) return
 
         shop.entries.forEach { it.stats.reset() }

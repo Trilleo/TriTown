@@ -19,10 +19,15 @@ command:
     shop: "商店"
     trade: "交易"
     admin: "管理"
+    menu: "菜单"
 
   help:
     header: "TriTown 命令"
     description: "显示所有可用命令"
+
+  menu:
+    description: "打开主菜单"
+    players-only: "<red>主菜单是菜单，只有玩家能打开。"
 
   admin:
     description: "打开管理面板"
@@ -168,6 +173,13 @@ command:
       stats: "<white>/tritown shop stats <id></white> <gray>- 商店的交易统计"
 
 
+# 快捷栏最后一格中用于打开主菜单的物品。
+menu-item:
+  name: "<gradient:yellow:gold><bold>TriTown 菜单</bold></gradient>"
+  lore: "<gray>右键打开菜单。<newline><dark_gray>它固定在这一格，无法丢弃、移动或存放。"
+  relocated: "<gray>TriTown 菜单固定在快捷栏最后一格，原本在那里的物品已移入你的背包。"
+  dropped: "<gray>TriTown 菜单固定在快捷栏最后一格，而你的背包已满，原本在那里的物品已掉落在你脚下。"
+
 founding-credit:
   granted: "你获得了 <white>{amount}</white> 的建镇资金。使用 <white>/t new</white> 创建你的第一个城镇时会自动抵扣费用，不能用于其他任何用途。加入其他城镇会失去这笔资金。"
   applied: "你的建镇资金抵扣了 <white>{amount}</white> 的城镇创建费用。"
@@ -256,6 +268,75 @@ gui:
   previous-page: "<yellow>上一页"
   next-page: "<yellow>下一页"
   page: "<white>第 {page}/{pages} 页"
+
+  # 主菜单，通过菜单物品或 /tritown menu 打开。
+  menu:
+    title: "<dark_gray>TriTown"
+    back: "<yellow>返回"
+    back-lore: "<gray>回到主菜单。"
+    close: "<red>关闭"
+    profile: "<gold><bold>{name}</bold></gold>"
+    profile-balance: "<gray>余额：<gold>{balance}</gold>"
+    profile-credit: "<gray>建镇资金：<white>{amount}</white>"
+    profile-rank: "<gray>财富排行：<white>第 {rank} 名</white>"
+    profile-town: "<gray>城镇：<white>{town}</white>"
+    profile-nation: "<gray>国家：<white>{nation}</white>"
+    town: "<green><bold>城镇</bold></green>"
+    town-name: "<gray>城镇：<white>{town}</white>"
+    town-residents: "<gray>居民：<white>{amount}</white>"
+    town-bank: "<gray>银行：<gold>{amount}</gold>"
+    town-upkeep: "<gray>维护费：<white>{amount}</white>"
+    town-none: "<gray>你还没有加入城镇。浏览城镇列表加入一个，或者创建你自己的城镇。"
+    town-credit: "<gray>你的 <white>{amount}</white> 建镇资金可用于支付你创建的第一个城镇。"
+    town-open: "<yellow>点击 <gray>打开 TownyMenu"
+    shop: "<green><bold>全局商店</bold></green>"
+    shop-lore: "<gray>无论身在何处，都能向服务器购买物品或把物品卖回给它。"
+    trade: "<aqua><bold>交易</bold></aqua>"
+    trade-lore: "<gray>与身边的玩家交换物品和金钱。也可以潜行右键点击对方发起交易。"
+    trade-waiting: "<yellow>{amount} 人正在等待你的回复"
+    pay: "<gold><bold>转账</bold></gold>"
+    pay-lore: "<gray>向在线的其他玩家转账。"
+    leaderboard: "<gold><bold>财富排行</bold></gold>"
+    leaderboard-lore: "<gray>服务器上最富有的玩家。"
+    leaderboard-entry: "<gray>#{rank} <white>{name}</white> <dark_gray>-</dark_gray> <gold>{balance}</gold>"
+    server: "<aqua><bold>服务器</bold></aqua>"
+    sidebar: "<yellow><bold>侧边栏</bold></yellow>"
+    sidebar-on: "<gray>侧边栏当前<green>显示</green>。"
+    sidebar-off: "<gray>侧边栏当前<red>隐藏</red>。"
+    sidebar-hide: "<yellow>点击 <gray>隐藏"
+    sidebar-show: "<yellow>点击 <gray>显示"
+    admin: "<red><bold>管理面板</bold></red>"
+    admin-lore: "<gray>查看服务器的经济与商店数据。"
+
+  menu-leaderboard:
+    title: "<dark_gray>财富排行"
+    first: "<gold><bold>#{rank}</bold></gold> <white>{name}</white>"
+    second: "<#d7dde4><bold>#{rank}</bold></#d7dde4> <white>{name}</white>"
+    third: "<#cd7f32><bold>#{rank}</bold></#cd7f32> <white>{name}</white>"
+    entry: "<yellow>#{rank}</yellow> <white>{name}</white>"
+    balance: "<gray>余额：<gold>{balance}</gold>"
+    account: "<dark_gray>{type}银行"
+    you: "<green>这是你！"
+    empty: "<gray>排行榜上还没有人"
+    your-rank: "<gold><bold>你的排名</bold></gold>"
+    ranked: "<gray>你排在 <white>第 {rank} 名</white>，余额 <gold>{balance}</gold>。"
+    unranked: "<gray>你还没有进入排行榜。"
+
+  menu-players:
+    title-trade: "<dark_gray>与谁交易…"
+    title-pay: "<dark_gray>向谁转账…"
+    name: "<yellow>{name}"
+    request: "<green>想与你交易。<newline><yellow>点击 <gray>接受"
+    distance: "<gray>距离 {amount} 格"
+    ask: "<yellow>点击 <gray>请求与对方交易"
+    pay: "<yellow>点击 <gray>选择转账金额"
+    pay-prompt: "<gray>你想向 <white>{name}</white> 转账多少？你有 <gold>{balance}</gold>。"
+    nobody-near: "<gray>附近没有可以交易的玩家"
+    nobody-near-lore: "<gray>站在其他玩家 <white>{amount}</white> 格以内即可与其交易。"
+    nobody-online: "<gray>没有其他玩家在线"
+    gone: "该玩家已不在线。"
+    refresh: "<aqua>刷新"
+    refresh-lore: "<gray>重新查找玩家，大家总在走动。"
 
   # 管理面板。金额、数量和百分比由 TriTown 填入。
   admin:
