@@ -26,7 +26,7 @@ data class StorageSettings(
 ) {
 
     /**
-     * Which groups of vanilla containers can no longer be placed or filled.
+     * Which groups of vanilla containers are decoration: withdraw-only, and closed once empty.
      *
      * @param chests       chests, trapped chests, barrels, chest minecarts and chest boats
      * @param shulkerBoxes every colour of shulker box
