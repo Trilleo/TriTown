@@ -4,17 +4,8 @@ import net.kyori.adventure.inventory.Book
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import net.trilleo.mc.plugins.tritown.guis.admin.PanelRender
-import net.trilleo.mc.plugins.tritown.news.EntryTag
-import net.trilleo.mc.plugins.tritown.news.LocalizedText
-import net.trilleo.mc.plugins.tritown.news.NewsCategory
-import net.trilleo.mc.plugins.tritown.news.NewsEntry
-import net.trilleo.mc.plugins.tritown.news.NewsPost
-import net.trilleo.mc.plugins.tritown.utils.ChatPrompt
-import net.trilleo.mc.plugins.tritown.utils.ComponentUtil
-import net.trilleo.mc.plugins.tritown.utils.LoreUtil
-import net.trilleo.mc.plugins.tritown.utils.itemStack
-import net.trilleo.mc.plugins.tritown.utils.sendPrefixed
-import net.trilleo.mc.plugins.tritown.utils.tr
+import net.trilleo.mc.plugins.tritown.news.*
+import net.trilleo.mc.plugins.tritown.utils.*
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -63,7 +54,10 @@ object NewsRender {
 
     fun title(viewer: Player, post: NewsPost): String {
         val title = text(viewer, post.title)
-        return if (post.pinned) viewer.tr("gui.news.pinned-title", "title" to title) else viewer.tr("gui.news.title", "title" to title)
+        return if (post.pinned) viewer.tr("gui.news.pinned-title", "title" to title) else viewer.tr(
+            "gui.news.title",
+            "title" to title
+        )
     }
 
     /**
@@ -83,7 +77,13 @@ object NewsRender {
         if (categories.isNotEmpty()) {
             add("")
             categories.forEach { category ->
-                add(viewer.tr("gui.news.category-count", "name" to text(viewer, category.name), "amount" to category.entries.size))
+                add(
+                    viewer.tr(
+                        "gui.news.category-count",
+                        "name" to text(viewer, category.name),
+                        "amount" to category.entries.size
+                    )
+                )
             }
         }
     }
@@ -154,6 +154,7 @@ object NewsRender {
             page = mutableListOf()
             used = 0
         }
+
         fun write(line: String) {
             val height = lineHeight(line)
             if (used + height > BOOK_LINES) flush()
@@ -164,7 +165,15 @@ object NewsRender {
         post.categories.filter { it.entries.isNotEmpty() }.forEach { category ->
             if (used > 0 && used + 3 > BOOK_LINES) flush() else if (used > 0) write("")
             write(viewer.tr("news.book.category", "name" to text(viewer, category.name)))
-            category.entries.forEach { write(viewer.tr("news.book.entry", "tag" to tag(viewer, it.tag), "text" to text(viewer, it.text))) }
+            category.entries.forEach {
+                write(
+                    viewer.tr(
+                        "news.book.entry",
+                        "tag" to tag(viewer, it.tag),
+                        "text" to text(viewer, it.text)
+                    )
+                )
+            }
         }
         flush()
 

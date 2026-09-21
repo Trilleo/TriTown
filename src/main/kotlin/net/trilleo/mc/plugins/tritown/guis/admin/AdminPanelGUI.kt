@@ -79,7 +79,8 @@ class AdminPanelGUI : PluginGUI(
             Card.SHOPS.takeIf { player.hasPermission(SHOPS_PERMISSION) },
             Card.SERVER,
         )
-        return GUIFrame.spacedColumns(cards.size).zip(cards).associate { (column, card) -> CARD_ROW * 9 + column to card }
+        return GUIFrame.spacedColumns(cards.size).zip(cards)
+            .associate { (column, card) -> CARD_ROW * 9 + column to card }
     }
 
     // ── Cards ───────────────────────────────────────────────────────────

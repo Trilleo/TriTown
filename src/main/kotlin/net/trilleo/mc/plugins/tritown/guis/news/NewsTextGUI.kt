@@ -64,7 +64,10 @@ class NewsTextGUI : PluginGUI(
         GUIFrame.draw(inventory, languages.keys + MAIN_SLOT)
         inventory.setItem(MAIN_SLOT, main(player, text))
         languages.forEach { (slot, id) -> inventory.setItem(slot, language(player, text, id)) }
-        inventory.setItem(BACK_SLOT, NewsRender.button(player, Material.ARROW, "gui.news-text.back", "gui.news-text.back-lore"))
+        inventory.setItem(
+            BACK_SLOT,
+            NewsRender.button(player, Material.ARROW, "gui.news-text.back", "gui.news-text.back-lore")
+        )
     }
 
     override fun onClick(event: InventoryClickEvent) {
@@ -100,7 +103,12 @@ class NewsTextGUI : PluginGUI(
             return
         }
 
-        NewsRender.prompt(player, player.tr("gui.news-text.prompt-language", "language" to language), target.maxLength, reopen) {
+        NewsRender.prompt(
+            player,
+            player.tr("gui.news-text.prompt-language", "language" to language),
+            target.maxLength,
+            reopen
+        ) {
             text.translate(language, it)
             NewsManager.changed(post)
         }
@@ -142,7 +150,8 @@ class NewsTextGUI : PluginGUI(
     /** One slot per installed language, packed along the row under the default text. Seven fit. */
     private fun languageSlots(): Map<Int, String> {
         val ids = Lang.ids.take(MAX_LANGUAGES)
-        return GUIFrame.packedColumns(ids.size).zip(ids).associate { (column, id) -> LANGUAGE_ROW * ROW_SIZE + column to id }
+        return GUIFrame.packedColumns(ids.size).zip(ids)
+            .associate { (column, id) -> LANGUAGE_ROW * ROW_SIZE + column to id }
     }
 
     private fun textOf(player: Player): LocalizedText? {

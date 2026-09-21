@@ -34,9 +34,18 @@ class NewsModelTest {
 
     @Test
     fun `a prefix picks the tag and is dropped from the text`() {
-        assertEquals(EntryTag.NEW to "Added harvest festivals", NewsShorthand.parse("+ Added harvest festivals", EntryTag.NOTE))
-        assertEquals(EntryTag.CHANGED to "Shops restock hourly", NewsShorthand.parse("*Shops restock hourly", EntryTag.NOTE))
-        assertEquals(EntryTag.FIXED to "Upkeep charged once", NewsShorthand.parse("! Upkeep charged once", EntryTag.NOTE))
+        assertEquals(
+            EntryTag.NEW to "Added harvest festivals",
+            NewsShorthand.parse("+ Added harvest festivals", EntryTag.NOTE)
+        )
+        assertEquals(
+            EntryTag.CHANGED to "Shops restock hourly",
+            NewsShorthand.parse("*Shops restock hourly", EntryTag.NOTE)
+        )
+        assertEquals(
+            EntryTag.FIXED to "Upkeep charged once",
+            NewsShorthand.parse("! Upkeep charged once", EntryTag.NOTE)
+        )
         assertEquals(EntryTag.REMOVED to "Old spawn", NewsShorthand.parse("- Old spawn", EntryTag.NOTE))
         assertEquals(EntryTag.NOTE to "Restart at 6", NewsShorthand.parse("? Restart at 6", EntryTag.NEW))
     }

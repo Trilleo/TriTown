@@ -50,7 +50,10 @@ class NewsSettingsGUI : PluginGUI(
         inventory.setItem(SLOT_LABEL, label(player, post))
         inventory.setItem(SLOT_ICON, icon(player, post))
         inventory.setItem(SLOT_PIN, pin(player, post))
-        inventory.setItem(SLOT_BACK, NewsRender.button(player, Material.ARROW, "gui.news-settings.back", "gui.news-settings.back-lore"))
+        inventory.setItem(
+            SLOT_BACK,
+            NewsRender.button(player, Material.ARROW, "gui.news-settings.back", "gui.news-settings.back-lore")
+        )
     }
 
     override fun onClick(event: InventoryClickEvent) {

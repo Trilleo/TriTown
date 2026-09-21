@@ -6,14 +6,7 @@ import net.trilleo.mc.plugins.tritown.config.NewsSettings
 import net.trilleo.mc.plugins.tritown.enums.FillMode
 import net.trilleo.mc.plugins.tritown.enums.PagedLayout
 import net.trilleo.mc.plugins.tritown.guis.menu.MenuRender
-import net.trilleo.mc.plugins.tritown.news.EntryTag
-import net.trilleo.mc.plugins.tritown.news.LocalizedText
-import net.trilleo.mc.plugins.tritown.news.NewsCategory
-import net.trilleo.mc.plugins.tritown.news.NewsEntry
-import net.trilleo.mc.plugins.tritown.news.NewsIds
-import net.trilleo.mc.plugins.tritown.news.NewsManager
-import net.trilleo.mc.plugins.tritown.news.NewsPost
-import net.trilleo.mc.plugins.tritown.news.NewsShorthand
+import net.trilleo.mc.plugins.tritown.news.*
 import net.trilleo.mc.plugins.tritown.registration.GUIManager
 import net.trilleo.mc.plugins.tritown.registration.PagedPluginGUI
 import net.trilleo.mc.plugins.tritown.utils.ChatPrompt
@@ -78,7 +71,12 @@ class NewsCategoryEditorGUI : PagedPluginGUI(
 
     override fun navButtons(player: Player): Map<Int, ItemStack> {
         val (_, category) = target(player) ?: return emptyMap()
-        val back = NewsRender.button(player, Material.ARROW, "gui.news-category-editor.back", "gui.news-category-editor.back-lore")
+        val back = NewsRender.button(
+            player,
+            Material.ARROW,
+            "gui.news-category-editor.back",
+            "gui.news-category-editor.back-lore"
+        )
 
         val held = moving[player.uniqueId]?.let(category::entry)
         if (held != null) {
@@ -87,17 +85,35 @@ class NewsCategoryEditorGUI : PagedPluginGUI(
                     NewsRender.card(
                         NewsRender.tagMaterial(held.tag),
                         NewsRender.entryLine(player, held),
-                        listOf(player.tr("gui.news-category-editor.holding"), player.tr("gui.news-category-editor.click-put-down")),
+                        listOf(
+                            player.tr("gui.news-category-editor.holding"),
+                            player.tr("gui.news-category-editor.click-put-down")
+                        ),
                     )
                 ),
-                SLOT_MOVE_FIRST to NewsRender.button(player, Material.SPECTRAL_ARROW, "gui.news-category-editor.move-first", "gui.news-category-editor.move-first-lore"),
-                SLOT_MOVE_LAST to NewsRender.button(player, Material.TIPPED_ARROW, "gui.news-category-editor.move-last", "gui.news-category-editor.move-last-lore"),
+                SLOT_MOVE_FIRST to NewsRender.button(
+                    player,
+                    Material.SPECTRAL_ARROW,
+                    "gui.news-category-editor.move-first",
+                    "gui.news-category-editor.move-first-lore"
+                ),
+                SLOT_MOVE_LAST to NewsRender.button(
+                    player,
+                    Material.TIPPED_ARROW,
+                    "gui.news-category-editor.move-last",
+                    "gui.news-category-editor.move-last-lore"
+                ),
                 SLOT_BACK to back,
             )
         }
 
         return mapOf(
-            SLOT_ADD to NewsRender.button(player, Material.FEATHER, "gui.news-category-editor.add", "gui.news-category-editor.add-lore"),
+            SLOT_ADD to NewsRender.button(
+                player,
+                Material.FEATHER,
+                "gui.news-category-editor.add",
+                "gui.news-category-editor.add-lore"
+            ),
             SLOT_NAME to NewsRender.card(
                 Material.NAME_TAG,
                 player.tr("gui.news-category-editor.name"),
@@ -149,11 +165,21 @@ class NewsCategoryEditorGUI : PagedPluginGUI(
                 MenuRender.later(player) {
                     NewsTextGUI.show(
                         player,
-                        NewsTextGUI.Target(post.id, { it.category(category.id)?.name }, null) { show(it, post, category) },
+                        NewsTextGUI.Target(post.id, { it.category(category.id)?.name }, null) {
+                            show(
+                                it,
+                                post,
+                                category
+                            )
+                        },
                     )
                 }
             } else {
-                NewsRender.prompt(player, player.tr("gui.news-category-editor.prompt-name"), null, { show(player, post, category) }) {
+                NewsRender.prompt(
+                    player,
+                    player.tr("gui.news-category-editor.prompt-name"),
+                    null,
+                    { show(player, post, category) }) {
                     category.name.main = it
                     NewsManager.changed(post)
                 }
@@ -271,14 +297,26 @@ class NewsCategoryEditorGUI : PagedPluginGUI(
                     )
                     category.entries += entry
                     NewsManager.changed(post)
-                    player.sendPrefixed(player.tr("news.editor.entry-added", "entry" to NewsRender.entryLine(player, entry)))
+                    player.sendPrefixed(
+                        player.tr(
+                            "news.editor.entry-added",
+                            "entry" to NewsRender.entryLine(player, entry)
+                        )
+                    )
                 }
             }
             addEntries(player, post, category, parsedTag, first = false)
         }
     }
 
-    private fun place(player: Player, post: NewsPost, category: NewsCategory, entryId: String, index: Int, inventory: Inventory) {
+    private fun place(
+        player: Player,
+        post: NewsPost,
+        category: NewsCategory,
+        entryId: String,
+        index: Int,
+        inventory: Inventory
+    ) {
         moving.remove(player.uniqueId)
 
         val from = category.entries.indexOfFirst { it.id == entryId }

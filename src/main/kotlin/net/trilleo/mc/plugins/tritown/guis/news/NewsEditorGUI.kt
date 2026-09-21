@@ -6,11 +6,7 @@ import net.trilleo.mc.plugins.tritown.enums.FillMode
 import net.trilleo.mc.plugins.tritown.enums.PagedLayout
 import net.trilleo.mc.plugins.tritown.guis.ConfirmGUI
 import net.trilleo.mc.plugins.tritown.guis.menu.MenuRender
-import net.trilleo.mc.plugins.tritown.news.LocalizedText
-import net.trilleo.mc.plugins.tritown.news.NewsCategory
-import net.trilleo.mc.plugins.tritown.news.NewsIds
-import net.trilleo.mc.plugins.tritown.news.NewsManager
-import net.trilleo.mc.plugins.tritown.news.NewsPost
+import net.trilleo.mc.plugins.tritown.news.*
 import net.trilleo.mc.plugins.tritown.registration.GUIManager
 import net.trilleo.mc.plugins.tritown.registration.PagedPluginGUI
 import net.trilleo.mc.plugins.tritown.utils.ChatPrompt
@@ -80,23 +76,58 @@ class NewsEditorGUI : PagedPluginGUI(
                         listOf(player.tr("gui.news-editor.holding"), player.tr("gui.news-editor.click-put-down")),
                     )
                 ),
-                SLOT_MOVE_FIRST to NewsRender.button(player, Material.SPECTRAL_ARROW, "gui.news-editor.move-first", "gui.news-editor.move-first-lore"),
-                SLOT_MOVE_LAST to NewsRender.button(player, Material.TIPPED_ARROW, "gui.news-editor.move-last", "gui.news-editor.move-last-lore"),
+                SLOT_MOVE_FIRST to NewsRender.button(
+                    player,
+                    Material.SPECTRAL_ARROW,
+                    "gui.news-editor.move-first",
+                    "gui.news-editor.move-first-lore"
+                ),
+                SLOT_MOVE_LAST to NewsRender.button(
+                    player,
+                    Material.TIPPED_ARROW,
+                    "gui.news-editor.move-last",
+                    "gui.news-editor.move-last-lore"
+                ),
                 SLOT_BACK to back,
             )
         }
 
         return mapOf(
-            SLOT_ADD to NewsRender.button(player, Material.BOOKSHELF, "gui.news-editor.add", "gui.news-editor.add-lore"),
-            SLOT_SETTINGS to NewsRender.button(player, Material.COMPARATOR, "gui.news-editor.settings", "gui.news-editor.settings-lore"),
-            SLOT_PREVIEW to NewsRender.button(player, Material.SPYGLASS, "gui.news-editor.preview", "gui.news-editor.preview-lore"),
+            SLOT_ADD to NewsRender.button(
+                player,
+                Material.BOOKSHELF,
+                "gui.news-editor.add",
+                "gui.news-editor.add-lore"
+            ),
+            SLOT_SETTINGS to NewsRender.button(
+                player,
+                Material.COMPARATOR,
+                "gui.news-editor.settings",
+                "gui.news-editor.settings-lore"
+            ),
+            SLOT_PREVIEW to NewsRender.button(
+                player,
+                Material.SPYGLASS,
+                "gui.news-editor.preview",
+                "gui.news-editor.preview-lore"
+            ),
             SLOT_BACK to back,
             SLOT_PUBLISH to if (post.isPublished) {
-                NewsRender.button(player, Material.GRAY_DYE, "gui.news-editor.unpublish", "gui.news-editor.unpublish-lore")
+                NewsRender.button(
+                    player,
+                    Material.GRAY_DYE,
+                    "gui.news-editor.unpublish",
+                    "gui.news-editor.unpublish-lore"
+                )
             } else {
                 NewsRender.button(player, Material.LIME_DYE, "gui.news-editor.publish", "gui.news-editor.publish-lore")
             },
-            SLOT_DELETE to NewsRender.button(player, Material.LAVA_BUCKET, "gui.news-editor.delete", "gui.news-editor.delete-lore"),
+            SLOT_DELETE to NewsRender.button(
+                player,
+                Material.LAVA_BUCKET,
+                "gui.news-editor.delete",
+                "gui.news-editor.delete-lore"
+            ),
         )
     }
 
@@ -190,16 +221,34 @@ class NewsEditorGUI : PagedPluginGUI(
      * over everyone's screen.
      */
     private fun confirmPublish(player: Player, post: NewsPost) {
-        val subject = NewsRender.card(NewsRender.postIcon(post), NewsRender.title(player, post), NewsRender.postLines(player, post))
+        val subject = NewsRender.card(
+            NewsRender.postIcon(post),
+            NewsRender.title(player, post),
+            NewsRender.postLines(player, post)
+        )
         ConfirmGUI.show(
             player,
             title = player.tr("gui.news-editor.publish-title"),
             subject = subject,
             choices = listOf(
-                ConfirmGUI.Choice(NewsRender.button(player, Material.BELL, "gui.news-editor.publish-announce", "gui.news-editor.publish-announce-lore")) {
+                ConfirmGUI.Choice(
+                    NewsRender.button(
+                        player,
+                        Material.BELL,
+                        "gui.news-editor.publish-announce",
+                        "gui.news-editor.publish-announce-lore"
+                    )
+                ) {
                     publish(it, post, announce = true)
                 },
-                ConfirmGUI.Choice(NewsRender.button(player, Material.LIME_DYE, "gui.news-editor.publish-quiet", "gui.news-editor.publish-quiet-lore")) {
+                ConfirmGUI.Choice(
+                    NewsRender.button(
+                        player,
+                        Material.LIME_DYE,
+                        "gui.news-editor.publish-quiet",
+                        "gui.news-editor.publish-quiet-lore"
+                    )
+                ) {
                     publish(it, post, announce = false)
                 },
             ),
@@ -219,7 +268,14 @@ class NewsEditorGUI : PagedPluginGUI(
             title = player.tr("gui.news-editor.remove-title"),
             subject = icon(player, category, null, hints = false),
             choices = listOf(
-                ConfirmGUI.Choice(NewsRender.button(player, Material.LAVA_BUCKET, "gui.news-editor.remove", "gui.news-editor.remove-lore")) {
+                ConfirmGUI.Choice(
+                    NewsRender.button(
+                        player,
+                        Material.LAVA_BUCKET,
+                        "gui.news-editor.remove",
+                        "gui.news-editor.remove-lore"
+                    )
+                ) {
                     post.categories.remove(category)
                     NewsManager.changed(post)
                     it.sendPrefixed(it.tr("news.editor.category-removed"))

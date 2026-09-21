@@ -72,14 +72,25 @@ class NewsPostGUI : PagedPluginGUI(
             put(
                 MenuRender.BACK_OFFSET,
                 if (state.preview) {
-                    NewsRender.button(player, Material.ARROW, "gui.news-post.back-editor", "gui.news-post.back-editor-lore")
+                    NewsRender.button(
+                        player,
+                        Material.ARROW,
+                        "gui.news-post.back-editor",
+                        "gui.news-post.back-editor-lore"
+                    )
                 } else {
                     NewsRender.button(player, Material.ARROW, "gui.news-post.back", "gui.news-post.back-lore")
                 },
             )
-            put(MenuRender.EXTRA_OFFSET, NewsRender.button(player, Material.WRITTEN_BOOK, "gui.news-post.book", "gui.news-post.book-lore"))
+            put(
+                MenuRender.EXTRA_OFFSET,
+                NewsRender.button(player, Material.WRITTEN_BOOK, "gui.news-post.book", "gui.news-post.book-lore")
+            )
             if (!state.preview && player.hasPermission(NewsCommand.MANAGE_PERMISSION)) {
-                put(EDIT_OFFSET, NewsRender.button(player, Material.WRITABLE_BOOK, "gui.news-post.edit", "gui.news-post.edit-lore"))
+                put(
+                    EDIT_OFFSET,
+                    NewsRender.button(player, Material.WRITABLE_BOOK, "gui.news-post.edit", "gui.news-post.edit-lore")
+                )
             }
         }
     }

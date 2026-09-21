@@ -52,7 +52,12 @@ class NewsListGUI : PagedPluginGUI(
         if (NewsReadState.unreadCount(player) > 0) {
             put(
                 MenuRender.EXTRA_OFFSET,
-                NewsRender.button(player, Material.MILK_BUCKET, "gui.news-list.read-all", "gui.news-list.read-all-lore"),
+                NewsRender.button(
+                    player,
+                    Material.MILK_BUCKET,
+                    "gui.news-list.read-all",
+                    "gui.news-list.read-all-lore"
+                ),
             )
         }
         if (player.hasPermission(NewsCommand.MANAGE_PERMISSION)) {

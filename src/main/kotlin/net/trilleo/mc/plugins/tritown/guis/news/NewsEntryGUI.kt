@@ -4,11 +4,7 @@ import net.trilleo.mc.plugins.tritown.commands.news.NewsCommand
 import net.trilleo.mc.plugins.tritown.config.NewsSettings
 import net.trilleo.mc.plugins.tritown.enums.FillMode
 import net.trilleo.mc.plugins.tritown.guis.menu.MenuRender
-import net.trilleo.mc.plugins.tritown.news.EntryTag
-import net.trilleo.mc.plugins.tritown.news.NewsCategory
-import net.trilleo.mc.plugins.tritown.news.NewsEntry
-import net.trilleo.mc.plugins.tritown.news.NewsManager
-import net.trilleo.mc.plugins.tritown.news.NewsPost
+import net.trilleo.mc.plugins.tritown.news.*
 import net.trilleo.mc.plugins.tritown.registration.GUIFrame
 import net.trilleo.mc.plugins.tritown.registration.GUIManager
 import net.trilleo.mc.plugins.tritown.registration.PluginGUI
@@ -64,11 +60,22 @@ class NewsEntryGUI : PluginGUI(
             )
             inventory.setItem(
                 slot,
-                NewsRender.card(NewsRender.tagMaterial(tag), NewsRender.tag(player, tag), lines, glow = tag == entry.tag),
+                NewsRender.card(
+                    NewsRender.tagMaterial(tag),
+                    NewsRender.tag(player, tag),
+                    lines,
+                    glow = tag == entry.tag
+                ),
             )
         }
-        inventory.setItem(BACK_SLOT, NewsRender.button(player, Material.ARROW, "gui.news-entry.back", "gui.news-entry.back-lore"))
-        inventory.setItem(DELETE_SLOT, NewsRender.button(player, Material.LAVA_BUCKET, "gui.news-entry.delete", "gui.news-entry.delete-lore"))
+        inventory.setItem(
+            BACK_SLOT,
+            NewsRender.button(player, Material.ARROW, "gui.news-entry.back", "gui.news-entry.back-lore")
+        )
+        inventory.setItem(
+            DELETE_SLOT,
+            NewsRender.button(player, Material.LAVA_BUCKET, "gui.news-entry.delete", "gui.news-entry.delete-lore")
+        )
     }
 
     override fun onClick(event: InventoryClickEvent) {
@@ -94,7 +101,11 @@ class NewsEntryGUI : PluginGUI(
                     )
                 }
             } else {
-                NewsRender.prompt(player, player.tr("gui.news-entry.prompt-text"), maxLength, { show(player, post, category, entry) }) {
+                NewsRender.prompt(
+                    player,
+                    player.tr("gui.news-entry.prompt-text"),
+                    maxLength,
+                    { show(player, post, category, entry) }) {
                     entry.text.main = it
                     NewsManager.changed(post)
                 }

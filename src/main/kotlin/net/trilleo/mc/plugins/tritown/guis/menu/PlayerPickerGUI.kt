@@ -96,7 +96,14 @@ class PlayerPickerGUI : PagedPluginGUI(
 
             Mode.PAY -> MenuRender.later(player) {
                 player.closeInventory()
-                ChatPrompt.ask(player, payPrompt(player, name)) { amount -> CommandRegistrar.run(player, "pay", name, amount) }
+                ChatPrompt.ask(player, payPrompt(player, name)) { amount ->
+                    CommandRegistrar.run(
+                        player,
+                        "pay",
+                        name,
+                        amount
+                    )
+                }
             }
         }
     }

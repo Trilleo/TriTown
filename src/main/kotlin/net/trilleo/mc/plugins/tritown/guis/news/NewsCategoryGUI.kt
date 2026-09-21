@@ -39,7 +39,12 @@ class NewsCategoryGUI : PagedPluginGUI(
 
     override fun title(player: Player): Component {
         val category = categoryOf(player) ?: return super.title(player)
-        return ComponentUtil.parse(player.tr("gui.news-category.title", "name" to NewsRender.text(player, category.name)))
+        return ComponentUtil.parse(
+            player.tr(
+                "gui.news-category.title",
+                "name" to NewsRender.text(player, category.name)
+            )
+        )
     }
 
     override fun getItems(player: Player): List<ItemStack> {
@@ -54,7 +59,12 @@ class NewsCategoryGUI : PagedPluginGUI(
     }
 
     override fun navButtons(player: Player): Map<Int, ItemStack> = mapOf(
-        MenuRender.BACK_OFFSET to NewsRender.button(player, Material.ARROW, "gui.news-category.back", "gui.news-category.back-lore"),
+        MenuRender.BACK_OFFSET to NewsRender.button(
+            player,
+            Material.ARROW,
+            "gui.news-category.back",
+            "gui.news-category.back-lore"
+        ),
     )
 
     override fun onNavClick(event: InventoryClickEvent, offset: Int) {

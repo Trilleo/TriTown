@@ -85,7 +85,12 @@ class LeaderboardGUI : PagedPluginGUI(
         }
 
         if (!entry.type.isGovernment) {
-            return MenuRender.head(Bukkit.getOfflinePlayer(entry.uuid), title, lines, glow = entry.uuid == viewer.uniqueId)
+            return MenuRender.head(
+                Bukkit.getOfflinePlayer(entry.uuid),
+                title,
+                lines,
+                glow = entry.uuid == viewer.uniqueId
+            )
         }
         return itemStack(Material.BELL) {
             name(title)

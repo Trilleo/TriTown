@@ -1,11 +1,6 @@
 package net.trilleo.mc.plugins.tritown.news.storage
 
-import net.trilleo.mc.plugins.tritown.news.EntryTag
-import net.trilleo.mc.plugins.tritown.news.LocalizedText
-import net.trilleo.mc.plugins.tritown.news.NewsCategory
-import net.trilleo.mc.plugins.tritown.news.NewsEntry
-import net.trilleo.mc.plugins.tritown.news.NewsPost
-import net.trilleo.mc.plugins.tritown.news.PostStatus
+import net.trilleo.mc.plugins.tritown.news.*
 import java.io.File
 import java.nio.file.Files
 import java.util.logging.Level

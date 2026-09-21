@@ -45,8 +45,18 @@ class NewsManageGUI : PagedPluginGUI(
     }
 
     override fun navButtons(player: Player): Map<Int, ItemStack> = mapOf(
-        MenuRender.BACK_OFFSET to NewsRender.button(player, Material.ARROW, "gui.news-manage.back", "gui.news-manage.back-lore"),
-        MenuRender.EXTRA_OFFSET to NewsRender.button(player, Material.WRITABLE_BOOK, "gui.news-manage.new", "gui.news-manage.new-lore"),
+        MenuRender.BACK_OFFSET to NewsRender.button(
+            player,
+            Material.ARROW,
+            "gui.news-manage.back",
+            "gui.news-manage.back-lore"
+        ),
+        MenuRender.EXTRA_OFFSET to NewsRender.button(
+            player,
+            Material.WRITABLE_BOOK,
+            "gui.news-manage.new",
+            "gui.news-manage.new-lore"
+        ),
     )
 
     override fun onNavClick(event: InventoryClickEvent, offset: Int) {
@@ -97,7 +107,12 @@ class NewsManageGUI : PagedPluginGUI(
             add(player.tr("gui.news-manage.click-edit"))
             add(player.tr("gui.news-manage.shift-click-delete"))
         }
-        return NewsRender.card(NewsRender.postIcon(post), NewsRender.title(player, post), lines, glow = !post.isPublished)
+        return NewsRender.card(
+            NewsRender.postIcon(post),
+            NewsRender.title(player, post),
+            lines,
+            glow = !post.isPublished
+        )
     }
 
     companion object {
@@ -107,14 +122,23 @@ class NewsManageGUI : PagedPluginGUI(
 
         /** Asks before deleting [post] for good. Deleting it leads here; backing out leads to [onCancel]. */
         fun confirmDelete(player: Player, post: NewsPost, onCancel: (Player) -> Unit) {
-            val subject = NewsRender.card(NewsRender.postIcon(post), NewsRender.title(player, post), NewsRender.postLines(player, post))
+            val subject = NewsRender.card(
+                NewsRender.postIcon(post),
+                NewsRender.title(player, post),
+                NewsRender.postLines(player, post)
+            )
             ConfirmGUI.show(
                 player,
                 title = player.tr("gui.news-manage.delete-title"),
                 subject = subject,
                 choices = listOf(
                     ConfirmGUI.Choice(
-                        NewsRender.button(player, Material.LAVA_BUCKET, "gui.news-manage.delete", "gui.news-manage.delete-lore")
+                        NewsRender.button(
+                            player,
+                            Material.LAVA_BUCKET,
+                            "gui.news-manage.delete",
+                            "gui.news-manage.delete-lore"
+                        )
                     ) {
                         NewsManager.delete(post)
                         it.sendPrefixed(it.tr("news.editor.deleted"))

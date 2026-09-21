@@ -19,11 +19,7 @@ import net.trilleo.mc.plugins.tritown.shops.ShopAccess
 import net.trilleo.mc.plugins.tritown.shops.ShopManager
 import net.trilleo.mc.plugins.tritown.towns.FoundingCredit
 import net.trilleo.mc.plugins.tritown.trades.TradeManager
-import net.trilleo.mc.plugins.tritown.utils.ComponentUtil
-import net.trilleo.mc.plugins.tritown.utils.EconomyUtil
-import net.trilleo.mc.plugins.tritown.utils.TownyUtil
-import net.trilleo.mc.plugins.tritown.utils.itemStack
-import net.trilleo.mc.plugins.tritown.utils.tr
+import net.trilleo.mc.plugins.tritown.utils.*
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -160,7 +156,11 @@ class MainMenuGUI : PluginGUI(
 
     /** A button that only says what it opens. */
     private fun card(player: Player, material: Material, nameKey: String, loreKey: String): ItemStack =
-        PanelRender.card(material, player.tr(nameKey), listOf(player.tr(loreKey), "", player.tr("gui.admin.click-open")))
+        PanelRender.card(
+            material,
+            player.tr(nameKey),
+            listOf(player.tr(loreKey), "", player.tr("gui.admin.click-open"))
+        )
 
     private fun profile(player: Player): ItemStack {
         val resident = TownyAPI.getInstance().getResident(player)
@@ -186,7 +186,11 @@ class MainMenuGUI : PluginGUI(
             "nation" to (resident?.nationOrNull?.let { TownyUtil.name(it.name) } ?: none),
         )
 
-        return MenuRender.head(player, player.tr("gui.menu.profile", "name" to ComponentUtil.escape(player.name)), lines)
+        return MenuRender.head(
+            player,
+            player.tr("gui.menu.profile", "name" to ComponentUtil.escape(player.name)),
+            lines
+        )
     }
 
     /** The viewer's town at a glance, or how to get one, on the button that opens TownyMenu. */

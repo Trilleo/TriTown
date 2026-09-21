@@ -26,7 +26,15 @@ object NewsNotifier {
         val preview = NewsSettings.snapshot.joinPreview
         player.sendPrefixed(player.tr("news.join.header", "amount" to unread.size))
         unread.take(preview).forEach { post ->
-            player.sendMessage(ComponentUtil.parse(player.tr("news.join.entry", "id" to post.id, "title" to title(player, post))))
+            player.sendMessage(
+                ComponentUtil.parse(
+                    player.tr(
+                        "news.join.entry",
+                        "id" to post.id,
+                        "title" to title(player, post)
+                    )
+                )
+            )
         }
         if (unread.size > preview) {
             player.sendMessage(ComponentUtil.parse(player.tr("news.join.more", "amount" to unread.size - preview)))
