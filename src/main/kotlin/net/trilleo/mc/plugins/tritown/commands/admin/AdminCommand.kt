@@ -2,6 +2,7 @@ package net.trilleo.mc.plugins.tritown.commands.admin
 
 import net.trilleo.mc.plugins.tritown.guis.admin.AdminPanelGUI
 import net.trilleo.mc.plugins.tritown.guis.admin.AdminShopsGUI
+import net.trilleo.mc.plugins.tritown.guis.admin.AdminStorageGUI
 import net.trilleo.mc.plugins.tritown.guis.admin.EconomyPanelGUI
 import net.trilleo.mc.plugins.tritown.registration.GUIManager
 import net.trilleo.mc.plugins.tritown.registration.PluginCommand
@@ -20,11 +21,15 @@ import org.bukkit.entity.Player
 class AdminCommand : PluginCommand(
     name = "admin",
     description = "Open the admin panel",
-    usage = "/tritown admin [economy|shops]",
+    usage = "/tritown admin [economy|shops|storage]",
     permission = AdminPanelGUI.PERMISSION,
 ) {
 
-    override val extraPermissions = listOf(AdminPanelGUI.ECONOMY_PERMISSION, AdminPanelGUI.SHOPS_PERMISSION)
+    override val extraPermissions = listOf(
+        AdminPanelGUI.ECONOMY_PERMISSION,
+        AdminPanelGUI.SHOPS_PERMISSION,
+        AdminPanelGUI.STORAGE_PERMISSION,
+    )
 
     override fun execute(sender: CommandSender, args: Array<out String>): Boolean {
         val player = sender as? Player ?: run {
@@ -41,6 +46,12 @@ class AdminCommand : PluginCommand(
         val permission = permissionFor(section)
         if (permission != null && !player.hasPermission(permission)) {
             player.sendPrefixed(player.tr("command.admin.no-permission-section", "section" to section.orEmpty()))
+            return true
+        }
+
+        // Read off disk first, so it opens a moment later rather than here.
+        if (section == "storage") {
+            AdminStorageGUI.show(player)
             return true
         }
 
@@ -68,10 +79,11 @@ class AdminCommand : PluginCommand(
     private fun permissionFor(section: String?): String? = when (section) {
         "economy" -> AdminPanelGUI.ECONOMY_PERMISSION
         "shops" -> AdminPanelGUI.SHOPS_PERMISSION
+        "storage" -> AdminPanelGUI.STORAGE_PERMISSION
         else -> null
     }
 
     private companion object {
-        val SECTIONS = listOf("economy", "shops")
+        val SECTIONS = listOf("economy", "shops", "storage")
     }
 }

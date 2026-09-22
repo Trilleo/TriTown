@@ -22,6 +22,9 @@ enum class FlowCategory {
     /** Bought from, or sold to, one of the server's own shops. */
     SHOP,
 
+    /** Pages of a player's storage, bought from the server. Always a sink. */
+    STORAGE,
+
     /** Anything Towny moved: bank deposits and withdrawals, plot sales, upkeep, taxes. */
     TOWNY,
 
@@ -42,6 +45,7 @@ enum class FlowCategory {
         get() = when (this) {
             STARTING_BALANCE -> "money.flow.starting-balance"
             SHOP -> "money.flow.shop"
+            STORAGE -> "money.flow.storage"
             TOWNY -> "money.flow.towny"
             ADMIN -> "money.flow.admin"
             PAYMENT -> "money.flow.payment"
@@ -65,10 +69,12 @@ enum class FlowCategory {
             return when {
                 key == TransactionReason.STARTING_BALANCE -> STARTING_BALANCE
                 key == TransactionReason.SHOP_BUY || key == TransactionReason.SHOP_SELL -> SHOP
+                key == TransactionReason.STORAGE_PAGE -> STORAGE
                 key == TransactionReason.TOWNY || key == TransactionReason.TOWN_DELETED -> TOWNY
                 key == TransactionReason.ADMIN_SET || key == TransactionReason.ADMIN_RESET -> ADMIN
                 key == TransactionReason.PAYMENT || key == TransactionReason.TRADE -> PAYMENT
                 source == EconomyContext.SOURCE_SHOP -> SHOP
+                source == EconomyContext.SOURCE_STORAGE -> STORAGE
                 source == EconomyContext.SOURCE_TOWNY -> TOWNY
                 key == TransactionReason.EXTERNAL -> EXTERNAL
                 else -> OTHER

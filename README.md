@@ -15,7 +15,7 @@ TriTown is in early development; see the [change log](CHANGELOG.md) for what has
 **A menu in every hotbar.** Every player carries a glowing item in the last slot of their hotbar; right-click it, or
 run `/tt menu`, for everything TriTown offers in one place. Your profile sits at the top — balance, founding credit,
 leaderboard rank, town and nation — and below it are your town at a glance with a shortcut into
-[TownyMenu](https://github.com/Trilleo/TownyMenu), the global shop, a list of the players near enough to trade with
+[TownyMenu](https://github.com/Trilleo/TownyMenu), your storage, the global shop, a list of the players near enough to trade with
 (anyone waiting for your answer first), a list of players to pay, the richest players as heads, the server's vital signs,
 the server news, a sidebar switch, and the admin panel for those allowed it. Anything switched off on the server, or that you may not
 use, is simply left out, and what remains is centred. The item cannot be moved, dropped, stored, crafted with or handed
@@ -39,6 +39,14 @@ town's claims show whose land it is and what the plot costs, and enemy territory
 group them, inside a shared header and footer carrying the server name and address. Which lines appear is set per board
 in `config.yml`; the wording lives in the language files, so everyone reads it in their own language. Players turn it on
 and off with `/tt scoreboard`, and it takes turns with Towny's own plot HUD rather than fighting it for the screen.
+
+**A storage of your own.** Every player gets a storage reached from the menu, wherever they are standing: pages the
+size of a large chest, used exactly like one, with a row of buttons beneath for turning pages, depositing everything
+you already store some of, sorting, emptying a page into your inventory, and unpacking a shulker box or bundle straight
+into it. Name your pages and give them icons, and see every page at once in an overview. The first pages are free and
+more can be bought, each a little dearer than the last. It replaces vanilla containers: chests, barrels, shulker boxes
+and ender chests are decoration now. They can still be placed, but nothing can be put in them — not even by a hopper —
+one with items inside only lets them be taken out, and an empty one does not open. Nothing anyone stored is lost.
 
 **Shops the server runs.** Admin shops, set up entirely in game: click an item in your own inventory to put it on the
 shelf and it is sold exactly as you made it, custom name, enchantments and all. An entry can be sold, bought back, or
@@ -66,9 +74,10 @@ server's languages, and players read their own.
 
 **An admin panel.** `/tt admin` opens a menu that reads the server back to you. The economy section shows how much
 currency exists and who holds it, what created it and what removed it — new players, shops, Towny, administrators or
-another plugin — with the net drift per day, how unevenly wealth is spread, how fast money circulates, and a chart of
+storage pages or another plugin — with the net drift per day, how unevenly wealth is spread, how fast money circulates, and a chart of
 the window drawn as columns. Read any of it over the last day, week or month, or over everything on record. Every
-shop's takings are in there too, next to the economy they act on.
+shop's takings are in there too, next to the economy they act on, and every player's storage — how full it is, how
+many pages were bought — which you can open and look through, online or not.
 
 **English and Simplified Chinese.** Every message, menu and item TriTown shows is translated. By default each player
 sees whichever of the two their Minecraft client is set to, and everyone else sees English. Set `language` in
@@ -113,6 +122,12 @@ first start:
 
 Prebuilt jars are attached to every [GitHub release](https://github.com/Trilleo/TriTown/releases).
 
+**Your items stay yours.** Like Hypixel SkyBlock, the only way to give another player an item is a trade. What you drop,
+mine, harvest, fish up or loot from a mob you killed can only be picked up by you. A furnace, hopper, brewing stand or
+decorated pot belongs to whoever filled it until it is empty again, and so do item frames, armor stands and the saddle
+on your horse. Nobody else can open, empty, break or blow them up. Death drops, and anything the world drops by
+itself, are still anyone's.
+
 ## Commands
 
 | Command                  | Description                           |
@@ -129,7 +144,9 @@ Prebuilt jars are attached to every [GitHub release](https://github.com/Trilleo/
 | `/trade <player>`        | Ask another player to trade           |
 | `/tt shop <action> …`    | Set up the server's shops (OP only)   |
 | `/tt news`               | Read the server news                  |
+| `/tt storage`            | Open your storage                     |
 | `/tt admin [section]`    | Open the admin panel (OP only)        |
+| `/tt protection <inspect/release>` | See or clear who owns what you look at (OP only) |
 
 `/eco` takes `give`, `take` and `set` (`<player> <amount> [currency]`), `reset <player>` back to the starting balance,
 `info <player>` for an account's details, `history [player]` to browse recorded transactions in a menu, and `flush` to
@@ -149,8 +166,18 @@ is open. There is no permission node: whether players may trade at all is `playe
 every post read, and `manage` to write them, which needs `tritown.news.manage` — as does the **Manage** button in the
 news.
 
-`/tt admin` opens the panel itself, and `economy` or `shops` opens that section directly. Opening the panel needs
-`tritown.admin`; the sections need `tritown.admin.economy` and `tritown.admin.shops` on top of it.
+`/tt storage` opens your storage; there is no permission node, since whether it runs at all is `storage.enabled`.
+Administrators with `tritown.storage.admin` also get `view <player>`, which opens anyone's storage — online or not — to
+change, and `pages <player> <add|set> <amount>`, which hands out pages for free. `tritown.storage.bypass` lets a
+builder place and fill the containers the storage replaces.
+
+`/tt protection inspect` shows who owns the container, item frame, armor stand or mob you are looking at, and
+`release` clears that claim; both need `tritown.protection.admin`. `tritown.protection.bypass` lets staff open, take
+from and break anything a player has claimed.
+
+`/tt admin` opens the panel itself, and `economy`, `shops` or `storage` opens that section directly. Opening the panel
+needs `tritown.admin`; the sections need `tritown.admin.economy`, `tritown.admin.shops` and `tritown.admin.storage` on
+top of it.
 
 Commands are sub-commands of `/tritown` (alias `/tt`) unless noted. The economy commands are registered as top-level
 commands as well, which `economy.commands.top-level-aliases` turns off — they are then only reachable as
@@ -201,6 +228,17 @@ version stays available as `/tritown:balance` and so on.
 | `player-trades.enabled`                   | `true`             | Turn player-to-player trading off entirely                                      |
 | `player-trades.distance`                  | `10.0`             | How close two players must be to trade, and stay while the menu is open         |
 | `player-trades.request-expiry`            | `60`               | Seconds an unanswered trade request stands                                      |
+| `storage.enabled`                         | `true`             | Turn the storage and the container lock off (turning it on needs a restart)     |
+| `storage.free-pages`                      | `2`                | Pages every player has without paying                                           |
+| `storage.max-pages`                       | `27`               | The most pages a storage can reach, free ones included                          |
+| `storage.price.base`                      | `500.0`            | What the first bought page costs                                                |
+| `storage.price.multiplier`                | `1.5`              | How much dearer each bought page is than the one before                         |
+| `storage.save-interval`                   | `30`               | Seconds between writing changed storages; closing one writes it at once         |
+| `storage.lock-containers.enabled`         | `true`             | Make containers decoration: withdraw-only, and closed once empty                |
+| `storage.lock-containers.<group>`         | `true`             | Each of `chests`, `shulker-boxes` and `ender-chest` on its own                 |
+| `item-protection.enabled`                 | `true`             | Items only change hands through a trade                                         |
+| `item-protection.disabled-worlds`         | `[]`               | Worlds where nothing is protected                                               |
+| `item-protection.<part>`                  | `true`             | Each of `drops`, `actions`, `mob-loot`, `projectiles`, `containers`, `entities`, `explosion-guard` |
 | `towns.founding-credit`                   | `100.0`            | Credit only `/t new` can spend, given once to players without a town; `0` is off |
 | `news.enabled`                            | `true`             | Turn the server news off entirely                                               |
 | `news.join-message.enabled`               | `true`             | List a player's unread posts a moment after they join                           |
@@ -271,6 +309,32 @@ in the transaction log and appears in `/eco history` as a shop movement naming t
 Shops live in `plugins/TriTown/shops/shops.json`, written atomically with a `.bak` copy beside it. A shop you edit is
 written straight away; stock levels and sales figures are written every `shops.save-interval` seconds, so a crash costs
 at most that long of counters and never a shop.
+
+### Storage
+
+Open your storage from the main menu or with `/tt storage`. Each page is five rows of ordinary slots, and you move
+items in and out of them just as you would a chest. The row beneath holds the buttons:
+
+- **Previous** and **Next** turn the page. On your last page, **Next** offers the next page for sale instead, with its
+  price, and asks before charging you. Each page bought costs `storage.price.multiplier` times the one before.
+- **All pages** shows every page at once — its name, how full it is and what it mostly holds — and opens any of them.
+- **Quick deposit** stores everything in your main inventory that your storage already holds some of. Your hotbar is
+  left alone.
+- **Sort** merges and orders the page; shift-click sorts every page.
+- **Take page** moves as much of the page as fits into your inventory.
+- **Unpack** empties a shulker box or bundle into your storage: pick one up and click the button with it. A full box
+  or bundle cannot be stored as it is, so this is how its contents come home.
+- **Page settings** renames the page (typed in chat) or gives it an icon (click any item in your inventory).
+
+Chests, trapped chests, barrels, shulker boxes, ender chests, chest minecarts and chest boats are decoration. They can
+still be placed, with a warning, but nothing can be put in them: one with items inside opens only to take things out,
+and an empty one does not open at all. Hoppers can still empty them but not fill them. Each group can be left alone
+under `storage.lock-containers`.
+
+Storages live in `plugins/TriTown/storage/<uuid>.json`, one per player, written atomically with a `.bak` copy beside
+it. A storage is written when it is closed, when its page is turned, every `storage.save-interval` seconds while it
+is open, and on a clean shutdown. If a file and its backup are both unreadable, that player's storage stays closed —
+and the file untouched — rather than opening empty.
 
 ### Player trades
 

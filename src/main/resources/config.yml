@@ -9,9 +9,9 @@ message-prefix: "<click:run_command:/tritown help><gradient:yellow:gold>[TriTown
 language: auto
 
 # ── Main Menu ───────────────────────────────────────────────────────────────
-# The menu players reach everything TriTown offers from: their balance and town,
-# the global shop, trading and paying other players, the leaderboard, the
-# sidebar switch and a shortcut into TownyMenu. /tritown menu opens it too.
+# The menu players reach everything TriTown offers from: their balance, town and
+# storage, the global shop, trading and paying other players, the leaderboard,
+# the sidebar switch and a shortcut into TownyMenu. /tritown menu opens it too.
 main-menu:
   item:
     # Keep the menu item in the last slot of every player's hotbar. Right-clicking
@@ -179,6 +179,74 @@ player-trades:
   distance: 10.0
   # Seconds an unanswered request stands before it lapses.
   request-expiry: 60
+
+# ── Storage ─────────────────────────────────────────────────────────────────
+# Every player's own storage, opened from the main menu or with /tritown storage.
+# A page is a large chest: five rows for items above a row of buttons for moving
+# between pages, depositing, sorting, and unpacking shulker boxes and bundles.
+#
+# It replaces vanilla containers. They can still be placed as decoration, with a
+# warning, but nothing can be put in them: one with items inside only lets them be
+# taken out, and an empty one does not open at all. Nothing anyone stored is lost.
+# tritown.storage.bypass lets a builder use them as vanilla does.
+storage:
+  # Turn the storage off entirely. Containers are then left as vanilla has them.
+  # Switching it back on needs a restart.
+  enabled: true
+  # Pages every player has without paying.
+  free-pages: 2
+  # The most pages a storage can reach, free ones included.
+  max-pages: 27
+  # Each page bought costs base × multiplier for every page bought before it:
+  # with these, 500, then 750, 1125, 1687.50 and so on. A multiplier of 1 keeps
+  # every page at the same price. Buying pages takes money out of the economy.
+  price:
+    base: 500.0
+    multiplier: 1.5
+  # Seconds between writing changed storages to disk. Closing a storage or
+  # turning its page writes it straight away, so this only covers a crash while
+  # someone is still moving items around in one.
+  save-interval: 30
+  lock-containers:
+    # Make the containers below decoration: withdraw-only while they hold
+    # anything, and closed once empty. Placing one warns the player. Hoppers can
+    # still pull items out of them, but not push in.
+    enabled: true
+    # Chests, trapped chests, barrels, chest minecarts and chest boats.
+    chests: true
+    shulker-boxes: true
+    ender-chest: true
+
+# ── Item protection ─────────────────────────────────────────────────────────
+# Items belong to the player who has them. The only way to hand one to another
+# player is a trade (/tritown trade). What is in your inventory is yours; these
+# settings decide what stays yours once it leaves it. Death drops are always
+# public, as is anything the world drops by itself (leaf decay, water farms).
+# tritown.protection.bypass lets staff open, take from and break anything.
+item-protection:
+  enabled: true
+  # Worlds where nothing is protected, such as a minigame or creative world.
+  disabled-worlds: []
+  # What a player drops can only be picked up by them.
+  drops: true
+  # What a player mines, harvests, shears or fishes up drops as theirs.
+  actions: true
+  # A mob's loot belongs to the player who killed it, by hand, bow or pet.
+  mob-loot: true
+  # Only the player who fired an arrow or trident can pick it back up.
+  projectiles: true
+  # A container belongs to whoever fills it, for as long as anything is in it:
+  # furnaces, hoppers, brewing stands, droppers, crafters, decorated pots,
+  # shelves, jukeboxes, campfires, lecterns and the like. Nobody else can open,
+  # feed, empty or break it, and hoppers can't carry one player's items into
+  # another's container. An empty container is free for anyone again.
+  containers: true
+  # Item frames, armor stands, allays, and mobs a player has saddled, armoured or
+  # given a chest belong to whoever put the item there. Nobody else can take it,
+  # shear it off, ride the mob or break the frame or stand.
+  entities: true
+  # Explosions leave a claimed container standing, so nobody can blow one open.
+  explosion-guard: true
 
 # ── Towns ───────────────────────────────────────────────────────────────────
 towns:

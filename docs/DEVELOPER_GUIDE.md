@@ -2,7 +2,7 @@
 
 This guide explains how to create **commands**, **listeners**, **GUIs**, **tasks**, **custom items**, **recipes**, work
 with **translations** and the **configuration** system using TriTown's registration system, and how to build on
-**Towny**, the **Vault economy**, the **admin panel**, **shops**, **player trades**, the **news** and the **sidebar**. Commands, listeners, GUIs, tasks, custom items, and recipes all
+**Towny**, the **Vault economy**, the **admin panel**, **shops**, **player trades**, **personal storage**, **item protection**, the **news** and the **sidebar**. Commands, listeners, GUIs, tasks, custom items, and recipes all
 follow the same pattern: extend a base class (or implement an interface), place the file in the correct package, and the
 plugin handles the rest automatically at startup. The configuration system provides typed access to `config.yml` values.
 
@@ -2498,16 +2498,16 @@ right-clicking the menu item or with `/tritown menu` (`commands/menu/MenuCommand
 | `LeaderboardGUI`  | `menu-leaderboard` | The top 112 of `BaltopCache` as heads, with the viewer's rank on each page |
 
 Every one of them opens at six rows. `MainMenuGUI` puts the profile alone at the top and lays the buttons out in rows of
-up to three with `GUIFrame.spacedColumns`. **A button for something switched off or not permitted is left out, not
+up to four with `GUIFrame.spacedColumns`. **A button for something switched off or not permitted is left out, not
 greyed**, and each row is centred on what remains: the global shop only when shops are on and the viewer passes its
-gate, trading only when `player-trades.enabled`, pay and the leaderboard only with the economy running and the
+gate, the storage only while `StorageManager.isAvailable`, trading only when `player-trades.enabled`, pay and the leaderboard only with the economy running and the
 command's permission (`CommandRegistrar.canRun`), the news only while `NewsManager.isAvailable`, the sidebar switch
 only while the sidebar runs, the admin panel only with `tritown.admin`, and the TownyMenu shortcut only when TownyMenu is enabled. Empty rows are dropped, so the menu
 never has a hole in it. The two list menus use `PagedLayout.CENTERED` and keep *Back* and one extra button either side
 of the page number (`MenuRender.BACK_OFFSET`, `EXTRA_OFFSET`).
 
 **The menu points the way; it does not do the work.** Each button runs the command or opens the menu that already owns
-the action — `/trades`, `/trade <name>`, `/pay <name> <amount>`, `/tritown news` through `CommandRegistrar.run`, the admin panel,
+the action — `/trades`, `/tritown storage`, `/trade <name>`, `/pay <name> <amount>`, `/tritown news` through `CommandRegistrar.run`, the admin panel,
 TownyMenu through its own `/townymenu` — so there is exactly one place each rule and message lives. Paying asks for the
 amount with `ChatPrompt` and hands it to `/pay`, which validates it.
 
@@ -2560,6 +2560,7 @@ surface: apart from writing the economy to disk on request, nothing in it change
 | `EconomyPanelGUI`  | `admin-economy`  | Supply, accounts, distribution, faucets, sinks, net, and the chart  |
 | `EconomyFlowGUI`   | `admin-flow`     | Every category and every kind of account, in full                   |
 | `AdminShopsGUI`    | `admin-shops`    | Every shop's takings, opening into that shop's own figures          |
+| `AdminStorageGUI`  | `admin-storage`  | Every storage on file, fullest first, opening into it read-only     |
 
 Adding a section means adding a card to `AdminPanelGUI` and a menu of its own — nothing else in the panel changes.
 
@@ -2575,8 +2576,10 @@ account-type names, and the cards themselves — so the same number reads the sa
 next to the largest one, green where the supply grew and red where it shrank. It reads as a chart at a glance without
 a single custom texture, and the exact figures are in the lore.
 
-Permissions: `tritown.admin` (`AdminPanelGUI.PERMISSION`) opens the panel, `tritown.admin.economy` and
-`tritown.admin.shops` open the sections. A card the viewer may not open is not drawn at all, and the rest are centred
+Permissions: `tritown.admin` (`AdminPanelGUI.PERMISSION`) opens the panel, `tritown.admin.economy`,
+`tritown.admin.shops` and `tritown.admin.storage` open the sections. The storage list opens a storage read-only; only
+an administrator who also holds `tritown.storage.admin` can shift-click into one to change it, and then it is the
+storage menu doing the changing, not the panel. A card the viewer may not open is not drawn at all, and the rest are centred
 along the row with `GUIFrame.spacedColumns`, so a missing card leaves no gap. The panel is reached from the
 [main menu](#main-menu) as well as by command, so its bottom row leads back there.
 
@@ -3013,6 +3016,270 @@ calls the trade off if they leave it hanging.
 
 `TradeSettings` is a snapshot swapped in whole on a reload, the way `ShopSettings` is.
 
+
+## Personal Storage
+
+Every player's own paged storage, reached from the main menu or with `/tritown storage`. It replaces vanilla
+containers: chests, barrels, shulker boxes and ender chests are decoration — withdraw-only while they hold anything, and
+closed once empty.
+
+The core lives under `storage/`, which is **not a scanned package** — the same reason `shops/` and `trades/` are not.
+`StorageManager` has to be alive before the registrars build the main menu that reads it. The menus are in
+`guis/storage` (plus `guis/admin/AdminStorageGUI`), the command is `commands/storage/StorageCommand`, the listeners
+are `listeners/storage/ContainerLockListener` and `StorageSessionListener`, and the flush is
+`tasks/storage/StorageSaveTask`.
+
+### The model
+
+| Type               | What it is                                                                          |
+|:-------------------|:------------------------------------------------------------------------------------|
+| `StoragePage`      | 45 slots (a large chest less the button row), plus a name and icon the owner picked |
+| `PlayerStorage`    | One player's pages, how many they bought, and items a load could not decode          |
+| `StorageManager`   | Loading, the viewer lock, pages and prices, depositing, and saving                  |
+| `StoragePricing`   | What the next page costs, free of Bukkit so it can be tested                        |
+| `SlotFill`         | Depositing into and sorting slots, written against `Rules<T>` so it can be tested   |
+| `StorageItems`     | `SlotFill`'s rules for real items, what a storage accepts, and unpacking containers |
+| `JsonStorageStore` | One file per player under `storage/`, written through `AtomicFile`                  |
+
+A storage owns `free-pages + purchased` pages, capped at `max-pages`. **`purchased` is stored rather than a page
+count**, so raising `free-pages` applies to everyone and the price of the next page stays where each player left it.
+`pageCount` never drops below the last page that still holds anything, so lowering the allowance can never hide a
+player's items. Pages are only created when they are opened or filled.
+
+Go through `StorageManager` for everything. It loads a storage the first time it is asked for and keeps it while its
+owner is online or anyone is looking at it; `unloadIfIdle` writes it and lets it go after that.
+
+### The viewer lock
+
+**One person at a time may change a storage.** `StorageManager.claim` hands out `Access.EDIT` to the first viewer and
+`Access.READ` to anyone else who may inspect (`tritown.storage.admin`); a player who may not is refused with
+`storage.error.busy`. `release` gives it back. This is what lets the storage menu copy its screen back into the model
+without ever overwriting another window's changes: there is never another window that can change it.
+
+A read-only viewer follows the editor. Every copy-back redraws the other viewers of the same page.
+
+### The menu lets the game move items
+
+`StorageGUI` is **the one menu in TriTown that does not cancel clicks** on its content. Players sort their storage the
+way they would sort a chest, so the top five rows are real slots, and everything around them is guarded instead:
+
+* **The button row is untouchable.** A click, number-key swap or drag that reaches slot 45 or beyond is cancelled.
+* **`COLLECT_TO_CURSOR` is cancelled everywhere**, because a double-click gathers from every slot on screen, buttons
+  included.
+* **A shift-click from the player's inventory is done by hand** into the page's own slots. Left to the game it would
+  merge into any matching stack on screen, and a button is a stack on screen.
+* **Only a whitelist of actions may touch a page slot** (`CONTENT_ACTIONS`), and anything being placed there must pass
+  `StorageItems.accepts`. That refuses a shulker box or bundle with anything in it — a page of full boxes would hold
+  many pages' worth and nobody would buy one — and the menu item.
+* **A read-only view cancels every click** that touches the storage.
+
+The screen is copied back into the model on the tick after every allowed click or drag, when the page is switched, and
+when the menu closes. A button that changes the storage itself (deposit, sort, take page, unpack) copies the screen
+back first, changes the model, then redraws from the model.
+
+**Opening another menu from here does not deliver a close to this one**, because `GUIManager` has already moved on to
+the new inventory. Every button that leaves the storage goes through `leave`, which calls `finish` — copy back, write,
+release — on the tick the next menu opens. `finish` is idempotent, so the quit listener and a real close can both call
+it.
+
+Buttons: previous and next page (next becomes **Buy page** on the last page), the overview (`StoragePagesGUI`), quick
+deposit (the main inventory without the hotbar, only materials already stored), sort (shift for every page), take
+page, **Unpack** (click it holding a shulker box or bundle; nothing moves unless all of it fits), page settings
+(`StoragePageSettingsGUI`: rename through `ChatPrompt`, icon from any item in the player's inventory), and the page
+info, which leads back to the main menu or, for an administrator, the storage list.
+
+### Buying pages
+
+`StorageManager.buyPage` charges first and grants the page only once the money has gone: the four-argument
+`EconomyUtil.withdraw` with `EconomyContext.SOURCE_STORAGE` and `TransactionReason.STORAGE_PAGE`, which
+`FlowCategory.of` maps to `STORAGE`. Storage pages are a pure sink. The price is
+`base × multiplier^(n − 1)` for the n-th page bought, rounded to the currency's smallest unit; a page too dear to
+hold in a `Money` is simply not for sale. A purchase always goes through `ConfirmGUI`.
+
+`/tritown storage pages <player> <add|set> <amount>` hands pages out without moving money, so there is nothing to
+attribute.
+
+### Saving
+
+Items can only be encoded on the server thread, so `toStored` runs there, and the finished text is handed to a
+**single writer thread**, so two saves of one storage can never land out of order. Closing a storage and turning its
+page both write it straight away; `StorageSaveTask` flushes whatever is still dirty every `storage.save-interval`
+seconds. `Main.onDisable` closes every open storage (`StorageGUI.closeAll`) before `StorageManager.shutdown` drains
+the writer and writes everything once more.
+
+A file that will not parse falls back to its `.bak`, and when neither can be read the storage is **unavailable, not
+empty** — an empty one would be written over the player's items the moment they closed it. A single item that cannot be
+decoded is set aside in `unreadable` and carried through every save untouched.
+
+**Crash window.** The server writes a player's inventory on its own schedule. A crash after an item is taken out of a
+storage, but before that storage is next written, can leave the item in both places. Writing on close and on every
+page turn keeps the window to the time someone is actively moving items around in one page.
+
+### The container lock
+
+`ContainerLockListener` lets a chest, trapped chest, barrel, ender chest, shulker box, chest minecart or chest boat be
+placed, as decoration, and warns the player who placed it (`storage.lock.decoration`, at `MONITOR` so a placement
+something else refused says nothing). Crafting is left alone.
+
+**An empty container does not open**: `InventoryOpenEvent` is cancelled when the inventory is empty, so a decorative
+chest never shows an inventory that looks as if it were waiting to be filled. For an ender chest that is the viewer's
+own ender inventory. A container with anything in it opens, and is **withdraw-only**. The listener recognises one by **the holder of its inventory**
+(`Chest`, `DoubleChest`, `Barrel`, `ShulkerBox`, `StorageMinecart`, `ChestBoat`, or the `ENDER_CHEST` type), never by
+`InventoryType` — TriTown's own menus and other plugins' are chest-shaped too, and they have no holder. It cancels
+anything that would put an item in: placing or swapping into a top slot, a shift-click from the player's inventory,
+a number key that carries an item in, and any drag touching the top. Taking out is always allowed.
+`InventoryMoveItemEvent` is cancelled when the **destination** is locked, so hoppers can still empty a chest but not
+fill one. A hopper minecart is left unlocked for the same reason: it is part of a machine.
+
+Each group has its own switch under `storage.lock-containers`, the whole lock follows `storage.enabled`, and
+`tritown.storage.bypass` exempts a player.
+
+### Settings
+
+| Key                                   | What it does                                                 |
+|:--------------------------------------|:-------------------------------------------------------------|
+| `storage.enabled`                     | Turns the storage and the lock off; turning it on needs a restart |
+| `storage.free-pages`                  | Pages every player has without paying                        |
+| `storage.max-pages`                   | The most pages a storage can reach (at most 256)             |
+| `storage.price.base`                  | What the first bought page costs                             |
+| `storage.price.multiplier`            | How much dearer each page is than the one before (1 to 10)   |
+| `storage.save-interval`               | Seconds between flushes of changed storages                  |
+| `storage.lock-containers.enabled`     | The lock as a whole                                          |
+| `storage.lock-containers.chests`      | Chests, trapped chests, barrels, chest minecarts, chest boats |
+| `storage.lock-containers.shulker-boxes` | Every colour of shulker box                                |
+| `storage.lock-containers.ender-chest` | The ender chest                                              |
+
+`StorageSettings` is a snapshot swapped in whole on a reload, the way `ShopSettings` is. A reload never re-reads the
+storage files.
+
+
+## Item Protection
+
+Items belong to the player who has them, and the only way to hand one to another player is a [trade](#player-trades).
+The core lives in `protection/`, outside the scan. The listeners are in `listeners/protection/` and the admin command
+is `commands/protection/ProtectionCommand`.
+
+### The model
+
+**An item in an inventory is never marked.** It is its holder's by being there, so stacks merge as usual and the
+trade, shop and storage code never think about ownership. Ownership is recorded only once an item leaves a player:
+
+- **On the ground**, as the dropped `Item`'s own owner field (`Item#setOwner`). The game saves it with the entity,
+  refuses a pickup by anyone else, and will not merge two drops with different owners. `ItemOwnership` is the only
+  place that sets it.
+- **In a container or entity holder**, as a claim: the owner's UUID under `tritown:claim` in the holder's persistent
+  data. `Claims` is the only thing that reads or writes one.
+
+Public items are the ones the world drops by itself, plus every player's death drops: leaf decay, water and piston
+farms, explosions nobody owns.
+
+### Dropped items
+
+| Where it comes from | Who owns it |
+|:--------------------|:------------|
+| `PlayerDropItemEvent`, and any spawn whose thrower is an online player | The dropper |
+| `BlockDropItemEvent` (mining, breaking crops) | The breaker, or the block's claimant if it was a claimed container |
+| `EntityDeathEvent` (not players) | The mob's claimant, else its `killer` (which covers bows and tamed pets) |
+| Right-clicking a block or an entity, shearing, `BlockDispenseLootEvent` | The player |
+| `PlayerFishEvent` (`CAUGHT_FISH`) | The angler |
+| A claimed dispenser, dropper, crafter or campfire | The claimant |
+| `EntityDropItemEvent` from a claimed entity | The claimant |
+| `PiglinBarterEvent` | Whoever threw the gold, recorded on the piglin as it picks it up |
+| `PlayerDeathEvent` | Nobody: a suppression window keeps them public |
+
+Most of these drops do not exist yet when the event names the player, so the event opens a **window** at the spot
+through `ItemOwnership.expect(location, owner)`, and `ItemSpawnEvent` claims it. `DropWindows` holds the windows. It is
+plain Kotlin, tested in `DropWindowsTest`. A window matches spawns within two blocks, in the tick it was opened and
+the next. The nearest window wins, and a suppression beats all of them.
+
+**Never stamp an `ItemStack` to carry an owner.** A mark nothing stripped would follow the item into an inventory and
+stop it stacking with its twins.
+
+`EntityPickupItemEvent` refuses every entity but the owner: allays, foxes, villagers and zombies included. The one
+exception is a piglin taking its barter material. `PlayerPickupArrowEvent` only lets the shooter pick an arrow or
+trident back up.
+
+**Handing a player items the plugin gives them** goes through `InventoryUtil.give`, whose overflow is dropped with
+`ItemOwnership.dropFor(player, stack)`. Never drop an item meant for a player with `dropItemNaturally` alone.
+
+### Claims
+
+`Claims.of(inventory | block | entity)` gives a `ClaimHolder`, or `null` for anything that is not one:
+
+- Every block entity with an inventory: furnaces, hoppers, droppers, dispensers, brewing stands, crafters, barrels,
+  chests (both halves answer to the left one's claim), shulker boxes, decorated pots, chiseled bookshelves, shelves,
+  jukeboxes, lecterns.
+- Campfires.
+- Item frames, armor stands and allays.
+- Mobs that are not `Enemy` and can wear a saddle or body armour, including a chested horse's inventory.
+- Minecarts and boats with an inventory.
+
+It is never kept, and it is never built for a holderless inventory (TriTown's menus), the ender chest, a player or a
+villager.
+
+**Claims are read lazily.** `Claims.ownerOf(holder)` clears a claim on a holder that is *vacant*: empty, with nobody
+viewing it. No task ever releases one, and a shared furnace is free the moment its owner takes the last item out. A
+viewer keeps even an empty claim alive, or a hopper could claim the container out from under them. `Claims.recorded`
+reads a claim without that check. It is for what a destroyed block or entity leaves behind, when its contents can no
+longer be counted.
+
+Blocks are read through `getState(false)`, the live block entity, so a claim is written without `update()`. Only
+the items inside make a claim worth anything, and moving them is what marks the chunk to be saved.
+
+The rules, in `ContainerProtectionListener` and `EntityProtectionListener`:
+
+- Opening a free container claims it for the opener. Only one non-bypass viewer may have a free container open.
+  Closing an empty one releases it.
+- `InventoryMoveItemEvent` / `InventoryPickupItemEvent`: an owned item may enter a free holder, which becomes the
+  owner's, or the owner's own. Anything else is cancelled. A public source never changes a destination's owner. A copper
+  golem never targets a claimed block.
+- A non-owner cannot break, blow up or shoot apart a claimed holder, destroy a claimed minecart, take a lectern's book,
+  or right-click a claimed interaction block, frame, stand or mob. `explosion-guard` removes claimed containers from an
+  explosion's block list.
+- A piston never moves or breaks a claimed holder. The game only ever breaks a block entity whose move reaction
+  is `BREAK`, such as a decorated pot, and that block is not always in the event's list. So the blocks around
+  everything that moves, and the one in front of the head, are checked as well, but only the breakable ones. A
+  piston door beside a claimed furnace still works.
+- A frame, stand or mob is claimed when an item goes on. For stands and mobs that is read a tick later, because the
+  item lands after the event.
+
+`Protection.settings(world)` returns the settings, or `null` when protection is off or off in that world. Every
+handler asks it first. `tritown.protection.bypass` (`Protection.BYPASS_PERMISSION`) exempts a player from every claim.
+Vanilla's own pickup check still applies to them, because it runs before any event.
+
+`/tritown protection inspect|release` (`tritown.protection.admin`) shows or clears the claim on the block or entity in
+the crosshair.
+
+### Adding a way for items to leave a player
+
+Any new feature that spills items into the world, or lets something hold a player's items, has to say whose they are:
+
+1. **A drop the feature makes itself**: use `ItemOwnership.dropFor`, or `bind` the `Item` it creates.
+2. **A drop the game makes a moment later**: call `ItemOwnership.expect` from the event that names the player.
+3. **A new kind of holder**: teach `Claims.of` to recognise it, and refuse non-owners on every event that reaches
+   inside it.
+
+### Known gaps
+
+- Flower pots and composters have no block entity to hold a claim, so they are left alone.
+- Leads dropped from a broken fence knot are public.
+- Death drops are public on purpose, so a player can still give their items away by dying next to someone.
+
+### Settings
+
+| Key                               | What it does                                                          |
+|:----------------------------------|:----------------------------------------------------------------------|
+| `item-protection.enabled`         | Everything below                                                       |
+| `item-protection.disabled-worlds` | Worlds, by name, where nothing is protected                            |
+| `item-protection.drops`           | Player drops are the dropper's                                         |
+| `item-protection.actions`         | Mining, harvesting, shearing, fishing and loot credit the player       |
+| `item-protection.mob-loot`        | A mob's loot is its killer's                                           |
+| `item-protection.projectiles`     | Only the shooter picks an arrow or trident back up                     |
+| `item-protection.containers`      | Containers and interaction blocks are claimed by whoever fills them    |
+| `item-protection.entities`        | Frames, stands, allays and equipped mobs are claimed the same way      |
+| `item-protection.explosion-guard` | Explosions and mobs leave claimed containers standing                  |
+
+`ProtectionSettings` is a snapshot swapped in whole on a reload.
 
 ## Server News
 

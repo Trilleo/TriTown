@@ -2,12 +2,14 @@ package net.trilleo.mc.plugins.tritown.guis.menu
 
 import com.palmergames.bukkit.towny.TownyAPI
 import net.trilleo.mc.plugins.tritown.config.ShopSettings
+import net.trilleo.mc.plugins.tritown.config.StorageSettings
 import net.trilleo.mc.plugins.tritown.economy.BaltopCache
 import net.trilleo.mc.plugins.tritown.economy.CurrencyRegistry
 import net.trilleo.mc.plugins.tritown.economy.EconomyService
 import net.trilleo.mc.plugins.tritown.enums.FillMode
 import net.trilleo.mc.plugins.tritown.guis.admin.AdminPanelGUI
 import net.trilleo.mc.plugins.tritown.guis.admin.PanelRender
+import net.trilleo.mc.plugins.tritown.guis.storage.StorageRender
 import net.trilleo.mc.plugins.tritown.news.NewsManager
 import net.trilleo.mc.plugins.tritown.news.NewsReadState
 import net.trilleo.mc.plugins.tritown.registration.CommandRegistrar
@@ -17,6 +19,7 @@ import net.trilleo.mc.plugins.tritown.registration.PluginGUI
 import net.trilleo.mc.plugins.tritown.scoreboard.ScoreboardService
 import net.trilleo.mc.plugins.tritown.shops.ShopAccess
 import net.trilleo.mc.plugins.tritown.shops.ShopManager
+import net.trilleo.mc.plugins.tritown.storage.StorageManager
 import net.trilleo.mc.plugins.tritown.towns.FoundingCredit
 import net.trilleo.mc.plugins.tritown.trades.TradeManager
 import net.trilleo.mc.plugins.tritown.utils.*
@@ -50,7 +53,7 @@ class MainMenuGUI : PluginGUI(
     fillMode = FillMode.NONE,
 ) {
 
-    private enum class Button { PROFILE, TOWN, SHOP, TRADE, PAY, LEADERBOARD, SERVER, NEWS, SIDEBAR, ADMIN, CLOSE }
+    private enum class Button { PROFILE, TOWN, STORAGE, SHOP, TRADE, PAY, LEADERBOARD, SERVER, NEWS, SIDEBAR, ADMIN, CLOSE }
 
     /** Which button each slot holds, per viewer, since the buttons shown depend on who is looking. */
     private val layouts = ConcurrentHashMap<UUID, Map<Int, Button>>()
@@ -70,6 +73,7 @@ class MainMenuGUI : PluginGUI(
         val player = event.whoClicked as? Player ?: return
         when (layouts[player.uniqueId]?.get(event.rawSlot)) {
             Button.TOWN -> MenuRender.later(player) { player.performCommand(TOWNY_MENU_COMMAND) }
+            Button.STORAGE -> MenuRender.later(player) { CommandRegistrar.run(player, "storage") }
             Button.SHOP -> MenuRender.later(player) { CommandRegistrar.run(player, "trades") }
             Button.TRADE -> MenuRender.later(player) { PlayerPickerGUI.show(player, PlayerPickerGUI.Mode.TRADE) }
             Button.PAY -> MenuRender.later(player) { PlayerPickerGUI.show(player, PlayerPickerGUI.Mode.PAY) }
@@ -103,6 +107,7 @@ class MainMenuGUI : PluginGUI(
             listOf(Button.PROFILE),
             listOfNotNull(
                 Button.TOWN.takeIf { hasTownyMenu() },
+                Button.STORAGE.takeIf { StorageManager.isAvailable },
                 Button.SHOP.takeIf { globalShopFor(player) },
                 Button.TRADE.takeIf { TradeManager.isEnabled },
             ),
@@ -143,6 +148,7 @@ class MainMenuGUI : PluginGUI(
     private fun render(player: Player, button: Button): ItemStack = when (button) {
         Button.PROFILE -> profile(player)
         Button.TOWN -> town(player)
+        Button.STORAGE -> storage(player)
         Button.SHOP -> card(player, Material.EMERALD, "gui.menu.shop", "gui.menu.shop-lore")
         Button.TRADE -> trade(player)
         Button.PAY -> card(player, Material.GOLD_INGOT, "gui.menu.pay", "gui.menu.pay-lore")
@@ -217,6 +223,25 @@ class MainMenuGUI : PluginGUI(
         lines += ""
         lines += player.tr("gui.menu.town-open")
         return PanelRender.card(Material.BELL, player.tr("gui.menu.town"), lines)
+    }
+
+    /** How many pages the viewer has, and what the next one costs, so buying one is never a surprise. */
+    private fun storage(player: Player): ItemStack {
+        val lines = mutableListOf(player.tr("gui.menu.storage-lore"))
+        StorageManager.get(player.uniqueId)?.let { storage ->
+            lines += ""
+            lines += player.tr(
+                "gui.menu.storage-pages",
+                "amount" to StorageManager.pageCount(storage),
+                "max" to StorageSettings.snapshot.maxPages,
+            )
+            StorageManager.nextPageCost(storage)?.let {
+                lines += player.tr("gui.menu.storage-next", "amount" to StorageRender.money(it))
+            }
+        }
+        lines += ""
+        lines += player.tr("gui.admin.click-open")
+        return PanelRender.card(Material.ENDER_CHEST, player.tr("gui.menu.storage"), lines)
     }
 
     /** Glows while somebody is waiting for an answer, which is the one thing here worth interrupting for. */

@@ -28,6 +28,7 @@ object TransactionReason {
     const val SHOP_BUY = "money.reason.shop-buy"
     const val SHOP_SELL = "money.reason.shop-sell"
     const val TRADE = "money.reason.trade"
+    const val STORAGE_PAGE = "money.reason.storage-page"
 
     /** Encodes [key] and its [args] into the single string that is stored with the transaction. */
     fun of(key: String, vararg args: Pair<String, Any?>): String =

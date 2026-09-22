@@ -3,8 +3,10 @@ package net.trilleo.mc.plugins.tritown.guis.admin
 import com.palmergames.bukkit.towny.TownyAPI
 import net.trilleo.mc.plugins.tritown.Main
 import net.trilleo.mc.plugins.tritown.config.ShopSettings
+import net.trilleo.mc.plugins.tritown.config.StorageSettings
 import net.trilleo.mc.plugins.tritown.economy.EconomyPulse
 import net.trilleo.mc.plugins.tritown.enums.FillMode
+import net.trilleo.mc.plugins.tritown.enums.FlowCategory
 import net.trilleo.mc.plugins.tritown.enums.StatsWindow
 import net.trilleo.mc.plugins.tritown.guis.menu.MainMenuGUI
 import net.trilleo.mc.plugins.tritown.guis.menu.MenuRender
@@ -13,6 +15,7 @@ import net.trilleo.mc.plugins.tritown.registration.GUIFrame
 import net.trilleo.mc.plugins.tritown.registration.GUIManager
 import net.trilleo.mc.plugins.tritown.registration.PluginGUI
 import net.trilleo.mc.plugins.tritown.shops.ShopManager
+import net.trilleo.mc.plugins.tritown.storage.StorageManager
 import net.trilleo.mc.plugins.tritown.utils.EconomyUtil
 import net.trilleo.mc.plugins.tritown.utils.TownyUtil
 import net.trilleo.mc.plugins.tritown.utils.tr
@@ -38,7 +41,7 @@ class AdminPanelGUI : PluginGUI(
     fillMode = FillMode.NONE,
 ) {
 
-    private enum class Card { ECONOMY, SHOPS, SERVER }
+    private enum class Card { ECONOMY, SHOPS, STORAGE, SERVER }
 
     override fun setup(player: Player, inventory: Inventory) {
         val cards = cardsFor(player)
@@ -48,6 +51,7 @@ class AdminPanelGUI : PluginGUI(
             val item = when (card) {
                 Card.ECONOMY -> economy(player)
                 Card.SHOPS -> shops(player)
+                Card.STORAGE -> storage(player)
                 Card.SERVER -> server(player)
             }
             inventory.setItem(slot, item)
@@ -68,6 +72,7 @@ class AdminPanelGUI : PluginGUI(
         when (cardsFor(player)[event.rawSlot]) {
             Card.ECONOMY -> GUIManager.openLater(player, EconomyPanelGUI.ID)
             Card.SHOPS -> GUIManager.openLater(player, AdminShopsGUI.ID)
+            Card.STORAGE -> MenuRender.later(player) { AdminStorageGUI.show(player) }
             Card.SERVER, null -> Unit
         }
     }
@@ -77,6 +82,7 @@ class AdminPanelGUI : PluginGUI(
         val cards = listOfNotNull(
             Card.ECONOMY.takeIf { player.hasPermission(ECONOMY_PERMISSION) },
             Card.SHOPS.takeIf { player.hasPermission(SHOPS_PERMISSION) },
+            Card.STORAGE.takeIf { player.hasPermission(STORAGE_PERMISSION) },
             Card.SERVER,
         )
         return GUIFrame.spacedColumns(cards.size).zip(cards)
@@ -131,6 +137,31 @@ class AdminPanelGUI : PluginGUI(
         return PanelRender.card(Material.EMERALD, player.tr("gui.admin.shops"), lines)
     }
 
+    private fun storage(player: Player): ItemStack {
+        val lines = mutableListOf(player.tr("gui.admin.storage-lore"))
+
+        if (!StorageManager.isAvailable) {
+            lines += player.tr("gui.admin.storage-off")
+        } else {
+            val settings = StorageSettings.snapshot
+            lines += ""
+            lines += player.tr("gui.admin.storage-free", "amount" to settings.freePages, "max" to settings.maxPages)
+            lines += player.tr("gui.admin.storage-open", "amount" to StorageManager.cachedAll().size)
+            if (EconomyPulse.isEnabled) {
+                val revenue = EconomyPulse.window(StatsWindow.DAY.hours).destroyedBy[FlowCategory.STORAGE] ?: 0L
+                lines += player.tr(
+                    "gui.admin.storage-revenue",
+                    "amount" to PanelRender.money(revenue),
+                    "window" to player.tr(StatsWindow.DAY.key),
+                )
+            }
+        }
+
+        lines += ""
+        lines += player.tr("gui.admin.click-open")
+        return PanelRender.card(Material.ENDER_CHEST, player.tr("gui.admin.storage"), lines)
+    }
+
     /**
      * What the server is running, in the two or three numbers that say whether
      * anything is wrong before the sections are opened.
@@ -166,6 +197,7 @@ class AdminPanelGUI : PluginGUI(
 
         const val ECONOMY_PERMISSION = "tritown.admin.economy"
         const val SHOPS_PERMISSION = "tritown.admin.shops"
+        const val STORAGE_PERMISSION = "tritown.admin.storage"
 
         private const val CARD_ROW = 2
         private const val BACK_SLOT = 49
