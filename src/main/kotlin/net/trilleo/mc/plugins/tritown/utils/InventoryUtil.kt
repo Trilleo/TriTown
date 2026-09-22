@@ -1,5 +1,6 @@
 package net.trilleo.mc.plugins.tritown.utils
 
+import net.trilleo.mc.plugins.tritown.protection.ItemOwnership
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -40,7 +41,7 @@ object InventoryUtil {
 
     /**
      * Puts [items] into the player's storage, dropping at their feet whatever
-     * will not fit.
+     * will not fit. Nobody but the player can pick those drops up.
      *
      * Space is checked before anything is handed over, so a drop only happens
      * when something else filled the inventory in between. Dropping is still
@@ -51,7 +52,7 @@ object InventoryUtil {
 
         val leftover = player.inventory.addItem(*split(items).toTypedArray())
         for (stack in leftover.values) {
-            player.world.dropItemNaturally(player.location, stack)
+            ItemOwnership.dropFor(player, stack)
         }
     }
 

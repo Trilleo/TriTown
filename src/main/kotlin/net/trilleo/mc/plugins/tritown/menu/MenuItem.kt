@@ -3,6 +3,7 @@ package net.trilleo.mc.plugins.tritown.menu
 import net.trilleo.mc.plugins.tritown.Main
 import net.trilleo.mc.plugins.tritown.config.MainMenuSettings
 import net.trilleo.mc.plugins.tritown.news.NewsReadState
+import net.trilleo.mc.plugins.tritown.protection.ItemOwnership
 import net.trilleo.mc.plugins.tritown.registration.PluginItem
 import net.trilleo.mc.plugins.tritown.utils.LoreUtil
 import net.trilleo.mc.plugins.tritown.utils.itemStack
@@ -157,7 +158,7 @@ object MenuItem {
      */
     private fun relocate(player: Player, displaced: ItemStack) {
         val leftover = player.inventory.addItem(displaced).values
-        leftover.forEach { player.world.dropItemNaturally(player.location, it) }
+        leftover.forEach { ItemOwnership.dropFor(player, it) }
         player.sendPrefixed(player.tr(if (leftover.isEmpty()) "menu-item.relocated" else "menu-item.dropped"))
     }
 }

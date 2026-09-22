@@ -2,7 +2,7 @@
 
 This guide explains how to create **commands**, **listeners**, **GUIs**, **tasks**, **custom items**, **recipes**, work
 with **translations** and the **configuration** system using TriTown's registration system, and how to build on
-**Towny**, the **Vault economy**, the **admin panel**, **shops**, **player trades**, **personal storage**, the **news** and the **sidebar**. Commands, listeners, GUIs, tasks, custom items, and recipes all
+**Towny**, the **Vault economy**, the **admin panel**, **shops**, **player trades**, **personal storage**, **item protection**, the **news** and the **sidebar**. Commands, listeners, GUIs, tasks, custom items, and recipes all
 follow the same pattern: extend a base class (or implement an interface), place the file in the correct package, and the
 plugin handles the rest automatically at startup. The configuration system provides typed access to `config.yml` values.
 
@@ -3152,6 +3152,130 @@ Each group has its own switch under `storage.lock-containers`, the whole lock fo
 `StorageSettings` is a snapshot swapped in whole on a reload, the way `ShopSettings` is. A reload never re-reads the
 storage files.
 
+
+## Item Protection
+
+Items belong to the player who has them, and the only way to hand one to another player is a [trade](#player-trades).
+The core lives in `protection/`, outside the scan. The listeners are in `listeners/protection/` and the admin command
+is `commands/protection/ProtectionCommand`.
+
+### The model
+
+**An item in an inventory is never marked.** It is its holder's by being there, so stacks merge as usual and the
+trade, shop and storage code never think about ownership. Ownership is recorded only once an item leaves a player:
+
+- **On the ground**, as the dropped `Item`'s own owner field (`Item#setOwner`). The game saves it with the entity,
+  refuses a pickup by anyone else, and will not merge two drops with different owners. `ItemOwnership` is the only
+  place that sets it.
+- **In a container or entity holder**, as a claim: the owner's UUID under `tritown:claim` in the holder's persistent
+  data. `Claims` is the only thing that reads or writes one.
+
+Public items are the ones the world drops by itself, plus every player's death drops: leaf decay, water and piston
+farms, explosions nobody owns.
+
+### Dropped items
+
+| Where it comes from | Who owns it |
+|:--------------------|:------------|
+| `PlayerDropItemEvent`, and any spawn whose thrower is an online player | The dropper |
+| `BlockDropItemEvent` (mining, breaking crops) | The breaker, or the block's claimant if it was a claimed container |
+| `EntityDeathEvent` (not players) | The mob's claimant, else its `killer` (which covers bows and tamed pets) |
+| Right-clicking a block or an entity, shearing, `BlockDispenseLootEvent` | The player |
+| `PlayerFishEvent` (`CAUGHT_FISH`) | The angler |
+| A claimed dispenser, dropper, crafter or campfire | The claimant |
+| `EntityDropItemEvent` from a claimed entity | The claimant |
+| `PiglinBarterEvent` | Whoever threw the gold, recorded on the piglin as it picks it up |
+| `PlayerDeathEvent` | Nobody: a suppression window keeps them public |
+
+Most of these drops do not exist yet when the event names the player, so the event opens a **window** at the spot
+through `ItemOwnership.expect(location, owner)`, and `ItemSpawnEvent` claims it. `DropWindows` holds the windows. It is
+plain Kotlin, tested in `DropWindowsTest`. A window matches spawns within two blocks, in the tick it was opened and
+the next. The nearest window wins, and a suppression beats all of them.
+
+**Never stamp an `ItemStack` to carry an owner.** A mark nothing stripped would follow the item into an inventory and
+stop it stacking with its twins.
+
+`EntityPickupItemEvent` refuses every entity but the owner: allays, foxes, villagers and zombies included. The one
+exception is a piglin taking its barter material. `PlayerPickupArrowEvent` only lets the shooter pick an arrow or
+trident back up.
+
+**Handing a player items the plugin gives them** goes through `InventoryUtil.give`, whose overflow is dropped with
+`ItemOwnership.dropFor(player, stack)`. Never drop an item meant for a player with `dropItemNaturally` alone.
+
+### Claims
+
+`Claims.of(inventory | block | entity)` gives a `ClaimHolder`, or `null` for anything that is not one:
+
+- Every block entity with an inventory: furnaces, hoppers, droppers, dispensers, brewing stands, crafters, barrels,
+  chests (both halves answer to the left one's claim), shulker boxes, decorated pots, chiseled bookshelves, shelves,
+  jukeboxes, lecterns.
+- Campfires.
+- Item frames, armor stands and allays.
+- Mobs that are not `Enemy` and can wear a saddle or body armour, including a chested horse's inventory.
+- Minecarts and boats with an inventory.
+
+It is never kept, and it is never built for a holderless inventory (TriTown's menus), the ender chest, a player or a
+villager.
+
+**Claims are read lazily.** `Claims.ownerOf(holder)` clears a claim on a holder that is *vacant*: empty, with nobody
+viewing it. No task ever releases one, and a shared furnace is free the moment its owner takes the last item out. A
+viewer keeps even an empty claim alive, or a hopper could claim the container out from under them. `Claims.recorded`
+reads a claim without that check. It is for what a destroyed block or entity leaves behind, when its contents can no
+longer be counted.
+
+Blocks are read through `getState(false)`, the live block entity, so a claim is written without `update()`. Only
+the items inside make a claim worth anything, and moving them is what marks the chunk to be saved.
+
+The rules, in `ContainerProtectionListener` and `EntityProtectionListener`:
+
+- Opening a free container claims it for the opener. Only one non-bypass viewer may have a free container open.
+  Closing an empty one releases it.
+- `InventoryMoveItemEvent` / `InventoryPickupItemEvent`: an owned item may enter a free holder, which becomes the
+  owner's, or the owner's own. Anything else is cancelled. A public source never changes a destination's owner. A copper
+  golem never targets a claimed block.
+- A non-owner cannot break, blow up or shoot apart a claimed holder, destroy a claimed minecart, take a lectern's book,
+  or right-click a claimed interaction block, frame, stand or mob. `explosion-guard` removes claimed containers from an
+  explosion's block list.
+- A frame, stand or mob is claimed when an item goes on. For stands and mobs that is read a tick later, because the
+  item lands after the event.
+
+`Protection.settings(world)` returns the settings, or `null` when protection is off or off in that world. Every
+handler asks it first. `tritown.protection.bypass` (`Protection.BYPASS_PERMISSION`) exempts a player from every claim.
+Vanilla's own pickup check still applies to them, because it runs before any event.
+
+`/tritown protection inspect|release` (`tritown.protection.admin`) shows or clears the claim on the block or entity in
+the crosshair.
+
+### Adding a way for items to leave a player
+
+Any new feature that spills items into the world, or lets something hold a player's items, has to say whose they are:
+
+1. **A drop the feature makes itself**: use `ItemOwnership.dropFor`, or `bind` the `Item` it creates.
+2. **A drop the game makes a moment later**: call `ItemOwnership.expect` from the event that names the player.
+3. **A new kind of holder**: teach `Claims.of` to recognise it, and refuse non-owners on every event that reaches
+   inside it.
+
+### Known gaps
+
+- Flower pots and composters have no block entity to hold a claim, so they are left alone.
+- Leads dropped from a broken fence knot are public.
+- Death drops are public on purpose, so a player can still give their items away by dying next to someone.
+
+### Settings
+
+| Key                               | What it does                                                          |
+|:----------------------------------|:----------------------------------------------------------------------|
+| `item-protection.enabled`         | Everything below                                                       |
+| `item-protection.disabled-worlds` | Worlds, by name, where nothing is protected                            |
+| `item-protection.drops`           | Player drops are the dropper's                                         |
+| `item-protection.actions`         | Mining, harvesting, shearing, fishing and loot credit the player       |
+| `item-protection.mob-loot`        | A mob's loot is its killer's                                           |
+| `item-protection.projectiles`     | Only the shooter picks an arrow or trident back up                     |
+| `item-protection.containers`      | Containers and interaction blocks are claimed by whoever fills them    |
+| `item-protection.entities`        | Frames, stands, allays and equipped mobs are claimed the same way      |
+| `item-protection.explosion-guard` | Explosions and mobs leave claimed containers standing                  |
+
+`ProtectionSettings` is a snapshot swapped in whole on a reload.
 
 ## Server News
 

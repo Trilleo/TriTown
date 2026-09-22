@@ -928,7 +928,7 @@ InventoryUtil.give(player, goods)
 | Method                     | Return            | Description                                                                   |
 |:---------------------------|:------------------|:-------------------------------------------------------------------------------|
 | `hasSpaceFor(player, items)` | `Boolean`       | Whether every stack would fit, tested against a copy of the player's storage  |
-| `give(player, items)`      | `Unit`            | Adds the stacks, dropping at the player's feet whatever will not fit          |
+| `give(player, items)`      | `Unit`            | Adds the stacks, dropping what will not fit at the player's feet, as theirs   |
 | `split(items)`             | `List<ItemStack>` | Breaks oversized stacks down into ones the game allows                        |
 
 ### Behavior Details
@@ -939,6 +939,8 @@ InventoryUtil.give(player, goods)
   `hasSpaceFor` and `give` run their input through `split` first.
 - **Nothing is ever lost**: `give` drops what will not fit rather than discarding it. Check `hasSpaceFor` beforehand
   and a drop only happens when something else filled the inventory in between.
+- **Nobody else can take the drop**: overflow goes through `ItemOwnership.dropFor`, so it belongs to the player it was
+  meant for (see [Item Protection](DEVELOPER_GUIDE.md#item-protection)).
 
 ---
 

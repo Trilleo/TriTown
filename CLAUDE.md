@@ -68,7 +68,7 @@ The server console reads commands from the terminal running Gradle.
 src/main/kotlin/net/trilleo/mc/plugins/tritown/
 ├── Main.kt                  # Plugin entry point (Main.instance, Main.reload())
 ├── commands/                # Sub-commands (auto-registered)
-│   ├── admin/  economy/  info/  menu/  news/
+│   ├── admin/  economy/  info/  menu/  news/  protection/
 │   └── moderation/  scoreboard/  shop/  storage/  trade/
 ├── config/                  # PluginConfig (typed config.yml wrapper), EconomySettings
 ├── data/                    # JSON-persisted PlayerData / ServerData and their managers
@@ -81,6 +81,8 @@ src/main/kotlin/net/trilleo/mc/plugins/tritown/
 ├── listeners/               # Event listeners, including Towny events (auto-registered)
 ├── menu/                    # The main menu item and the invariant that keeps it unique (not scanned)
 ├── news/                    # Server news: posts, storage, read state, notifications (not scanned)
+├── protection/              # Item protection: drop owners, drop windows, container and entity claims
+│                            # (not scanned)
 ├── recipes/                 # Recipes (auto-registered, implement PluginRecipe)
 ├── registration/            # Auto-registration engine (do not modify lightly)
 ├── shops/                   # Admin shops: model, trading, storage, FancyNpcs bridge (not scanned)
@@ -291,6 +293,24 @@ The panel in `guis/admin` is where an owner reads the server; `/tritown admin` o
   only ever sees text.
 - **Recognise a vanilla container by its inventory's holder**, never by `InventoryType`: TriTown's own menus are
   chest-shaped too and have no holder.
+
+## Working with Item Protection
+
+**Items belong to the player who has them; a trade is the only way to hand one over.** See
+[Item Protection](docs/DEVELOPER_GUIDE.md#item-protection).
+
+- **An item in an inventory is never marked.** Ownership exists only on a dropped `Item` (the game's own owner field,
+  set through `ItemOwnership`) and as a claim on a container or entity holder (`Claims`). Never stamp an `ItemStack`
+  with an owner: a mark nothing strips follows the item into an inventory and stops it stacking.
+- **Never drop an item for a player with `dropItemNaturally` alone.** Use `ItemOwnership.dropFor`, or
+  `InventoryUtil.give`, whose overflow already does.
+- **A drop that does not exist yet gets a window.** Call `ItemOwnership.expect` from the event that names the player.
+  The spawn claims it. Death drops stay public through `suppress`.
+- **Claims are released lazily.** `Claims.ownerOf` clears a claim on a vacant holder (empty and unviewed). Never add a
+  task to release them, and read with `Claims.recorded` only for what a destroyed holder leaves behind.
+- **Ask `Protection.settings(world)` first** in every handler, and let `Protection.BYPASS_PERMISSION` through.
+- **A new holder of player items** (a block, an entity, a feature that spills items) must be taught to `Claims.of`
+  or given an owner before it ships. Otherwise it becomes a way to hand items over outside a trade.
 
 ## Working with the Main Menu
 

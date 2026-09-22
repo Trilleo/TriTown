@@ -22,6 +22,7 @@ command:
     menu: "Menu"
     news: "News"
     storage: "Storage"
+    protection: "Protection"
 
   help:
     header: "TriTown Commands"
@@ -134,6 +135,15 @@ command:
     usage: "<red>Usage: <white>/tritown storage [view <player>|pages <player> <add|set> <amount>]</white>"
     not-found: "No player called {name} has played here."
     pages-set: "<white>{name}</white> now has <white>{amount}</white> storage pages."
+
+  protection:
+    description: "See or clear who owns a container or entity"
+    players-only: "<red>Look at a container or entity in game to use this."
+    usage: "<red>Usage: <white>/tritown protection <inspect|release></white>"
+    no-target: "Look at a container, item frame, armor stand or mob first."
+    public: "<gray>Nobody owns that: anyone can use it."
+    owner: "That belongs to <white>{name}</white>."
+    released: "Released <white>{name}</white>'s claim. Anyone can use it now."
 
   trades:
     description: "Open the server's global shop"
@@ -1161,6 +1171,12 @@ storage:
     decoration: "<yellow>Containers are decoration on this server: nothing can be put in them, and an empty one won't open. Keep your items in your storage instead: <white>/tritown storage</white>"
     withdraw-only: "<yellow>This container is withdraw-only. Open your storage from the menu."
     empty: "<gray>This container is empty. It is only decoration now."
+
+# Refusals shown in the action bar when an item belongs to someone else.
+protection:
+  hint:
+    owned: "<red>That belongs to <white>{name}</white>. Items only change hands through a trade."
+    in-use: "<red>Someone else is using that right now."
 
 trade:
   done: "Traded with <white>{name}</white>."

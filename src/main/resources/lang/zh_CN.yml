@@ -22,6 +22,7 @@ command:
     menu: "菜单"
     news: "公告"
     storage: "仓库"
+    protection: "物品保护"
 
   help:
     header: "TriTown 命令"
@@ -134,6 +135,15 @@ command:
     usage: "<red>用法：<white>/tritown storage [view <player>|pages <player> <add|set> <amount>]</white>"
     not-found: "没有名为 {name} 的玩家来过本服务器。"
     pages-set: "<white>{name}</white> 现在拥有 <white>{amount}</white> 页仓库。"
+
+  protection:
+    description: "查看或清除容器、实体的所有者"
+    players-only: "<red>请在游戏中看着一个容器或实体使用此命令。"
+    usage: "<red>用法：<white>/tritown protection <inspect|release></white>"
+    no-target: "请先看着一个容器、物品展示框、盔甲架或生物。"
+    public: "<gray>它不归属任何人：所有人都可以使用。"
+    owner: "它归属于 <white>{name}</white>。"
+    released: "已解除 <white>{name}</white> 的归属。现在所有人都可以使用。"
 
   trades:
     description: "打开服务器的全局商店"
@@ -1161,6 +1171,12 @@ storage:
     decoration: "<yellow>本服务器的容器仅作装饰：无法放入物品，空的容器也无法打开。请把物品存放在你的仓库中：<white>/tritown storage</white>"
     withdraw-only: "<yellow>这个容器只能取出物品。请从菜单打开你的仓库。"
     empty: "<gray>这个容器是空的，现在只是装饰。"
+
+# 物品归属他人时在动作栏显示的提示。
+protection:
+  hint:
+    owned: "<red>它归属于 <white>{name}</white>。物品只能通过交易转手。"
+    in-use: "<red>其他人正在使用它。"
 
 trade:
   done: "已与 <white>{name}</white> 完成交易。"

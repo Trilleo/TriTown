@@ -122,6 +122,12 @@ first start:
 
 Prebuilt jars are attached to every [GitHub release](https://github.com/Trilleo/TriTown/releases).
 
+**Your items stay yours.** Like Hypixel SkyBlock, the only way to give another player an item is a trade. What you drop,
+mine, harvest, fish up or loot from a mob you killed can only be picked up by you. A furnace, hopper, brewing stand or
+decorated pot belongs to whoever filled it until it is empty again, and so do item frames, armor stands and the saddle
+on your horse. Nobody else can open, empty, break or blow them up. Death drops, and anything the world drops by
+itself, are still anyone's.
+
 ## Commands
 
 | Command                  | Description                           |
@@ -140,6 +146,7 @@ Prebuilt jars are attached to every [GitHub release](https://github.com/Trilleo/
 | `/tt news`               | Read the server news                  |
 | `/tt storage`            | Open your storage                     |
 | `/tt admin [section]`    | Open the admin panel (OP only)        |
+| `/tt protection <inspect/release>` | See or clear who owns what you look at (OP only) |
 
 `/eco` takes `give`, `take` and `set` (`<player> <amount> [currency]`), `reset <player>` back to the starting balance,
 `info <player>` for an account's details, `history [player]` to browse recorded transactions in a menu, and `flush` to
@@ -163,6 +170,10 @@ news.
 Administrators with `tritown.storage.admin` also get `view <player>`, which opens anyone's storage — online or not — to
 change, and `pages <player> <add|set> <amount>`, which hands out pages for free. `tritown.storage.bypass` lets a
 builder place and fill the containers the storage replaces.
+
+`/tt protection inspect` shows who owns the container, item frame, armor stand or mob you are looking at, and
+`release` clears that claim; both need `tritown.protection.admin`. `tritown.protection.bypass` lets staff open, take
+from and break anything a player has claimed.
 
 `/tt admin` opens the panel itself, and `economy`, `shops` or `storage` opens that section directly. Opening the panel
 needs `tritown.admin`; the sections need `tritown.admin.economy`, `tritown.admin.shops` and `tritown.admin.storage` on
@@ -225,6 +236,9 @@ version stays available as `/tritown:balance` and so on.
 | `storage.save-interval`                   | `30`               | Seconds between writing changed storages; closing one writes it at once         |
 | `storage.lock-containers.enabled`         | `true`             | Make containers decoration: withdraw-only, and closed once empty                |
 | `storage.lock-containers.<group>`         | `true`             | Each of `chests`, `shulker-boxes` and `ender-chest` on its own                 |
+| `item-protection.enabled`                 | `true`             | Items only change hands through a trade                                         |
+| `item-protection.disabled-worlds`         | `[]`               | Worlds where nothing is protected                                               |
+| `item-protection.<part>`                  | `true`             | Each of `drops`, `actions`, `mob-loot`, `projectiles`, `containers`, `entities`, `explosion-guard` |
 | `towns.founding-credit`                   | `100.0`            | Credit only `/t new` can spend, given once to players without a town; `0` is off |
 | `news.enabled`                            | `true`             | Turn the server news off entirely                                               |
 | `news.join-message.enabled`               | `true`             | List a player's unread posts a moment after they join                           |

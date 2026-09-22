@@ -20,6 +20,32 @@
 + Added a **Storage** section to the admin panel (`tritown.admin.storage`). It lists every storage, fullest first, with
   how many pages were bought and what they earned, and opens any of them read-only.
 
+#### Item Protection
+
++ Items now belong to the player who has them, and the only way to hand one to someone else is a trade
+  (`/trade <player>`).
+    + Items you drop can only be picked up by you. So can whatever you mine, harvest, shear or fish up, the loot of a
+      mob you kill (with a bow or a tamed pet too), and a vault's reward.
+    + Death drops, and anything the world drops by itself, can still be picked up by anyone.
+    + Mobs, allays and foxes can't pick up anyone's items. Piglins still barter, and pay back whoever threw the gold.
+    + Only the player who fired an arrow or trident can pick it back up.
++ Containers belong to whoever fills them, for as long as anything is inside: furnaces, hoppers, brewing stands,
+  droppers, crafters, decorated pots, shelves, chiseled bookshelves, jukeboxes, campfires and lecterns.
+    + Nobody else can open, feed, empty or break one, or blow it up. An empty container is free for anyone again, so
+      shared furnaces still work.
+    + Hoppers carry the owner along: your items can fill a free container, which becomes yours, but never someone
+      else's.
+    + Anyone can still read a lectern. Only its owner can take the book.
++ Item frames, armor stands, allays, and mobs you have saddled, armoured or given a chest are yours too. Nobody else
+  can take the item, shear it off, ride the mob, or break the frame or stand.
++ Items the plugin hands you that don't fit in your inventory, from a trade, a shop or your storage, now drop as
+  yours.
++ Administrators with `tritown.protection.admin` can see who owns the container or entity they are looking at with
+  `/tritown protection inspect`, and clear the claim with `release`. `tritown.protection.bypass` lets staff open, take
+  from and break anything.
++ Everything can be tuned or switched off under `item-protection` in `config.yml`, including a list of worlds where
+  nothing is protected.
+
 #### Misc
 
 + Vanilla containers are decoration now, in favour of the storage. Chests, trapped chests, barrels, shulker boxes,
@@ -38,6 +64,9 @@
 
 + Added the storage core under `storage/`: `StorageManager` (loading, the one-editor lock, pricing and saving),
   one JSON file per player under `plugins/TriTown/storage/`, written atomically with a backup, on a single writer thread.
++ Added the item protection core under `protection/`: `ItemOwnership` (drop owners, kept on the game's own `Item`
+  owner field), `DropWindows` (per-tick windows that credit drops which do not exist yet), and `Claims` (container
+  and entity claims in their persistent data, released lazily).
 + `StorageGUI` is the first menu that lets the game move items itself, with the button row, shift-clicks and
   double-clicks guarded by hand.
 

@@ -109,6 +109,7 @@ class Main : JavaPlugin() {
 
         TradeSettings.load(pluginConfig)
         TownSettings.load(pluginConfig)
+        ProtectionSettings.load(pluginConfig)
         MainMenuSettings.load(pluginConfig, logger)
 
         // Before the registrars, like the shops: the main menu reads a player's storage as it is drawn.
@@ -162,6 +163,7 @@ class Main : JavaPlugin() {
 
         TradeSettings.load(pluginConfig)
         TownSettings.load(pluginConfig)
+        ProtectionSettings.load(pluginConfig)
         // Only the settings, as with the shops: the storage files are never re-read while players hold them open.
         StorageSettings.load(pluginConfig)
         // Only the settings, as with the shops: every change to a post is already on disk.

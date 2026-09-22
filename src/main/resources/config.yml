@@ -217,6 +217,37 @@ storage:
     shulker-boxes: true
     ender-chest: true
 
+# ── Item protection ─────────────────────────────────────────────────────────
+# Items belong to the player who has them. The only way to hand one to another
+# player is a trade (/tritown trade). What is in your inventory is yours; these
+# settings decide what stays yours once it leaves it. Death drops are always
+# public, as is anything the world drops by itself (leaf decay, water farms).
+# tritown.protection.bypass lets staff open, take from and break anything.
+item-protection:
+  enabled: true
+  # Worlds where nothing is protected, such as a minigame or creative world.
+  disabled-worlds: []
+  # What a player drops can only be picked up by them.
+  drops: true
+  # What a player mines, harvests, shears or fishes up drops as theirs.
+  actions: true
+  # A mob's loot belongs to the player who killed it, by hand, bow or pet.
+  mob-loot: true
+  # Only the player who fired an arrow or trident can pick it back up.
+  projectiles: true
+  # A container belongs to whoever fills it, for as long as anything is in it:
+  # furnaces, hoppers, brewing stands, droppers, crafters, decorated pots,
+  # shelves, jukeboxes, campfires, lecterns and the like. Nobody else can open,
+  # feed, empty or break it, and hoppers can't carry one player's items into
+  # another's container. An empty container is free for anyone again.
+  containers: true
+  # Item frames, armor stands, allays, and mobs a player has saddled, armoured or
+  # given a chest belong to whoever put the item there. Nobody else can take it,
+  # shear it off, ride the mob or break the frame or stand.
+  entities: true
+  # Explosions leave a claimed container standing, so nobody can blow one open.
+  explosion-guard: true
+
 # ── Towns ───────────────────────────────────────────────────────────────────
 towns:
   # Money set aside for a player's first town, on top of their starting balance.
