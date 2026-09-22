@@ -31,7 +31,7 @@
     + Only the player who fired an arrow or trident can pick it back up.
 + Containers belong to whoever fills them, for as long as anything is inside: furnaces, hoppers, brewing stands,
   droppers, crafters, decorated pots, shelves, chiseled bookshelves, jukeboxes, campfires and lecterns.
-    + Nobody else can open, feed, empty or break one, or blow it up. An empty container is free for anyone again, so
+    + Nobody else can open, feed, empty or break one, blow it up, or break it with a piston. An empty container is free for anyone again, so
       shared furnaces still work.
     + Hoppers carry the owner along: your items can fill a free container, which becomes yours, but never someone
       else's.

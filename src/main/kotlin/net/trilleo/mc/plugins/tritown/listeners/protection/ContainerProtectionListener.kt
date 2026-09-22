@@ -7,6 +7,7 @@ import net.trilleo.mc.plugins.tritown.protection.Claims
 import net.trilleo.mc.plugins.tritown.protection.ItemOwnership
 import net.trilleo.mc.plugins.tritown.protection.Protection
 import net.trilleo.mc.plugins.tritown.utils.tr
+import org.bukkit.World
 import org.bukkit.block.*
 import org.bukkit.entity.Player
 import org.bukkit.event.Event
@@ -146,6 +147,36 @@ class ContainerProtectionListener : Listener {
         event.blockList().removeIf(::isHeld)
     }
 
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
+    fun onPistonExtend(event: BlockPistonExtendEvent) {
+        if (pistonBreaksHolder(event.block.world, event.blocks, event.block.getRelative(event.direction))) {
+            event.isCancelled = true
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
+    fun onPistonRetract(event: BlockPistonRetractEvent) {
+        if (pistonBreaksHolder(event.block.world, event.blocks, null)) event.isCancelled = true
+    }
+
+    /**
+     * Whether a piston would move or break a claimed holder.
+     *
+     * The game never moves a block entity, but it breaks one whose move reaction
+     * is `BREAK`, such as a decorated pot, and spills its contents as public drops.
+     * Those blocks are not always in [moved], so the blocks around everything
+     * that moves, and the one in front of the head, are checked too. Only the
+     * breakable ones among them count, so a piston door beside a claimed furnace
+     * still works.
+     */
+    private fun pistonBreaksHolder(world: World, moved: List<Block>, head: Block?): Boolean {
+        if (Protection.settings(world)?.containers != true) return false
+        if (moved.any(::isHeld)) return true
+
+        val around = moved.flatMap { block -> FACES.map(block::getRelative) } + listOfNotNull(head)
+        return around.distinct().any { it.pistonMoveReaction == PistonMoveReaction.BREAK && isHeld(it) }
+    }
+
     /** An arrow through a decorated pot, a wither chewing through a furnace. */
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
     fun onEntityChangeBlock(event: EntityChangeBlockEvent) {
@@ -244,5 +275,9 @@ class ContainerProtectionListener : Listener {
         if (!Protection.refuses(player, owner)) return
         event.isCancelled = true
         Protection.hintOwned(player, owner!!)
+    }
+
+    private companion object {
+        val FACES = listOf(BlockFace.UP, BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST)
     }
 }

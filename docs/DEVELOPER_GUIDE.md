@@ -3236,6 +3236,10 @@ The rules, in `ContainerProtectionListener` and `EntityProtectionListener`:
 - A non-owner cannot break, blow up or shoot apart a claimed holder, destroy a claimed minecart, take a lectern's book,
   or right-click a claimed interaction block, frame, stand or mob. `explosion-guard` removes claimed containers from an
   explosion's block list.
+- A piston never moves or breaks a claimed holder. The game only ever breaks a block entity whose move reaction
+  is `BREAK`, such as a decorated pot, and that block is not always in the event's list. So the blocks around
+  everything that moves, and the one in front of the head, are checked as well, but only the breakable ones. A
+  piston door beside a claimed furnace still works.
 - A frame, stand or mob is claimed when an item goes on. For stands and mobs that is read a tick later, because the
   item lands after the event.
 
